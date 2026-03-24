@@ -79,7 +79,7 @@ export default function CandidateProgressBar({ candidate, onClick }: Props) {
         <p className="text-xs text-muted-foreground">{candidate.position} · {candidate.site}</p>
         <div className="space-y-1 pt-1">
           {milestones.map((m) => {
-            const done = !!(candidate as Record<string, unknown>)[m.key];
+            const done = !!(candidate as unknown as Record<string, unknown>)[m.key];
             return (
               <div key={m.key} className="flex items-center gap-2 text-xs">
                 <span className={done ? "text-success" : "text-muted-foreground"}>

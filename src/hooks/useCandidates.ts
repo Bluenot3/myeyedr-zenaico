@@ -76,7 +76,7 @@ export function useCreateCandidate() {
     mutationFn: async (candidate: Partial<Candidate>) => {
       const { data, error } = await supabase
         .from("candidates")
-        .insert(candidate)
+        .insert([candidate as any])
         .select()
         .single();
       if (error) throw error;

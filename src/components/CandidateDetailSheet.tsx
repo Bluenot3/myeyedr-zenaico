@@ -205,7 +205,7 @@ export default function CandidateDetailSheet({ candidate, open, onOpenChange }: 
         <div className="space-y-3 py-4">
           <h3 className="text-sm font-semibold font-display">Onboarding Milestones</h3>
           {toggleFields.map((field) => {
-            if (field.condition && !(form as Record<string, unknown>)[field.condition]) return null;
+            if ("condition" in field && field.condition && !(form as unknown as Record<string, unknown>)[field.condition]) return null;
             return (
               <div key={field.key} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
