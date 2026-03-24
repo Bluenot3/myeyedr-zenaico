@@ -133,6 +133,33 @@ export type Database = {
         }
         Relationships: []
       }
+      locations: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          manager: string
+          region: string
+          site_name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          manager?: string
+          region: string
+          site_name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          manager?: string
+          region?: string
+          site_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
