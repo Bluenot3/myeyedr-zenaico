@@ -14,7 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      candidate_documents: {
+        Row: {
+          candidate_id: string
+          document_type: string
+          file_name: string
+          file_path: string
+          id: string
+          uploaded_at: string
+        }
+        Insert: {
+          candidate_id: string
+          document_type?: string
+          file_name: string
+          file_path: string
+          id?: string
+          uploaded_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_documents_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidates: {
+        Row: {
+          adp_registration_complete: boolean
+          adp_registration_sent: boolean
+          background_check_complete: boolean
+          background_check_sent: boolean
+          blocker_notes: string
+          candidate_name: string
+          clearance_type: string
+          created_at: string
+          current_phase: number
+          dc_suitability_complete: boolean
+          dc_suitability_needed: boolean
+          first_day_confirmed: string | null
+          hiring_manager: string
+          id: string
+          ids_received: boolean
+          mandated_reporter_complete: boolean
+          nvo_complete: boolean
+          nvo_date: string | null
+          offer_packet_returned: boolean
+          offer_packet_sent: boolean
+          position: string
+          region: string
+          requisition_id: string
+          site: string
+          updated_at: string
+        }
+        Insert: {
+          adp_registration_complete?: boolean
+          adp_registration_sent?: boolean
+          background_check_complete?: boolean
+          background_check_sent?: boolean
+          blocker_notes?: string
+          candidate_name: string
+          clearance_type?: string
+          created_at?: string
+          current_phase?: number
+          dc_suitability_complete?: boolean
+          dc_suitability_needed?: boolean
+          first_day_confirmed?: string | null
+          hiring_manager?: string
+          id?: string
+          ids_received?: boolean
+          mandated_reporter_complete?: boolean
+          nvo_complete?: boolean
+          nvo_date?: string | null
+          offer_packet_returned?: boolean
+          offer_packet_sent?: boolean
+          position?: string
+          region?: string
+          requisition_id?: string
+          site?: string
+          updated_at?: string
+        }
+        Update: {
+          adp_registration_complete?: boolean
+          adp_registration_sent?: boolean
+          background_check_complete?: boolean
+          background_check_sent?: boolean
+          blocker_notes?: string
+          candidate_name?: string
+          clearance_type?: string
+          created_at?: string
+          current_phase?: number
+          dc_suitability_complete?: boolean
+          dc_suitability_needed?: boolean
+          first_day_confirmed?: string | null
+          hiring_manager?: string
+          id?: string
+          ids_received?: boolean
+          mandated_reporter_complete?: boolean
+          nvo_complete?: boolean
+          nvo_date?: string | null
+          offer_packet_returned?: boolean
+          offer_packet_sent?: boolean
+          position?: string
+          region?: string
+          requisition_id?: string
+          site?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
