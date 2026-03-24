@@ -5,18 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Upload, Loader2 } from "lucide-react";
-import { useCreateCandidate, useUploadDocument, computePhase } from "@/hooks/useCandidates";
+import { useCreateCandidate, useUploadDocument, useLocations, computePhase } from "@/hooks/useCandidates";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const regions = ["DC", "Maryland", "Virginia", "Virtual"];
-
-const sitesByRegion: Record<string, string[]> = {
-  DC: ["FBR Club", "George M. Ferris Clubhouse #6", "Richard England Clubhouse #14", "Jelleff Community Center"],
-  Maryland: ["Benjamin Stoddert MS", "Charles Carroll MS", "Drew Freeman MS", "James Gholson MS", "Nicolas Orem MS", "Oxon Hill MS", "Palmer Park Rec Center", "Galway Elementary", "Germantown Club", "Germantown Elementary"],
-  Virginia: ["Dunbar Alexandria Olympic Club", "Bailey's BGC", "Murraygate Village Club", "Hylton Club", "Martin K. Alloy Club", "Heiser Club", "Ox-Hill Club", "Annandale Club"],
-  Virtual: ["Clubhouse @ Your House"],
-};
 
 export default function AddCandidateDialog() {
   const [open, setOpen] = useState(false);
@@ -24,6 +17,13 @@ export default function AddCandidateDialog() {
   const [paFile, setPaFile] = useState<File | null>(null);
   const createCandidate = useCreateCandidate();
   const uploadDoc = useUploadDocument();
+  const { data: locations = [] } = useLocations();
+
+  const sitesByRegion = locations.reduce<Record<string, string[]>>((acc, loc) => {
+    if (!acc[loc.region]) acc[loc.region] = [];
+    acc[loc.region].push(loc.site_name);
+    return acc;
+  }, {});
 
   const [form, setForm] = useState({
     candidate_name: "",
@@ -104,7 +104,6 @@ export default function AddCandidateDialog() {
       current_phase: phase,
     });
 
-    // If PA file was uploaded, attach it to the candidate
     if (paFile && result?.id) {
       await uploadDoc.mutateAsync({
         candidateId: result.id,
@@ -130,57 +129,61 @@ export default function AddCandidateDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" /> Add Candidate
+        <Button size="sm" className="gap-1.5 h-9">
+          <Plus className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Add Candidate</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto">
         <DialogHeader>
           <DialogTitle className="font-display">Add New Candidate</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="upload" className="mt-2">
           <TabsList className="w-full">
-            <TabsTrigger value="upload" className="flex-1 gap-2">
-              <Upload className="h-3.5 w-3.5" /> Upload PA Form
+            <TabsTrigger value="upload" className="flex-1 gap-1.5 text-xs sm:text-sm">
+              <Upload className="h-3.5 w-3.5" /> Upload PA
             </TabsTrigger>
-            <TabsTrigger value="manual" className="flex-1">Manual Entry</TabsTrigger>
+            <TabsTrigger value="manual" className="flex-1 text-xs sm:text-sm">Manual</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-4 mt-4">
-            <div
-              className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-accent/50 transition-colors cursor-pointer"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files[0];
-                if (file) handlePAUpload(file);
-              }}
-            >
-              {parsing ? (
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-accent" />
-                  <p className="text-sm text-muted-foreground">Parsing PA form with AI…</p>
-                </div>
-              ) : (
-                <>
-                  <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm font-medium text-foreground">
-                    Drop PA form here or click to browse
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">PDF, JPG, or PNG</p>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handlePAUpload(file);
-                    }}
-                  />
-                </>
-              )}
-            </div>
+            <label className="relative block">
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-6 sm:p-8 text-center hover:border-accent/50 transition-colors cursor-pointer"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file) handlePAUpload(file);
+                }}
+              >
+                {parsing ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                    <p className="text-sm text-muted-foreground">Parsing PA form…</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm font-medium text-foreground">
+                      Drop PA form or tap to browse
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF, JPG, or PNG</p>
+                  </>
+                )}
+              </div>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handlePAUpload(file);
+                }}
+              />
+            </label>
             {paFile && !parsing && (
               <p className="text-xs text-success font-medium">✓ {paFile.name} parsed</p>
             )}
@@ -188,14 +191,13 @@ export default function AddCandidateDialog() {
 
           <TabsContent value="manual" className="mt-4">
             <p className="text-xs text-muted-foreground mb-4">
-              Enter candidate details manually below.
+              Enter candidate details manually.
             </p>
           </TabsContent>
         </Tabs>
 
-        {/* Form fields always visible */}
         <div className="space-y-3 mt-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Candidate Name *</Label>
               <Input
@@ -214,7 +216,7 @@ export default function AddCandidateDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Region</Label>
               <select
@@ -242,7 +244,7 @@ export default function AddCandidateDialog() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Hiring Manager</Label>
               <Input
@@ -268,9 +270,7 @@ export default function AddCandidateDialog() {
             onClick={handleSubmit}
             disabled={createCandidate.isPending || !form.candidate_name.trim()}
           >
-            {createCandidate.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
+            {createCandidate.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Add Candidate
           </Button>
         </div>

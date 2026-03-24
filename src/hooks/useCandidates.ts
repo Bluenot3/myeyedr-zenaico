@@ -39,6 +39,15 @@ export interface CandidateDocument {
   uploaded_at: string;
 }
 
+export interface Location {
+  id: string;
+  region: string;
+  site_name: string;
+  manager: string;
+  active: boolean;
+  created_at: string;
+}
+
 export function useCandidates() {
   return useQuery({
     queryKey: ["candidates"],
@@ -70,6 +79,22 @@ export function useCandidateDocuments(candidateId: string | null) {
   });
 }
 
+export function useLocations() {
+  return useQuery({
+    queryKey: ["locations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("locations")
+        .select("*")
+        .eq("active", true)
+        .order("region")
+        .order("site_name");
+      if (error) throw error;
+      return data as Location[];
+    },
+  });
+}
+
 export function useCreateCandidate() {
   const qc = useQueryClient();
   return useMutation({
@@ -96,7 +121,7 @@ export function useUpdateCandidate() {
     mutationFn: async ({ id, ...updates }: Partial<Candidate> & { id: string }) => {
       const { data, error } = await supabase
         .from("candidates")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id)
         .select()
         .single();
@@ -105,9 +130,26 @@ export function useUpdateCandidate() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["candidates"] });
-      toast.success("Candidate updated");
     },
     onError: (e) => toast.error("Failed to update: " + e.message),
+  });
+}
+
+export function useBulkUpdateCandidates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: Partial<Candidate> }) => {
+      const { error } = await supabase
+        .from("candidates")
+        .update(updates as any)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidates"] });
+      toast.success(`Updated ${vars.ids.length} candidate(s)`);
+    },
+    onError: (e) => toast.error("Bulk update failed: " + e.message),
   });
 }
 
@@ -149,7 +191,7 @@ export function useUploadDocument() {
         document_type: documentType,
         file_name: file.name,
         file_path: filePath,
-      });
+      } as any);
       if (dbError) throw dbError;
     },
     onSuccess: () => {
@@ -157,6 +199,37 @@ export function useUploadDocument() {
       toast.success("Document uploaded");
     },
     onError: (e) => toast.error("Upload failed: " + e.message),
+  });
+}
+
+// Location mutations
+export function useCreateLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (loc: { region: string; site_name: string; manager?: string }) => {
+      const { error } = await supabase.from("locations").insert(loc as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["locations"] });
+      toast.success("Location added");
+    },
+    onError: (e) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useUpdateLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; manager?: string; active?: boolean; site_name?: string }) => {
+      const { error } = await supabase.from("locations").update(updates as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["locations"] });
+      toast.success("Location updated");
+    },
+    onError: (e) => toast.error("Failed: " + e.message),
   });
 }
 
