@@ -63,10 +63,7 @@ const Index = () => {
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-40 glass-panel border-b border-border">
           <div className="flex items-center justify-between px-4 h-14">
-            <div className="flex items-center gap-2">
-              <Medallion size={30} />
-              <span className="font-display text-lg font-bold text-foil">MyEyeDr Talent</span>
-            </div>
+            <Logo markSize={28} wordSize={17} />
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
               <ShieldCheck className="h-2.5 w-2.5" /> Admin
             </span>
