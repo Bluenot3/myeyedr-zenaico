@@ -6,7 +6,7 @@ import Openings from "@/components/recruiting/Openings";
 import TalentPool from "@/components/recruiting/TalentPool";
 import ScreeningLibrary from "@/components/recruiting/ScreeningLibrary";
 import LocationsManager from "@/components/recruiting/LocationsManager";
-import Medallion from "@/components/recruiting/Medallion";
+import Logo from "@/components/recruiting/Logo";
 
 type Tab = "overview" | "pipeline" | "openings" | "pool" | "library" | "locations";
 
