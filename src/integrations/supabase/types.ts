@@ -14,34 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      candidate_documents: {
+      candidate_badges: {
         Row: {
+          badge_type: string
+          block_index: number
           candidate_id: string
-          document_type: string
-          file_name: string
-          file_path: string
+          detail: Json
+          file_url: string
+          hash: string
           id: string
-          uploaded_at: string
+          issued_at: string
+          issued_by: string
+          prev_hash: string
+          score: number | null
+          status: string
+          summary: string
+          title: string
         }
         Insert: {
+          badge_type?: string
+          block_index?: number
           candidate_id: string
-          document_type?: string
-          file_name: string
-          file_path: string
+          detail?: Json
+          file_url?: string
+          hash?: string
           id?: string
-          uploaded_at?: string
+          issued_at?: string
+          issued_by?: string
+          prev_hash?: string
+          score?: number | null
+          status?: string
+          summary?: string
+          title: string
         }
         Update: {
+          badge_type?: string
+          block_index?: number
           candidate_id?: string
-          document_type?: string
-          file_name?: string
-          file_path?: string
+          detail?: Json
+          file_url?: string
+          hash?: string
           id?: string
-          uploaded_at?: string
+          issued_at?: string
+          issued_by?: string
+          prev_hash?: string
+          score?: number | null
+          status?: string
+          summary?: string
+          title?: string
         }
         Relationships: [
           {
-            foreignKeyName: "candidate_documents_candidate_id_fkey"
+            foreignKeyName: "candidate_badges_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_notes: {
+        Row: {
+          author: string
+          body: string
+          candidate_id: string
+          created_at: string
+          id: string
+          pinned: boolean
+        }
+        Insert: {
+          author?: string
+          body: string
+          candidate_id: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+        }
+        Update: {
+          author?: string
+          body?: string
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_notes_candidate_id_fkey"
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
@@ -51,112 +110,296 @@ export type Database = {
       }
       candidates: {
         Row: {
-          adp_registration_complete: boolean
-          adp_registration_sent: boolean
-          background_check_complete: boolean
-          background_check_sent: boolean
-          blocker_notes: string
-          candidate_name: string
-          clearance_type: string
+          applied_role: string
+          best_fit_roles: string
+          contact_count: number
           created_at: string
-          current_phase: number
-          dc_suitability_complete: boolean
-          dc_suitability_needed: boolean
-          first_day_confirmed: string | null
-          hiring_manager: string
+          email: string
+          full_name: string
+          headline: string
           id: string
-          ids_received: boolean
-          mandated_reporter_complete: boolean
-          nvo_complete: boolean
-          nvo_date: string | null
-          offer_packet_returned: boolean
-          offer_packet_sent: boolean
-          position: string
+          in_talent_pool: boolean
+          last_contacted_at: string | null
+          last_contacted_by: string
+          location_id: string | null
+          phone: string
+          position_id: string | null
+          rating: number
           region: string
-          requisition_id: string
-          site: string
+          resume_url: string
+          score: number
+          source: string
+          stage: string
+          status: string
+          tags: string[]
+          talent_pool_reason: string
           updated_at: string
+          years_experience: number
         }
         Insert: {
-          adp_registration_complete?: boolean
-          adp_registration_sent?: boolean
-          background_check_complete?: boolean
-          background_check_sent?: boolean
-          blocker_notes?: string
-          candidate_name: string
-          clearance_type?: string
+          applied_role?: string
+          best_fit_roles?: string
+          contact_count?: number
           created_at?: string
-          current_phase?: number
-          dc_suitability_complete?: boolean
-          dc_suitability_needed?: boolean
-          first_day_confirmed?: string | null
-          hiring_manager?: string
+          email?: string
+          full_name: string
+          headline?: string
           id?: string
-          ids_received?: boolean
-          mandated_reporter_complete?: boolean
-          nvo_complete?: boolean
-          nvo_date?: string | null
-          offer_packet_returned?: boolean
-          offer_packet_sent?: boolean
-          position?: string
+          in_talent_pool?: boolean
+          last_contacted_at?: string | null
+          last_contacted_by?: string
+          location_id?: string | null
+          phone?: string
+          position_id?: string | null
+          rating?: number
           region?: string
-          requisition_id?: string
-          site?: string
+          resume_url?: string
+          score?: number
+          source?: string
+          stage?: string
+          status?: string
+          tags?: string[]
+          talent_pool_reason?: string
           updated_at?: string
+          years_experience?: number
         }
         Update: {
-          adp_registration_complete?: boolean
-          adp_registration_sent?: boolean
-          background_check_complete?: boolean
-          background_check_sent?: boolean
-          blocker_notes?: string
-          candidate_name?: string
-          clearance_type?: string
+          applied_role?: string
+          best_fit_roles?: string
+          contact_count?: number
           created_at?: string
-          current_phase?: number
-          dc_suitability_complete?: boolean
-          dc_suitability_needed?: boolean
-          first_day_confirmed?: string | null
-          hiring_manager?: string
+          email?: string
+          full_name?: string
+          headline?: string
           id?: string
-          ids_received?: boolean
-          mandated_reporter_complete?: boolean
-          nvo_complete?: boolean
-          nvo_date?: string | null
-          offer_packet_returned?: boolean
-          offer_packet_sent?: boolean
-          position?: string
+          in_talent_pool?: boolean
+          last_contacted_at?: string | null
+          last_contacted_by?: string
+          location_id?: string | null
+          phone?: string
+          position_id?: string | null
+          rating?: number
           region?: string
-          requisition_id?: string
-          site?: string
+          resume_url?: string
+          score?: number
+          source?: string
+          stage?: string
+          status?: string
+          tags?: string[]
+          talent_pool_reason?: string
           updated_at?: string
+          years_experience?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidates_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidates_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_log: {
+        Row: {
+          candidate_id: string
+          contacted_by: string
+          created_at: string
+          direction: string
+          id: string
+          method: string
+          notes: string
+          outcome: string
+        }
+        Insert: {
+          candidate_id: string
+          contacted_by?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          method?: string
+          notes?: string
+          outcome?: string
+        }
+        Update: {
+          candidate_id?: string
+          contacted_by?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          method?: string
+          notes?: string
+          outcome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_log_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_questions: {
+        Row: {
+          category: string
+          created_at: string
+          difficulty: string
+          guidance: string
+          id: string
+          question: string
+          role: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          difficulty?: string
+          guidance?: string
+          id?: string
+          question: string
+          role?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          difficulty?: string
+          guidance?: string
+          id?: string
+          question?: string
+          role?: string
         }
         Relationships: []
       }
       locations: {
         Row: {
           active: boolean
+          city: string
           created_at: string
           id: string
           manager: string
+          phone: string
           region: string
           site_name: string
+          state: string
         }
         Insert: {
           active?: boolean
+          city?: string
           created_at?: string
           id?: string
           manager?: string
+          phone?: string
           region: string
           site_name: string
+          state?: string
         }
         Update: {
           active?: boolean
+          city?: string
           created_at?: string
           id?: string
           manager?: string
+          phone?: string
           region?: string
           site_name?: string
+          state?: string
+        }
+        Relationships: []
+      }
+      positions: {
+        Row: {
+          created_at: string
+          department: string
+          description: string
+          employment_type: string
+          id: string
+          location_id: string | null
+          openings: number
+          pay_range: string
+          priority: string
+          region: string
+          requirements: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          description?: string
+          employment_type?: string
+          id?: string
+          location_id?: string | null
+          openings?: number
+          pay_range?: string
+          priority?: string
+          region?: string
+          requirements?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          description?: string
+          employment_type?: string
+          id?: string
+          location_id?: string | null
+          openings?: number
+          pay_range?: string
+          priority?: string
+          region?: string
+          requirements?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screening_templates: {
+        Row: {
+          category: string
+          created_at: string
+          criteria: Json
+          description: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          criteria?: Json
+          description?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          criteria?: Json
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
