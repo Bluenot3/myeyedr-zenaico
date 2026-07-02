@@ -6,7 +6,7 @@ import Openings from "@/components/recruiting/Openings";
 import TalentPool from "@/components/recruiting/TalentPool";
 import ScreeningLibrary from "@/components/recruiting/ScreeningLibrary";
 import LocationsManager from "@/components/recruiting/LocationsManager";
-import Medallion from "@/components/recruiting/Medallion";
+import Logo from "@/components/recruiting/Logo";
 
 type Tab = "overview" | "pipeline" | "openings" | "pool" | "library" | "locations";
 
@@ -27,13 +27,8 @@ const Index = () => {
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border glass-panel sticky top-0 h-screen">
         <div className="p-5 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <Medallion size={38} />
-            <div>
-              <p className="font-display text-lg font-bold leading-none text-foil">MyEyeDr</p>
-              <p className="micro-label text-[8px] text-muted-foreground mt-1">Talent Command</p>
-            </div>
-          </div>
+          <Logo markSize={36} sub="Talent Command" wordSize={19} />
+
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map((n) => {
@@ -68,10 +63,7 @@ const Index = () => {
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-40 glass-panel border-b border-border">
           <div className="flex items-center justify-between px-4 h-14">
-            <div className="flex items-center gap-2">
-              <Medallion size={30} />
-              <span className="font-display text-lg font-bold text-foil">MyEyeDr Talent</span>
-            </div>
+            <Logo markSize={28} wordSize={17} />
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
               <ShieldCheck className="h-2.5 w-2.5" /> Admin
             </span>
