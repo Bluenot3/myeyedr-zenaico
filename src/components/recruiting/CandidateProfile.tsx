@@ -1,0 +1,433 @@
+import { useState, useEffect } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
+  Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight,
+} from "lucide-react";
+import {
+  Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
+  useUpdateCandidate, useDeleteCandidate, useAddBadge, useLogContact,
+  useAddNote, useUpdateNote, useDeleteNote, useLocations, usePositions,
+} from "@/hooks/useRecruiting";
+import { STAGES, stageMeta, stageProgress, initials, relativeTime, scoreTone, TONE_HSL, BADGE_TYPES, badgeMeta } from "@/lib/recruiting";
+import BlockchainLedger from "./BlockchainLedger";
+import ScoreRing from "./ScoreRing";
+import StageBadge from "./StageBadge";
+import HoloStrip from "./HoloStrip";
+import Medallion from "./Medallion";
+
+interface Props {
+  candidate: Candidate | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}
+
+export default function CandidateProfile({ candidate, open, onOpenChange }: Props) {
+  const { data: badges = [] } = useCandidateBadges(candidate?.id ?? null);
+  const { data: contacts = [] } = useContactLog(candidate?.id ?? null);
+  const { data: notes = [] } = useCandidateNotes(candidate?.id ?? null);
+  const { data: locations = [] } = useLocations();
+  const { data: positions = [] } = usePositions();
+  const updateCandidate = useUpdateCandidate();
+  const deleteCandidate = useDeleteCandidate();
+  const addBadge = useAddBadge();
+  const logContact = useLogContact();
+  const addNote = useAddNote();
+  const updateNote = useUpdateNote();
+  const deleteNote = useDeleteNote();
+
+  const [form, setForm] = useState<Partial<Candidate>>({});
+  const [noteBody, setNoteBody] = useState("");
+  const [contactForm, setContactForm] = useState({ method: "phone", outcome: "reached", notes: "" });
+  const [showSeal, setShowSeal] = useState(false);
+  const [seal, setSeal] = useState({ badge_type: "evaluation", title: "", score: "", summary: "", status: "verified" });
+
+  useEffect(() => {
+    if (candidate) setForm({ ...candidate });
+  }, [candidate]);
+
+  if (!candidate) return null;
+  const loc = locations.find((l) => l.id === candidate.location_id);
+  const sTone = TONE_HSL[scoreTone(candidate.score)];
+
+  const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
+
+  const handleStage = (stage: string) => {
+    const score = Math.max(candidate.score, stageProgress(stage));
+    updateCandidate.mutate({ id: candidate.id, stage, score });
+    patch({ stage, score });
+  };
+
+  const handleSave = () => {
+    const { id, created_at, updated_at, ...u } = form as any;
+    updateCandidate.mutate({ id: candidate.id, ...u });
+  };
+
+  const handleSeal = () => {
+    if (!seal.title.trim()) return;
+    addBadge.mutate({
+      candidate_id: candidate.id,
+      badge_type: seal.badge_type,
+      title: seal.title,
+      status: seal.status,
+      score: seal.score ? Number(seal.score) : null,
+      summary: seal.summary,
+    });
+    setSeal({ badge_type: "evaluation", title: "", score: "", summary: "", status: "verified" });
+    setShowSeal(false);
+  };
+
+  const handleLogContact = () => {
+    logContact.mutate({
+      candidate_id: candidate.id,
+      method: contactForm.method,
+      outcome: contactForm.outcome,
+      notes: contactForm.notes,
+      contact_count: candidate.contact_count,
+    });
+    setContactForm({ method: "phone", outcome: "reached", notes: "" });
+  };
+
+  // Talent-pool best-fit suggestions
+  const suggestions = candidate.in_talent_pool
+    ? positions.filter(
+        (p) =>
+          p.status === "open" &&
+          (candidate.best_fit_roles.toLowerCase().includes(p.title.toLowerCase().split(" ")[0]) ||
+            p.region === candidate.region)
+      ).slice(0, 4)
+    : [];
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-0 glass-panel border-l border-border">
+        {/* Header */}
+        <div className="cert-surface p-5 sm:p-6 relative overflow-hidden">
+          <Medallion size={120} className="absolute -right-6 -top-6 opacity-20" spin />
+          <div className="flex items-start gap-4 relative">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold"
+              style={{ background: `hsl(${stageMeta(candidate.stage).hsl} / 0.14)`, color: `hsl(${stageMeta(candidate.stage).hsl})`, border: `1.5px solid hsl(${stageMeta(candidate.stage).hsl} / 0.4)` }}
+            >
+              {initials(candidate.full_name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-2xl font-bold text-foreground truncate">{candidate.full_name}</h2>
+                {candidate.in_talent_pool && (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.35)" }}>
+                    <Sparkles className="h-2.5 w-2.5" /> Pool
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground truncate">{candidate.headline || candidate.applied_role}</p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <StageBadge stage={candidate.stage} size="sm" />
+                <span className="inline-flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={`h-3.5 w-3.5 ${i < candidate.rating ? "fill-gold text-gold" : "text-muted-foreground/30"}`} />
+                  ))}
+                </span>
+              </div>
+            </div>
+            <ScoreRing score={candidate.score} size={64} label="score" />
+          </div>
+
+          {/* Quick contact */}
+          <div className="flex items-center gap-2 mt-4 relative">
+            {candidate.email && (
+              <a href={`mailto:${candidate.email}`} className="flex-1">
+                <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs"><Mail className="h-3.5 w-3.5" /> Email</Button>
+              </a>
+            )}
+            {candidate.phone && (
+              <a href={`tel:${candidate.phone}`} className="flex-1">
+                <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs"><Phone className="h-3.5 w-3.5" /> Call</Button>
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Stage stepper */}
+        <div className="px-5 sm:px-6 py-4 border-b border-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="micro-label text-muted-foreground">Pipeline Stage</span>
+            <span className="text-[11px] text-muted-foreground">{stageProgress(candidate.stage)}% complete</span>
+          </div>
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {STAGES.map((s) => {
+              const active = s.key === candidate.stage;
+              const passed = STAGES.findIndex((x) => x.key === s.key) < STAGES.findIndex((x) => x.key === candidate.stage);
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => handleStage(s.key)}
+                  className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wide transition-all tap-target"
+                  style={{
+                    color: active || passed ? `hsl(${s.hsl})` : "hsl(var(--muted-foreground))",
+                    background: active ? `hsl(${s.hsl} / 0.16)` : passed ? `hsl(${s.hsl} / 0.08)` : "transparent",
+                    border: `1px solid ${active ? `hsl(${s.hsl} / 0.5)` : "hsl(var(--border))"}`,
+                  }}
+                >
+                  {s.short}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="ledger" className="px-5 sm:px-6 py-4">
+          <TabsList className="w-full grid grid-cols-4">
+            <TabsTrigger value="ledger" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Ledger</TabsTrigger>
+            <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
+            <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
+            <TabsTrigger value="notes" className="text-xs">Notes</TabsTrigger>
+          </TabsList>
+
+          {/* Ledger */}
+          <TabsContent value="ledger" className="mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="font-display text-lg font-semibold text-foreground">Credential Ledger</h3>
+                <p className="text-[11px] text-muted-foreground">Timestamped, chained records — click any block to expand.</p>
+              </div>
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setShowSeal((s) => !s)}>
+                <Plus className="h-3.5 w-3.5" /> Seal
+              </Button>
+            </div>
+
+            {showSeal && (
+              <div className="glass-panel rounded-lg p-3 mb-4 space-y-2.5 animate-rise">
+                <HoloStrip className="mb-1" />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px]">Type</Label>
+                    <select value={seal.badge_type} onChange={(e) => setSeal((s) => ({ ...s, badge_type: e.target.value }))} className="w-full h-9 rounded-md border border-input bg-background px-2 text-xs mt-1">
+                      {Object.entries(BADGE_TYPES).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Status</Label>
+                    <select value={seal.status} onChange={(e) => setSeal((s) => ({ ...s, status: e.target.value }))} className="w-full h-9 rounded-md border border-input bg-background px-2 text-xs mt-1">
+                      <option value="verified">Verified</option>
+                      <option value="pending">Pending</option>
+                      <option value="flagged">Flagged</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px]">Title</Label>
+                  <Input value={seal.title} onChange={(e) => setSeal((s) => ({ ...s, title: e.target.value }))} placeholder="e.g. On-site interview" className="h-9 text-xs mt-1" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px]">Score (optional)</Label>
+                    <Input type="number" value={seal.score} onChange={(e) => setSeal((s) => ({ ...s, score: e.target.value }))} placeholder="0-100" className="h-9 text-xs mt-1" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px]">Summary</Label>
+                  <Input value={seal.summary} onChange={(e) => setSeal((s) => ({ ...s, summary: e.target.value }))} placeholder="Short note" className="h-9 text-xs mt-1" />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setShowSeal(false)}>Cancel</Button>
+                  <Button size="sm" onClick={handleSeal} disabled={!seal.title.trim() || addBadge.isPending}>Seal to Ledger</Button>
+                </div>
+              </div>
+            )}
+
+            <BlockchainLedger badges={badges} />
+          </TabsContent>
+
+          {/* Details */}
+          <TabsContent value="details" className="mt-4 space-y-4">
+            {suggestions.length > 0 && (
+              <div className="glass-panel rounded-lg p-3">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Sparkles className="h-3.5 w-3.5 text-gold" />
+                  <span className="micro-label text-gold text-[10px]">Best-Fit Openings</span>
+                </div>
+                <div className="space-y-1.5">
+                  {suggestions.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => { updateCandidate.mutate({ id: candidate.id, position_id: p.id, location_id: p.location_id, region: p.region, applied_role: p.title, in_talent_pool: false, stage: "screening" }); }}
+                      className="w-full flex items-center gap-2 rounded-md bg-background/40 border border-border/60 px-2.5 py-2 text-left hover:border-emerald/40 transition-colors tap-target"
+                    >
+                      <Briefcase className="h-3.5 w-3.5 text-emerald shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{p.title}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{p.region}</p>
+                      </div>
+                      <span className="text-[10px] text-emerald inline-flex items-center gap-0.5">Place <ArrowRight className="h-3 w-3" /></span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[10px]">Applied Role</Label>
+                <Input value={form.applied_role || ""} onChange={(e) => patch({ applied_role: e.target.value })} className="h-9 text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px]">Source</Label>
+                <Input value={form.source || ""} onChange={(e) => patch({ source: e.target.value })} className="h-9 text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px]">Email</Label>
+                <Input value={form.email || ""} onChange={(e) => patch({ email: e.target.value })} className="h-9 text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px]">Phone</Label>
+                <Input value={form.phone || ""} onChange={(e) => patch({ phone: e.target.value })} className="h-9 text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px]">Location</Label>
+                <select value={form.location_id || ""} onChange={(e) => { const l = locations.find(x => x.id === e.target.value); patch({ location_id: e.target.value || null, region: l?.region || form.region }); }} className="w-full h-9 rounded-md border border-input bg-background px-2 text-xs mt-1">
+                  <option value="">—</option>
+                  {locations.map((l) => <option key={l.id} value={l.id}>{l.site_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <Label className="text-[10px]">Years Experience</Label>
+                <Input type="number" value={form.years_experience ?? 0} onChange={(e) => patch({ years_experience: Number(e.target.value) })} className="h-9 text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px]">Score</Label>
+                <Input type="number" value={form.score ?? 0} onChange={(e) => patch({ score: Number(e.target.value) })} className="h-9 text-xs mt-1" />
+              </div>
+              <div>
+                <Label className="text-[10px]">Rating (0-5)</Label>
+                <Input type="number" min={0} max={5} value={form.rating ?? 0} onChange={(e) => patch({ rating: Math.min(5, Math.max(0, Number(e.target.value))) })} className="h-9 text-xs mt-1" />
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-gold" />
+                  <span className="text-sm font-medium text-foreground">Talent Pool</span>
+                </div>
+                <Switch checked={!!form.in_talent_pool} onCheckedChange={(v) => patch({ in_talent_pool: v })} />
+              </div>
+              {form.in_talent_pool && (
+                <div className="mt-3 space-y-2">
+                  <div>
+                    <Label className="text-[10px]">Best-fit roles</Label>
+                    <Input value={form.best_fit_roles || ""} onChange={(e) => patch({ best_fit_roles: e.target.value })} placeholder="e.g. Licensed Optician, Retail Lead" className="h-9 text-xs mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Reason to keep warm</Label>
+                    <Input value={form.talent_pool_reason || ""} onChange={(e) => patch({ talent_pool_reason: e.target.value })} className="h-9 text-xs mt-1" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Remove</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove candidate?</AlertDialogTitle>
+                    <AlertDialogDescription>This permanently deletes {candidate.full_name} and their entire credential ledger.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => { deleteCandidate.mutate(candidate.id); onOpenChange(false); }} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button size="sm" onClick={handleSave} disabled={updateCandidate.isPending} className="gap-1.5"><Save className="h-4 w-4" /> Save</Button>
+            </div>
+          </TabsContent>
+
+          {/* Contact */}
+          <TabsContent value="contact" className="mt-4 space-y-4">
+            <div className="glass-panel rounded-lg p-3 space-y-2.5">
+              <span className="micro-label text-muted-foreground text-[10px]">Log outreach</span>
+              <div className="grid grid-cols-2 gap-2">
+                <select value={contactForm.method} onChange={(e) => setContactForm((f) => ({ ...f, method: e.target.value }))} className="h-9 rounded-md border border-input bg-background px-2 text-xs">
+                  <option value="phone">Phone</option>
+                  <option value="email">Email</option>
+                  <option value="sms">Text</option>
+                  <option value="in_person">In person</option>
+                </select>
+                <select value={contactForm.outcome} onChange={(e) => setContactForm((f) => ({ ...f, outcome: e.target.value }))} className="h-9 rounded-md border border-input bg-background px-2 text-xs">
+                  <option value="reached">Reached</option>
+                  <option value="no_answer">No answer</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="declined">Declined</option>
+                </select>
+              </div>
+              <Input value={contactForm.notes} onChange={(e) => setContactForm((f) => ({ ...f, notes: e.target.value }))} placeholder="What happened?" className="h-9 text-xs" />
+              <div className="flex justify-end">
+                <Button size="sm" onClick={handleLogContact} disabled={logContact.isPending} className="gap-1.5"><Phone className="h-3.5 w-3.5" /> Log Contact</Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {contacts.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No outreach logged yet.</p>}
+              {contacts.map((ct) => (
+                <div key={ct.id} className="flex items-start gap-2.5 glass-panel rounded-lg p-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted shrink-0">
+                    {ct.method === "phone" ? <Phone className="h-3 w-3 text-cyan" /> : ct.method === "email" ? <Mail className="h-3 w-3 text-holo" /> : <MessageSquarePlus className="h-3 w-3 text-lime" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-foreground capitalize">{ct.method}</span>
+                      <span className="text-[10px] px-1.5 rounded-full capitalize" style={{ color: ct.outcome === "reached" || ct.outcome === "scheduled" ? "hsl(var(--emerald))" : "hsl(var(--muted-foreground))" }}>{ct.outcome.replace("_", " ")}</span>
+                      <span className="text-[10px] text-muted-foreground ml-auto">{relativeTime(ct.created_at)}</span>
+                    </div>
+                    {ct.notes && <p className="text-[11px] text-muted-foreground mt-0.5">{ct.notes}</p>}
+                    <p className="text-[9px] text-muted-foreground/70 mt-0.5">by {ct.contacted_by}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Notes */}
+          <TabsContent value="notes" className="mt-4 space-y-4">
+            <div className="glass-panel rounded-lg p-3 space-y-2.5">
+              <Input value={noteBody} onChange={(e) => setNoteBody(e.target.value)} placeholder="Add a note…" className="h-9 text-xs" onKeyDown={(e) => { if (e.key === "Enter" && noteBody.trim()) { addNote.mutate({ candidate_id: candidate.id, body: noteBody }); setNoteBody(""); } }} />
+              <div className="flex justify-end">
+                <Button size="sm" onClick={() => { if (noteBody.trim()) { addNote.mutate({ candidate_id: candidate.id, body: noteBody }); setNoteBody(""); } }} className="gap-1.5"><Plus className="h-3.5 w-3.5" /> Add Note</Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {notes.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No notes yet.</p>}
+              {notes.map((n) => (
+                <div key={n.id} className={`glass-panel rounded-lg p-3 ${n.pinned ? "border-gold/40" : ""}`}>
+                  <div className="flex items-start gap-2">
+                    <p className="flex-1 text-xs text-foreground/90">{n.body}</p>
+                    <button onClick={() => updateNote.mutate({ id: n.id, candidate_id: candidate.id, pinned: !n.pinned })} className="shrink-0 tap-target">
+                      {n.pinned ? <Pin className="h-3.5 w-3.5 text-gold fill-gold" /> : <PinOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                    </button>
+                    <button onClick={() => deleteNote.mutate({ id: n.id, candidate_id: candidate.id })} className="shrink-0 tap-target"><X className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" /></button>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground/70 mt-1.5">{n.author} · {relativeTime(n.created_at)}</p>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
