@@ -24,7 +24,7 @@ import BlockchainLedger from "./BlockchainLedger";
 import ScoreRing from "./ScoreRing";
 import StageBadge from "./StageBadge";
 import HoloStrip from "./HoloStrip";
-import Medallion from "./Medallion";
+import { EyeMark } from "./Logo";
 
 interface Props {
   candidate: Candidate | null;
@@ -113,7 +113,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-0 glass-panel border-l border-border">
         {/* Header */}
         <div className="cert-surface p-5 sm:p-6 relative overflow-hidden">
-          <Medallion size={120} className="absolute -right-6 -top-6 opacity-20" spin />
+          <EyeMark size={120} className="absolute -right-6 -top-6 opacity-20" spin />
           <div className="flex items-start gap-4 relative">
             <div
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold"

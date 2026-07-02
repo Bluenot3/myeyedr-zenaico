@@ -6,7 +6,7 @@ import StatCard from "./StatCard";
 import CandidateProfile from "./CandidateProfile";
 import StageBadge from "./StageBadge";
 import HoloStrip from "./HoloStrip";
-import Medallion from "./Medallion";
+import { EyeMark } from "./Logo";
 
 export default function Overview() {
   const { data: candidates = [] } = useCandidates();
@@ -59,7 +59,7 @@ export default function Overview() {
     <div className="space-y-6 animate-rise">
       {/* Hero */}
       <div className="cert-surface rounded-2xl p-5 sm:p-7 relative overflow-hidden">
-        <Medallion size={150} className="absolute -right-8 -top-8 opacity-20" spin />
+        <EyeMark size={150} className="absolute -right-8 -top-8 opacity-20" spin />
         <div className="relative">
           <p className="micro-label text-emerald mb-2">MyEyeDr · Regional Talent Command</p>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight">
