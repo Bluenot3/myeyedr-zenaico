@@ -27,13 +27,8 @@ const Index = () => {
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border glass-panel sticky top-0 h-screen">
         <div className="p-5 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <Medallion size={38} />
-            <div>
-              <p className="font-display text-lg font-bold leading-none text-foil">MyEyeDr</p>
-              <p className="micro-label text-[8px] text-muted-foreground mt-1">Talent Command</p>
-            </div>
-          </div>
+          <Logo markSize={36} sub="Talent Command" wordSize={19} />
+
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {NAV.map((n) => {
