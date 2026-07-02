@@ -79,6 +79,8 @@ const Index = () => {
           {tab === "pipeline" && <PipelineBoard />}
           {tab === "openings" && <Openings />}
           {tab === "pool" && <TalentPool />}
+          {tab === "agents" && <AgentStudio />}
+          {tab === "decision" && <DecisionTool />}
           {tab === "library" && <ScreeningLibrary />}
           {tab === "locations" && <LocationsManager />}
         </main>
