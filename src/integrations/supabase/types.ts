@@ -108,6 +108,48 @@ export type Database = {
           },
         ]
       }
+      candidate_scorecards: {
+        Row: {
+          candidate_id: string
+          concerns: Json
+          created_at: string
+          decision: string
+          dimensions: Json
+          evaluated_by: string
+          id: string
+          overall_score: number
+          recommendation: string
+          strengths: Json
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          concerns?: Json
+          created_at?: string
+          decision?: string
+          dimensions?: Json
+          evaluated_by?: string
+          id?: string
+          overall_score?: number
+          recommendation?: string
+          strengths?: Json
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          concerns?: Json
+          created_at?: string
+          decision?: string
+          dimensions?: Json
+          evaluated_by?: string
+          id?: string
+          overall_score?: number
+          recommendation?: string
+          strengths?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       candidates: {
         Row: {
           applied_role: string
@@ -373,6 +415,72 @@ export type Database = {
           },
         ]
       }
+      screening_agents: {
+        Row: {
+          active: boolean
+          closing_line: string
+          color: string
+          created_at: string
+          extraction_goals: Json
+          id: string
+          name: string
+          opening_line: string
+          persona: string
+          questions: Json
+          role_focus: string
+          runs: number
+          similarity: number
+          stability: number
+          system_prompt: string
+          temperature: number
+          updated_at: string
+          voice_id: string
+          voice_name: string
+        }
+        Insert: {
+          active?: boolean
+          closing_line?: string
+          color?: string
+          created_at?: string
+          extraction_goals?: Json
+          id?: string
+          name: string
+          opening_line?: string
+          persona?: string
+          questions?: Json
+          role_focus?: string
+          runs?: number
+          similarity?: number
+          stability?: number
+          system_prompt?: string
+          temperature?: number
+          updated_at?: string
+          voice_id?: string
+          voice_name?: string
+        }
+        Update: {
+          active?: boolean
+          closing_line?: string
+          color?: string
+          created_at?: string
+          extraction_goals?: Json
+          id?: string
+          name?: string
+          opening_line?: string
+          persona?: string
+          questions?: Json
+          role_focus?: string
+          runs?: number
+          similarity?: number
+          stability?: number
+          system_prompt?: string
+          temperature?: number
+          updated_at?: string
+          voice_id?: string
+          voice_name?: string
+        }
+        Relationships: []
+      }
       screening_templates: {
         Row: {
           category: string
@@ -400,6 +508,54 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      screening_transcripts: {
+        Row: {
+          agent_id: string | null
+          candidate_id: string
+          created_at: string
+          duration_seconds: number
+          extracted: Json
+          fit_score: number | null
+          id: string
+          recommendation: string
+          sentiment: string
+          source: string
+          summary: string
+          title: string
+          transcript: string
+        }
+        Insert: {
+          agent_id?: string | null
+          candidate_id: string
+          created_at?: string
+          duration_seconds?: number
+          extracted?: Json
+          fit_score?: number | null
+          id?: string
+          recommendation?: string
+          sentiment?: string
+          source?: string
+          summary?: string
+          title?: string
+          transcript?: string
+        }
+        Update: {
+          agent_id?: string | null
+          candidate_id?: string
+          created_at?: string
+          duration_seconds?: number
+          extracted?: Json
+          fit_score?: number | null
+          id?: string
+          recommendation?: string
+          sentiment?: string
+          source?: string
+          summary?: string
+          title?: string
+          transcript?: string
         }
         Relationships: []
       }

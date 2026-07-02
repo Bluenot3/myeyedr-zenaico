@@ -1,20 +1,24 @@
 import { useState } from "react";
-import { LayoutDashboard, GitBranch, Briefcase, Sparkles, ClipboardList, MapPin, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, GitBranch, Briefcase, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords } from "lucide-react";
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
 import TalentPool from "@/components/recruiting/TalentPool";
 import ScreeningLibrary from "@/components/recruiting/ScreeningLibrary";
 import LocationsManager from "@/components/recruiting/LocationsManager";
+import AgentStudio from "@/components/recruiting/AgentStudio";
+import DecisionTool from "@/components/recruiting/DecisionTool";
 import Logo from "@/components/recruiting/Logo";
 
-type Tab = "overview" | "pipeline" | "openings" | "pool" | "library" | "locations";
+type Tab = "overview" | "pipeline" | "openings" | "pool" | "agents" | "decision" | "library" | "locations";
 
 const NAV: { key: Tab; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "pipeline", label: "Pipeline", icon: GitBranch },
   { key: "openings", label: "Openings", icon: Briefcase },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
+  { key: "agents", label: "AI Agents", icon: Bot },
+  { key: "decision", label: "Decision", icon: Swords },
   { key: "library", label: "Library", icon: ClipboardList },
   { key: "locations", label: "Locations", icon: MapPin },
 ];
@@ -75,6 +79,8 @@ const Index = () => {
           {tab === "pipeline" && <PipelineBoard />}
           {tab === "openings" && <Openings />}
           {tab === "pool" && <TalentPool />}
+          {tab === "agents" && <AgentStudio />}
+          {tab === "decision" && <DecisionTool />}
           {tab === "library" && <ScreeningLibrary />}
           {tab === "locations" && <LocationsManager />}
         </main>
