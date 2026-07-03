@@ -55,6 +55,8 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
   const [contactForm, setContactForm] = useState({ method: "phone", outcome: "reached", notes: "" });
   const [showSeal, setShowSeal] = useState(false);
   const [seal, setSeal] = useState({ badge_type: "evaluation", title: "", score: "", summary: "", status: "verified" });
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const docInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (candidate) setForm({ ...candidate });
