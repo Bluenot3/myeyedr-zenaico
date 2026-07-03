@@ -1,4 +1,4 @@
-import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight } from "lucide-react";
+import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight, ClipboardCheck } from "lucide-react";
 import { Candidate } from "@/hooks/useRecruiting";
 import { stageMeta, initials, relativeTime } from "@/lib/recruiting";
 import { computeMatch, nextAction } from "@/lib/matchScore";
@@ -10,12 +10,13 @@ interface Props {
   candidate: Candidate;
   locationName?: string;
   onOpen: () => void;
+  onEvaluate?: () => void;
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
 }
 
-export default function CandidateCard({ candidate: c, locationName, onOpen, selectable, selected, onToggleSelect }: Props) {
+export default function CandidateCard({ candidate: c, locationName, onOpen, onEvaluate, selectable, selected, onToggleSelect }: Props) {
   const meta = stageMeta(c.stage);
   const m = computeMatch(c);
   const action = nextAction(c, m);
@@ -97,6 +98,16 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, sele
           <MessageSquare className="h-2.5 w-2.5" /> {c.contact_count} · {relativeTime(c.last_contacted_at)}
         </span>
       </div>
+
+      {onEvaluate && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onEvaluate(); }}
+          className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald/40 bg-emerald/10 px-3 py-2 text-[11px] font-semibold text-emerald transition-all hover:bg-emerald/20 hover:border-emerald/60 active:scale-[0.98] tap-target"
+        >
+          <ClipboardCheck className="h-3.5 w-3.5" /> Evaluate candidate
+        </button>
+      )}
+
 
       {locationName && (
         <p className="mt-1.5 inline-flex items-center gap-1 text-[9px] text-muted-foreground truncate">

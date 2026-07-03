@@ -21,6 +21,7 @@ export default function PipelineBoard() {
   const [region, setRegion] = useState("All");
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
+  const [profileTab, setProfileTab] = useState<string>("match");
   const [ids, setIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<ViewMode>("board");
 
@@ -48,7 +49,7 @@ export default function PipelineBoard() {
   }, [filtered]);
 
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
-  const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
+  const openCandidate = (c: Candidate, tab: string = "match") => { setSelected(c); setProfileTab(tab); setOpen(true); };
 
   const toggle = (id: string) => setIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const clearSel = () => setIds(new Set());
@@ -140,7 +141,7 @@ export default function PipelineBoard() {
               </div>
               <div className="space-y-2 min-h-[60px]">
                 {byStage[s.key].map((c) => (
-                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
                 ))}
                 {byStage[s.key].length === 0 && <div className="rounded-lg border border-dashed border-border/60 py-6 text-center text-[10px] text-muted-foreground">Empty</div>}
               </div>
@@ -156,12 +157,12 @@ export default function PipelineBoard() {
             </div>
           )}
           {filtered.sort((a, b) => stageIndex(a.stage) - stageIndex(b.stage)).map((c) => (
-            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
           ))}
         </div>
       )}
 
-      <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} />
+      <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} initialTab={profileTab} />
     </div>
   );
 }
