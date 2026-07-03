@@ -9,46 +9,13 @@ import {
 import { useCreateCandidate, useLocations, usePositions } from "@/hooks/useRecruiting";
 import { SOURCES } from "@/lib/recruiting";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadCandidateFile as uploadFile, fileToBase64, UploadedDoc as DocEntry } from "@/lib/storage";
 import { toast } from "sonner";
 
 interface Props {
   compact?: boolean;
 }
 
-interface DocEntry {
-  name: string;
-  url: string;
-  type: string;
-  size: number;
-  kind: "resume" | "attachment";
-}
-
-const BUCKET = "candidate-documents";
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1] || "");
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function uploadFile(file: File): Promise<{ url: string }> {
-  const safe = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-  const path = `intake/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    upsert: false,
-    contentType: file.type || "application/octet-stream",
-  });
-  if (error) throw error;
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return { url: data.publicUrl };
-}
 
 const EMPTY = {
   full_name: "", email: "", phone: "", applied_role: "", position_id: "",
