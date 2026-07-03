@@ -192,8 +192,9 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
         <div className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
             <div><Label className="text-xs">Full name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" /></div>
-            <div><Label className="text-xs">Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@myeyedr.com" /></div>
+            <div><Label className="text-xs">Email (their username)</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@myeyedr.com" /></div>
           </div>
+          <div><Label className="text-xs">Job title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Office Manager · Patient Services Coordinator" /></div>
           <div>
             <Label className="text-xs mb-1.5 block">Role</Label>
             <div className="grid grid-cols-3 gap-2">
