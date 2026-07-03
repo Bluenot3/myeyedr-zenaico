@@ -15,7 +15,7 @@ import {
   Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
   FileText, Loader2,
 } from "lucide-react";
-import { uploadCandidateFile, CandidateDocument } from "@/lib/storage";
+import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
   useUpdateCandidate, useDeleteCandidate, useAddBadge, useLogContact,
