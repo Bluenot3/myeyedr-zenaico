@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         hasAllAccess,
         mustReset: !!profile?.must_reset_password,
-        loading,
+        loading: loading || (!!session && ctxLoading),
         refresh,
         signOut,
       }}
