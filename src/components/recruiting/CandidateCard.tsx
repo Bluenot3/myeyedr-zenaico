@@ -67,6 +67,11 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, sele
         </div>
       )}
 
+      {/* signature relevance & match bar — fills from AI analysis, pips light up through the process */}
+      <div className="mt-3">
+        <MatchBar m={m} height={10} />
+      </div>
+
       {/* availability meter */}
       <div className="mt-2.5">
         <div className="flex items-center justify-between mb-1">
@@ -75,6 +80,7 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, sele
         </div>
         <MeterBar value={m.availability.fit} hsl={m.availability.hsl} height={4} />
       </div>
+
 
       {/* footer: next action + meta */}
       <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-border/50">
