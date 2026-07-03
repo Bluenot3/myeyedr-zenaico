@@ -12,69 +12,69 @@
 
 @layer base {
   :root {
-    --background: 193 60% 7%;
-    --foreground: 43 44% 93%;
+    --background: 220 60% 4%;
+    --foreground: 210 40% 98%;
 
-    --card: 194 52% 12%;
-    --card-foreground: 43 44% 93%;
+    --card: 219 52% 8%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 194 53% 11%;
-    --popover-foreground: 43 44% 93%;
+    --popover: 220 54% 7%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 161 66% 57%;
-    --primary-foreground: 165 60% 8%;
+    --primary: 214 100% 60%;
+    --primary-foreground: 220 60% 5%;
 
-    --secondary: 193 45% 16%;
-    --secondary-foreground: 43 44% 93%;
+    --secondary: 218 44% 14%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 194 40% 16%;
-    --muted-foreground: 180 14% 70%;
+    --muted: 218 38% 14%;
+    --muted-foreground: 208 25% 72%;
 
-    --accent: 43 85% 70%;
-    --accent-foreground: 40 80% 7%;
+    --accent: 197 100% 76%;
+    --accent-foreground: 220 60% 6%;
 
-    --destructive: 4 73% 60%;
-    --destructive-foreground: 43 60% 96%;
+    --destructive: 4 78% 62%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 180 28% 22%;
-    --input: 180 28% 24%;
-    --ring: 194 90% 72%;
+    --border: 210 45% 20%;
+    --input: 210 45% 22%;
+    --ring: 205 100% 68%;
 
-    --radius: 0.75rem;
+    --radius: 0.85rem;
 
-    /* Brand tokens */
-    --gold: 43 85% 70%;
-    --emerald: 161 66% 57%;
-    --holo: 172 66% 71%;
-    --cyan: 194 100% 79%;
-    --orange: 28 86% 63%;
-    --lime: 76 72% 71%;
-    --ink: 193 60% 7%;
-    --navy: 194 45% 12%;
-    --platinum: 43 55% 94%;
+    /* Brand tokens — electric neon blue / light blue / white / black */
+    --gold: 197 100% 78%;      /* remapped: light-blue accent */
+    --emerald: 214 100% 62%;   /* remapped: electric neon blue */
+    --holo: 190 100% 80%;
+    --cyan: 200 100% 74%;
+    --orange: 210 100% 66%;    /* remapped: bright blue for urgency-hot */
+    --lime: 186 100% 72%;
+    --ink: 220 60% 4%;
+    --navy: 219 50% 9%;
+    --platinum: 210 40% 98%;
 
-    --success: 152 60% 48%;
-    --warning: 38 92% 60%;
+    --success: 160 84% 45%;
+    --warning: 38 96% 60%;
 
-    --sidebar-background: 194 50% 10%;
-    --sidebar-foreground: 43 40% 90%;
-    --sidebar-primary: 161 66% 57%;
-    --sidebar-primary-foreground: 165 60% 8%;
-    --sidebar-accent: 194 40% 16%;
-    --sidebar-accent-foreground: 43 44% 93%;
-    --sidebar-border: 180 28% 20%;
-    --sidebar-ring: 194 90% 72%;
+    --sidebar-background: 220 55% 6%;
+    --sidebar-foreground: 210 36% 92%;
+    --sidebar-primary: 214 100% 62%;
+    --sidebar-primary-foreground: 220 60% 5%;
+    --sidebar-accent: 218 40% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 210 45% 18%;
+    --sidebar-ring: 205 100% 68%;
 
-    /* Gradients (raw hex to preserve foil luminosity) */
-    --grad-emerald-gold: linear-gradient(135deg, #45dcae 0%, #d4ec80 48%, #f3d172 100%);
-    --grad-holo: linear-gradient(135deg, #95e8ff 0%, #7fe8da 45%, #fcf9f2 100%);
-    --grad-gold-platinum: linear-gradient(120deg, #f6964f 0%, #f3d172 48%, #fcf9f2 100%);
-    --grad-currency: linear-gradient(110deg, #95e8ff 0%, #5fdcd0 18%, #6fdc9e 36%, #d4ec80 54%, #f3d172 72%, #f6964f 88%, #fcf6e6 100%);
-    --grad-foil: linear-gradient(115deg, #fcf9f2 0%, #cfe9ff 14%, #ffd9ec 28%, #d8ffe9 42%, #fff3c4 56%, #ffe0c2 70%, #d6f0ff 84%, #fcf9f2 100%);
+    /* Gradients (raw hex to preserve luminous foil / neon energy) */
+    --grad-emerald-gold: linear-gradient(135deg, #1f8bff 0%, #5cc9ff 48%, #bfeaff 100%);
+    --grad-holo: linear-gradient(135deg, #6fdcff 0%, #3a9bff 45%, #ffffff 100%);
+    --grad-gold-platinum: linear-gradient(120deg, #2e7dff 0%, #6fd0ff 48%, #ffffff 100%);
+    --grad-currency: linear-gradient(110deg, #9fe4ff 0%, #5cc4ff 18%, #2e8bff 36%, #1f6dff 54%, #5cc9ff 72%, #bfeaff 88%, #ffffff 100%);
+    --grad-foil: linear-gradient(115deg, #ffffff 0%, #cfeaff 14%, #a3d4ff 28%, #6fb8ff 42%, #bfeaff 56%, #7fd6ff 70%, #d6f0ff 84%, #ffffff 100%);
 
-    --shadow-cert: 0 30px 80px -40px rgba(0,0,0,0.8), 0 0 0 1px rgba(127,232,218,0.12);
-    --glow-gold: 0 0 44px -12px rgba(243,209,114,0.5);
-    --glow-emerald: 0 0 50px -16px rgba(69,220,174,0.5);
+    --shadow-cert: 0 30px 80px -40px rgba(0,0,0,0.85), 0 0 0 1px rgba(58,155,255,0.16);
+    --glow-gold: 0 0 44px -12px rgba(92,201,255,0.55);
+    --glow-emerald: 0 0 52px -14px rgba(31,109,255,0.6);
   }
 }
 
