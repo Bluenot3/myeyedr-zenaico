@@ -3,6 +3,7 @@ import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, 
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
+import CalendarView from "@/components/recruiting/CalendarView";
 import TalentPool from "@/components/recruiting/TalentPool";
 import ScreeningLibrary from "@/components/recruiting/ScreeningLibrary";
 import LocationsManager from "@/components/recruiting/LocationsManager";
