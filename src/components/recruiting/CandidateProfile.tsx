@@ -320,6 +320,36 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
               </div>
             )}
 
+            {/* Documents */}
+            <div className="glass-panel rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-emerald" />
+                  <span className="micro-label text-muted-foreground text-[10px]">Documents</span>
+                </div>
+                <input ref={docInput} type="file" multiple className="hidden" onChange={(e) => { handleDocUpload(e.target.files); e.target.value = ""; }} />
+                <Button size="sm" variant="outline" className="h-7 gap-1 text-[11px]" disabled={uploadingDoc} onClick={() => docInput.current?.click()}>
+                  {uploadingDoc ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />} Add
+                </Button>
+              </div>
+              {(candidate.documents?.length ?? 0) === 0 ? (
+                <p className="text-[11px] text-muted-foreground py-1">No documents attached.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {candidate.documents.map((d) => (
+                    <div key={d.url} className="flex items-center gap-2 rounded-md bg-background/40 border border-border/60 px-2.5 py-1.5">
+                      <FileText className={`h-3.5 w-3.5 shrink-0 ${d.kind === "resume" ? "text-emerald" : "text-holo"}`} />
+                      <a href={d.url} target="_blank" rel="noreferrer" className="text-[11px] text-foreground truncate flex-1 hover:text-emerald hover:underline">{d.name}</a>
+                      {d.kind === "resume" && <span className="text-[8px] font-mono uppercase text-emerald">résumé</span>}
+                      <button onClick={() => removeDoc(d.url)} className="tap-target text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-[10px]">Applied Role</Label>
