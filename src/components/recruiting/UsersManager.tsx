@@ -169,6 +169,7 @@ type Loc = { id: string; site_name: string; region: string | null; city: string 
 function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onClose: () => void; onInvited: (c: { email: string; password: string }) => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [role, setRole] = useState<Role>("manager");
   const [locIds, setLocIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -179,7 +180,7 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
     if (!email.trim() || !name.trim()) { toast.error("Name and email required"); return; }
     setBusy(true);
     try {
-      const res = await callAdmin("invite", { email, full_name: name, role, location_ids: role === "manager" ? locIds : [] });
+      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [] });
       onInvited({ email: res.email, password: res.temp_password });
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
