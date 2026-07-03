@@ -1,4 +1,4 @@
-import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight } from "lucide-react";
+import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight, ClipboardCheck } from "lucide-react";
 import { Candidate } from "@/hooks/useRecruiting";
 import { stageMeta, initials, relativeTime } from "@/lib/recruiting";
 import { computeMatch, nextAction } from "@/lib/matchScore";
@@ -10,12 +10,13 @@ interface Props {
   candidate: Candidate;
   locationName?: string;
   onOpen: () => void;
+  onEvaluate?: () => void;
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
 }
 
-export default function CandidateCard({ candidate: c, locationName, onOpen, selectable, selected, onToggleSelect }: Props) {
+export default function CandidateCard({ candidate: c, locationName, onOpen, onEvaluate, selectable, selected, onToggleSelect }: Props) {
   const meta = stageMeta(c.stage);
   const m = computeMatch(c);
   const action = nextAction(c, m);
