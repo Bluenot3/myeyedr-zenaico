@@ -13,10 +13,10 @@ import ZenSignature from "@/components/recruiting/ZenSignature";
 
 type Tab = "overview" | "pipeline" | "openings" | "pool" | "agents" | "decision" | "library" | "locations";
 
-const NAV: { key: Tab; label: string; icon: typeof LayoutDashboard }[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard },
+const NAV: { key: Tab; label: string; icon: typeof ScanEye }[] = [
+  { key: "overview", label: "Overview", icon: ScanEye },
   { key: "pipeline", label: "Pipeline", icon: GitBranch },
-  { key: "openings", label: "Openings", icon: Briefcase },
+  { key: "openings", label: "Openings", icon: Glasses },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
   { key: "agents", label: "AI Agents", icon: Bot },
   { key: "decision", label: "Decision", icon: Swords },
