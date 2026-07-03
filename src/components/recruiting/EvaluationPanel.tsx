@@ -5,7 +5,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Candidate, ScorecardTemplate, EvaluationRating, CandidateEvaluation,
   useScorecardTemplates, useCandidateEvaluations, useCreateEvaluation, useDeleteEvaluation,
