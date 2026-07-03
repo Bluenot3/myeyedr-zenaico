@@ -157,6 +157,14 @@ export default function Openings() {
                   <span>· {p.openings} seat{p.openings > 1 ? "s" : ""}</span>
                 </div>
 
+                {p.description ? (
+                  <p className="mt-2.5 text-[11px] text-muted-foreground/90 leading-relaxed line-clamp-3">{p.description}</p>
+                ) : (
+                  <button onClick={() => openPostings(p)} className="mt-2.5 text-[10px] text-emerald hover:underline inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add job description</button>
+                )}
+
+
+
                 {/* Postings */}
                 <div className="mt-3 rounded-lg bg-background/40 border border-border/60 p-2.5">
                   <div className="flex items-center justify-between mb-1.5">
