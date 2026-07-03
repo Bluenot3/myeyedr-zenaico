@@ -43,7 +43,7 @@ export default function Overview() {
   const { data: locations = [] } = useLocations();
   const { data: events = [] } = useInterviewEvents();
   const { profile, hasAllAccess } = useAuth();
-  const { data: allEvals = [] } = useRecentEvaluations(hasAllAccess ? 300 : 0);
+  const { data: allEvals = [] } = useRecentEvaluations(300, hasAllAccess);
   const firstName = (profile?.full_name || profile?.email?.split("@")[0] || "").split(" ")[0];
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
