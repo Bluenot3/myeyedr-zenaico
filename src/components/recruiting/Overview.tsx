@@ -103,6 +103,37 @@ export default function Overview() {
     avgScore: enriched.length ? Math.round(enriched.filter((e) => e.c.status === "active").reduce((s, e) => s + e.m.overall, 0) / Math.max(1, active.length)) : 0,
   }), [active, candidates, positions, enriched]);
 
+  // Evaluation summary (admins & regionals only) — live from cloud, RLS-scoped
+  const evalSummary = useMemo(() => {
+    if (!hasAllAccess) return null;
+    const submitted = allEvals.filter((e) => e.submitted);
+    const byCand = new Map<string, number>();
+    const evaluators = new Set<string>();
+    let hire = 0;
+    for (const e of submitted) {
+      byCand.set(e.candidate_id, (byCand.get(e.candidate_id) || 0) + 1);
+      if (e.evaluator) evaluators.add(e.evaluator.toLowerCase());
+      const r = (e.recommendation || "").toLowerCase();
+      if (r.includes("hire") || r.includes("strong") || r.includes("advance")) hire++;
+    }
+    const avg = submitted.length
+      ? Math.round(submitted.reduce((s, e) => s + (e.overall_score || 0), 0) / submitted.length)
+      : 0;
+    const recent = submitted.slice(0, 6).map((e) => ({
+      e,
+      name: candById(e.candidate_id)?.full_name || "Candidate",
+    }));
+    return {
+      total: submitted.length,
+      candidates: byCand.size,
+      evaluators: evaluators.size,
+      avg,
+      hirePct: submitted.length ? Math.round((hire / submitted.length) * 100) : 0,
+      recent,
+    };
+  }, [allEvals, hasAllAccess, candidates]);
+
+
   // Next best actions — prioritize high-urgency, then stuck, then high match
   const nextBest = useMemo(() => {
     return [...enriched]
