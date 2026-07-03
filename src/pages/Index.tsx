@@ -100,6 +100,7 @@ const Index = () => {
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
                 <RoleIcon className="h-2.5 w-2.5" /> {roleInfo.label}
               </span>
+              <ChangePasswordDialog compact />
               <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
                 <LogOut className="h-4 w-4" />
               </button>
