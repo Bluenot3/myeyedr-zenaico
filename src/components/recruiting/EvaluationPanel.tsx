@@ -252,6 +252,7 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
       {/* Rich interactive interview / phone-screen form */}
       <Dialog open={!!richForm} onOpenChange={(o) => !o && setRichForm(null)}>
         <DialogContent className="max-w-[1100px] w-[calc(100vw-16px)] h-[calc(100vh-24px)] sm:h-[92vh] overflow-y-auto p-0 gap-0 bg-transparent border-0 shadow-none">
+          <DialogTitle className="sr-only">{richForm?.template.name || "Evaluation form"}</DialogTitle>
           {richForm && (
             <InterviewEvaluationForm
               candidate={candidate}
