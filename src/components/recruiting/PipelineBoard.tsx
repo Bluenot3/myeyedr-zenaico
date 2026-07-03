@@ -117,10 +117,19 @@ export default function PipelineBoard() {
         <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1">
           {STAGES.map((s) => (
             <div key={s.key} className="w-72 shrink-0">
-              <div className="flex items-center gap-2 mb-2 px-1">
-                <span className="h-2 w-2 rounded-full" style={{ background: `hsl(${s.hsl})` }} />
-                <span className="text-xs font-mono uppercase tracking-wide" style={{ color: `hsl(${s.hsl})` }}>{s.label}</span>
-                <span className="ml-auto text-[10px] text-muted-foreground bg-muted rounded-full px-1.5">{byStage[s.key].length}</span>
+              <div className="mb-2 px-1 rounded-lg border border-border/50 bg-card/40 p-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full" style={{ background: `hsl(${s.hsl})` }} />
+                  <span className="text-xs font-mono uppercase tracking-wide" style={{ color: `hsl(${s.hsl})` }}>{s.label}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground bg-muted rounded-full px-1.5">{byStage[s.key].length}</span>
+                </div>
+                {s.action && <p className="mt-1.5 text-[11px] font-medium text-foreground/90 leading-snug">{s.action}</p>}
+                {s.done && (
+                  <p className="mt-1 flex items-start gap-1 text-[10px] text-muted-foreground leading-snug">
+                    <CheckSquare className="h-2.5 w-2.5 mt-[1px] shrink-0" style={{ color: `hsl(${s.hsl})` }} />
+                    <span><span className="uppercase tracking-wide text-[8px] mr-1" style={{ color: `hsl(${s.hsl})` }}>Done when</span>{s.done}</span>
+                  </p>
+                )}
               </div>
               <div className="space-y-2 min-h-[60px]">
                 {byStage[s.key].map((c) => (
