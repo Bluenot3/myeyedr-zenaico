@@ -76,6 +76,64 @@
     --glow-gold: 0 0 44px -12px rgba(92,201,255,0.55);
     --glow-emerald: 0 0 52px -14px rgba(31,109,255,0.6);
   }
+
+  /* ============ LIGHT MODE ============ */
+  :root.light {
+    --background: 210 44% 97%;
+    --foreground: 221 60% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 221 55% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 221 55% 12%;
+
+    --primary: 214 100% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 93%;
+    --secondary-foreground: 221 55% 14%;
+
+    --muted: 210 38% 92%;
+    --muted-foreground: 216 22% 40%;
+
+    --accent: 200 92% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 4 78% 54%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 30% 84%;
+    --input: 214 30% 82%;
+    --ring: 214 100% 48%;
+
+    /* Brand tokens tuned for contrast on white */
+    --gold: 200 92% 40%;
+    --emerald: 214 100% 46%;
+    --holo: 200 90% 44%;
+    --cyan: 198 90% 42%;
+    --orange: 214 96% 50%;
+    --lime: 190 85% 38%;
+    --ink: 221 60% 11%;
+    --navy: 214 40% 92%;
+    --platinum: 221 55% 12%;
+
+    --success: 160 84% 34%;
+    --warning: 34 92% 46%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 221 45% 20%;
+    --sidebar-primary: 214 100% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 93%;
+    --sidebar-accent-foreground: 221 55% 14%;
+    --sidebar-border: 214 30% 86%;
+    --sidebar-ring: 214 100% 48%;
+
+    --shadow-cert: 0 24px 60px -34px rgba(20,60,140,0.35), 0 0 0 1px rgba(31,109,255,0.10);
+    --glow-gold: 0 0 30px -14px rgba(31,109,255,0.35);
+    --glow-emerald: 0 0 36px -16px rgba(31,109,255,0.4);
+  }
 }
 
 @layer base {
