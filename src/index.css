@@ -144,29 +144,29 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(120% 85% at 82% -12%, rgba(31,109,255,0.18), transparent 52%),
-      radial-gradient(95% 75% at 8% 6%, rgba(58,155,255,0.16), transparent 55%),
-      radial-gradient(85% 80% at 50% 116%, rgba(111,216,255,0.12), transparent 58%),
-      linear-gradient(168deg, #061024 0%, #030711 58%, #05101f 100%);
+      radial-gradient(120% 85% at 82% -12%, rgba(47,111,181,0.15), transparent 52%),
+      radial-gradient(95% 75% at 8% 6%, rgba(111,155,209,0.10), transparent 55%),
+      radial-gradient(85% 80% at 50% 116%, rgba(111,155,209,0.06), transparent 58%),
+      linear-gradient(168deg, #08152a 0%, #030811 58%, #06101f 100%);
     background-attachment: fixed;
     font-feature-settings: "ss01", "cv01";
   }
 
   :root.light body {
     background-image:
-      radial-gradient(120% 85% at 82% -12%, rgba(31,109,255,0.12), transparent 52%),
-      radial-gradient(95% 75% at 8% 6%, rgba(58,155,255,0.10), transparent 55%),
-      radial-gradient(85% 80% at 50% 116%, rgba(111,216,255,0.10), transparent 58%),
-      linear-gradient(168deg, #eef4fc 0%, #f6f9fe 55%, #e9f1fb 100%);
+      radial-gradient(120% 85% at 82% -12%, rgba(47,111,181,0.08), transparent 52%),
+      radial-gradient(95% 75% at 8% 6%, rgba(111,155,209,0.07), transparent 55%),
+      radial-gradient(85% 80% at 50% 116%, rgba(111,155,209,0.06), transparent 58%),
+      linear-gradient(168deg, #eef3fa 0%, #f7f9fd 55%, #eaf0f8 100%);
   }
 
   ::selection {
-    background: rgba(58,155,255,0.35);
+    background: rgba(111,155,209,0.34);
     color: #ffffff;
   }
 
   :root.light ::selection {
-    background: rgba(31,109,255,0.22);
+    background: rgba(47,111,181,0.20);
     color: #0a1836;
   }
 
