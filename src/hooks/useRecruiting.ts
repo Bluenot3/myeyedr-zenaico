@@ -978,6 +978,23 @@ export function useCandidateEvaluations(candidateId: string | null) {
   });
 }
 
+/** All evaluations the current user can access (RLS-scoped) — powers the admin/regional summary. */
+export function useRecentEvaluations(limit = 200, enabled = true) {
+  return useQuery({
+    queryKey: ["recent_evaluations", limit],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("candidate_evaluations")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data as CandidateEvaluation[];
+    },
+  });
+}
+
 export function useCreateEvaluation() {
   const qc = useQueryClient();
   return useMutation({
@@ -988,6 +1005,7 @@ export function useCreateEvaluation() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["recent_evaluations"] });
       toast.success("Evaluation saved to candidate");
     },
     onError: (e: any) => toast.error("Failed to save evaluation: " + e.message),
@@ -1003,6 +1021,7 @@ export function useUpdateEvaluation() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["recent_evaluations"] });
       toast.success("Evaluation updated");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
@@ -1018,6 +1037,7 @@ export function useDeleteEvaluation() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["recent_evaluations"] });
       toast.success("Evaluation removed");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
