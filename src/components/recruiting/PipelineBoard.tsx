@@ -162,7 +162,7 @@ export default function PipelineBoard() {
         </div>
       )}
 
-      <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} />
+      <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} initialTab={profileTab} />
     </div>
   );
 }
