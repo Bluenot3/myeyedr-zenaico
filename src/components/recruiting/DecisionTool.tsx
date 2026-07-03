@@ -426,6 +426,23 @@ function GoldenLeaderboard({ golden, candidates }: { golden: GoldenProfile; cand
 
   const focusName = focus?.candidate.full_name.split(" ")[0] || "Candidate";
 
+  // Fit distribution across the benchmarked pool — a quick read on bench strength
+  const distData = useMemo(() => {
+    const buckets = [
+      { band: "Golden 90+", tone: "152 62% 50%", count: 0 },
+      { band: "Strong 75-89", tone: "88 60% 55%", count: 0 },
+      { band: "Fair 60-74", tone: "43 90% 62%", count: 0 },
+      { band: "Weak <60", tone: "18 90% 62%", count: 0 },
+    ];
+    ranked.forEach((r) => {
+      if (r.fit >= 90) buckets[0].count++;
+      else if (r.fit >= 75) buckets[1].count++;
+      else if (r.fit >= 60) buckets[2].count++;
+      else buckets[3].count++;
+    });
+    return buckets;
+  }, [ranked]);
+
   return (
     <div className="space-y-5">
       {/* Golden summary header */}
