@@ -867,6 +867,41 @@ export function useAnalyzeInterview() {
   });
 }
 
+/* ===================== Candidate signals (AI pattern scan) ===================== */
+export function useCandidateSignals(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["candidate_signals", candidateId],
+    enabled: !!candidateId,
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("candidate_signals").select("*").eq("candidate_id", candidateId).maybeSingle();
+      if (error) throw error;
+      return (data as CandidateSignals) || null;
+    },
+  });
+}
+
+export function useAnalyzeCandidateSignals() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { candidateId: string; evaluatorName?: string }) => {
+      const { data, error } = await supabase.functions.invoke("analyze-candidate-signals", {
+        body: { candidateId: payload.candidateId, evaluatorName: payload.evaluatorName },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return (data as any).signals as CandidateSignals;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_signals", vars.candidateId] });
+      toast.success("Signal scan complete");
+    },
+    onError: (e: any) => toast.error("Scan failed: " + (e?.message || e)),
+  });
+}
+
+
+
 /* ============================ Scorecard templates ============================ */
 export function useScorecardTemplates() {
   return useQuery({
