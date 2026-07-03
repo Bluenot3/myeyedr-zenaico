@@ -32,11 +32,13 @@ export default function Openings() {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "" });
 
-  // Postings editor state
+  // Postings + description editor state
   const [postOpen, setPostOpen] = useState(false);
   const [postPos, setPostPos] = useState<Position | null>(null);
   const [postUrl, setPostUrl] = useState("");
   const [postLocs, setPostLocs] = useState<PostingLocation[]>([]);
+  const [postDesc, setPostDesc] = useState("");
+  const [postReq, setPostReq] = useState("");
 
   const filtered = useMemo(() => positions.filter((p) => region === "All" || p.region === region), [positions, region]);
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
