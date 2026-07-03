@@ -88,6 +88,9 @@ const Index = () => {
           {tab === "library" && <ScreeningLibrary />}
           {tab === "locations" && <LocationsManager />}
         </main>
+        <footer className="lg:hidden px-4 pb-24 pt-2">
+          <ZenSignature />
+        </footer>
       </div>
 
       {/* Bottom nav (mobile) */}
