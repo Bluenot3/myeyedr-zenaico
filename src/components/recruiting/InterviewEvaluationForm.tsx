@@ -393,6 +393,9 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
         <div className="form-actions">
           <span className="live">{candidate.full_name} · {total}/{maxTotal} · {recLabel}</span>
           <button className="mini-btn" type="button" onClick={onDone}>Cancel</button>
+          <button className="mini-btn" type="button" onClick={downloadPdf} disabled={pdfBusy}>
+            {pdfBusy ? <Loader2 className="inline h-3.5 w-3.5 -mt-0.5 animate-spin" /> : <Download className="inline h-3.5 w-3.5 -mt-0.5" />} {pdfBusy ? "Building…" : "Download PDF"}
+          </button>
           <button className="mini-btn primary" type="button" onClick={save} disabled={completed === 0 || saving}>
             <Save className="inline h-3.5 w-3.5 -mt-0.5" /> {saving ? "Saving…" : existing?.id ? "Update Evaluation" : "Save Evaluation"}
           </button>
