@@ -313,6 +313,53 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_signals: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          generated_by: string
+          headline: string
+          id: string
+          model: string
+          risk_level: string
+          signals: Json
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          generated_by?: string
+          headline?: string
+          id?: string
+          model?: string
+          risk_level?: string
+          signals?: Json
+          summary?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          generated_by?: string
+          headline?: string
+          id?: string
+          model?: string
+          risk_level?: string
+          signals?: Json
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_signals_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: true
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           applied_role: string
