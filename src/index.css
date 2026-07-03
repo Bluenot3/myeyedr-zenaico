@@ -241,3 +241,72 @@
 .animate-shimmer { animation: shimmer 7s ease-in-out infinite; }
 .animate-float { animation: float 9s ease-in-out infinite; }
 .animate-spin-slow { animation: spin-slow 90s linear infinite; }
+
+/* ============ ZEN neon signature ============ */
+.zen-neon {
+  position: relative;
+  display: inline-block;
+  font-family: theme('fontFamily.sans');
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+/* dim, unlit tubing */
+.zen-neon-base {
+  color: hsl(172 40% 55% / 0.28);
+}
+/* lit neon, revealed left-to-right by the traveling beam, then loops */
+.zen-neon-lit {
+  position: absolute;
+  inset: 0;
+  color: hsl(165 90% 72%);
+  text-shadow:
+    0 0 4px hsl(165 95% 65% / 0.9),
+    0 0 10px hsl(172 90% 60% / 0.7),
+    0 0 20px hsl(190 95% 60% / 0.45);
+  clip-path: inset(0 100% 0 0);
+  animation: zen-build 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+/* the light beam edge sweeping across the sign */
+.zen-neon-beam {
+  position: absolute;
+  top: -30%;
+  left: -6%;
+  height: 160%;
+  width: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, hsl(190 100% 85% / 0.95), hsl(172 100% 70% / 0.4), transparent 75%);
+  filter: blur(2px);
+  animation: zen-beam 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes zen-build {
+  0%   { clip-path: inset(0 100% 0 0); }
+  70%  { clip-path: inset(0 0 0 0); }
+  86%  { clip-path: inset(0 0 0 0); opacity: 1; }
+  93%  { opacity: 0.55; }
+  100% { clip-path: inset(0 0 0 0); opacity: 0; }
+}
+@keyframes zen-beam {
+  0%   { left: -6%; opacity: 0; }
+  6%   { opacity: 1; }
+  70%  { left: 100%; opacity: 1; }
+  76%  { opacity: 0; }
+  100% { left: 100%; opacity: 0; }
+}
+
+/* ZEN mark crisp shimmer */
+.zen-mark-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, hsl(0 0% 100% / 0.85) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: zen-shine 4.2s ease-in-out infinite;
+}
+@keyframes zen-shine {
+  0%, 55% { transform: translateX(-120%); }
+  78%     { transform: translateX(120%); }
+  100%    { transform: translateX(120%); }
+}
