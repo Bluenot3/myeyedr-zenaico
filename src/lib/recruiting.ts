@@ -9,17 +9,37 @@ export interface StageMeta {
   label: string;
   hsl: string; // "H S% L%"
   short: string;
+  /** the exact BGCGW onboarding action for this phase */
+  action?: string;
+  /** clear "done" criteria — how a manager knows the candidate can advance */
+  done?: string;
 }
 
 export const STAGES: StageMeta[] = [
-  { key: "applied", label: "Applied", hsl: "194 100% 79%", short: "APP" },
-  { key: "screening", label: "Screening", hsl: "172 66% 71%", short: "SCR" },
-  { key: "phone_screen", label: "Phone Screen", hsl: "161 66% 57%", short: "PHN" },
-  { key: "interview", label: "Interview", hsl: "76 72% 66%", short: "INT" },
-  { key: "assessment", label: "Assessment", hsl: "43 85% 66%", short: "ASM" },
-  { key: "reference", label: "Reference", hsl: "28 86% 63%", short: "REF" },
-  { key: "offer", label: "Offer", hsl: "14 82% 62%", short: "OFR" },
-  { key: "hired", label: "Hired", hsl: "152 62% 50%", short: "HIR" },
+  { key: "applied", label: "Applied", hsl: "194 100% 79%", short: "APP",
+    action: "Resume received & profile created",
+    done: "Contact info verified and candidate logged to the correct site/position." },
+  { key: "screening", label: "Screening", hsl: "172 66% 71%", short: "SCR",
+    action: "Resume review & initial fit check",
+    done: "Resume reviewed, match score generated, and first outreach sent." },
+  { key: "phone_screen", label: "Phone Screen", hsl: "161 66% 57%", short: "PHN",
+    action: "Availability & interest screening call",
+    done: "Availability confirmed, interest confirmed, and screening notes logged." },
+  { key: "interview", label: "Interview", hsl: "76 72% 66%", short: "INT",
+    action: "Site manager interview",
+    done: "Interview completed and scorecard submitted by the hiring manager." },
+  { key: "assessment", label: "Assessment", hsl: "43 85% 66%", short: "ASM",
+    action: "Skills & role-fit assessment",
+    done: "Assessment scored and role-fit evidence documented on the profile." },
+  { key: "reference", label: "Reference", hsl: "28 86% 63%", short: "REF",
+    action: "Reference & background checks",
+    done: "References contacted and background/clearance verification cleared." },
+  { key: "offer", label: "Offer", hsl: "14 82% 62%", short: "OFR",
+    action: "Offer & pre-hire paperwork",
+    done: "Offer extended, accepted, and onboarding paperwork initiated." },
+  { key: "hired", label: "Hired", hsl: "152 62% 50%", short: "HIR",
+    action: "Onboarding complete",
+    done: "Start date set, credentials issued, and candidate onboarded to the site." },
 ];
 
 export const TERMINAL_STAGES: Record<string, StageMeta> = {

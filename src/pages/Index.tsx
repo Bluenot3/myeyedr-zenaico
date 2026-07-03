@@ -9,6 +9,7 @@ import LocationsManager from "@/components/recruiting/LocationsManager";
 import AgentStudio from "@/components/recruiting/AgentStudio";
 import DecisionTool from "@/components/recruiting/DecisionTool";
 import Logo from "@/components/recruiting/Logo";
+import ZenSignature from "@/components/recruiting/ZenSignature";
 
 type Tab = "overview" | "pipeline" | "openings" | "pool" | "agents" | "decision" | "library" | "locations";
 
@@ -60,6 +61,9 @@ const Index = () => {
             </div>
           </div>
         </div>
+        <div className="px-3 pb-4 pt-1">
+          <ZenSignature />
+        </div>
       </aside>
 
       {/* Main */}
@@ -84,6 +88,9 @@ const Index = () => {
           {tab === "library" && <ScreeningLibrary />}
           {tab === "locations" && <LocationsManager />}
         </main>
+        <footer className="lg:hidden px-4 pb-24 pt-2">
+          <ZenSignature />
+        </footer>
       </div>
 
       {/* Bottom nav (mobile) */}
