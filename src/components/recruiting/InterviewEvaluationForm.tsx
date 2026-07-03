@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Check, Save, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Check, Save, X, Download, Loader2 } from "lucide-react";
 import {
   Candidate, ScorecardTemplate, CandidateEvaluation, Competency,
   useCreateEvaluation, useUpdateEvaluation,
@@ -68,6 +68,54 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
   const [location, setLocation] = useState(existing?.details?.location || "");
   const [interviewDate, setInterviewDate] = useState(existing?.details?.interviewDate || new Date().toISOString().slice(0, 10));
   const [view, setView] = useState<string>("full");
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+
+  const downloadPdf = async () => {
+    const node = shellRef.current;
+    if (!node) return;
+    setPdfBusy(true);
+    const prevView = view;
+    try {
+      // Force the full reference view so every question/anchor is captured.
+      setView("full");
+      await new Promise((r) => setTimeout(r, 60));
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        windowWidth: Math.max(node.scrollWidth, 1100),
+      });
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const imgData = canvas.toDataURL("image/png");
+      let heightLeft = imgH;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        position -= pageH;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+      const safeName = candidate.full_name.replace(/[^a-z0-9]+/gi, "_");
+      const kindLabel = isPhone ? "Phone_Screen" : "Interview";
+      pdf.save(`${safeName}_${kindLabel}_Evaluation.pdf`);
+    } catch (e) {
+      console.error("PDF export failed", e);
+    } finally {
+      setView(prevView);
+      setPdfBusy(false);
+    }
+  };
 
   const { total, completed, maxTotal, percent, recLabel } = useMemo(() => {
     const scored = comps.filter((c) => scores[c.id] !== undefined);
@@ -121,8 +169,8 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
   const saving = createEval.isPending || updateEval.isPending;
 
   return (
-    <div className="iform" data-view={view}>
-      <div className="app-shell">
+    <div className={`iform${pdfBusy ? " exporting" : ""}`} data-view={view}>
+      <div className="app-shell" ref={shellRef}>
         {/* Header */}
         <section className="top-card">
           <div className="brand-line">
@@ -134,6 +182,9 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
           </div>
           <div className="header-actions">
             <div className="phi-pill">Do not record PHI</div>
+            <button className="mini-btn" type="button" onClick={downloadPdf} disabled={pdfBusy}>
+              {pdfBusy ? <Loader2 className="inline h-3.5 w-3.5 -mt-0.5 animate-spin" /> : <Download className="inline h-3.5 w-3.5 -mt-0.5" />} {pdfBusy ? "Building…" : "Download PDF"}
+            </button>
             <button className="mini-btn orange" type="button" onClick={onDone}>
               <X className="inline h-3.5 w-3.5 -mt-0.5" /> Close
             </button>
@@ -342,6 +393,9 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
         <div className="form-actions">
           <span className="live">{candidate.full_name} · {total}/{maxTotal} · {recLabel}</span>
           <button className="mini-btn" type="button" onClick={onDone}>Cancel</button>
+          <button className="mini-btn" type="button" onClick={downloadPdf} disabled={pdfBusy}>
+            {pdfBusy ? <Loader2 className="inline h-3.5 w-3.5 -mt-0.5 animate-spin" /> : <Download className="inline h-3.5 w-3.5 -mt-0.5" />} {pdfBusy ? "Building…" : "Download PDF"}
+          </button>
           <button className="mini-btn primary" type="button" onClick={save} disabled={completed === 0 || saving}>
             <Save className="inline h-3.5 w-3.5 -mt-0.5" /> {saving ? "Saving…" : existing?.id ? "Update Evaluation" : "Save Evaluation"}
           </button>
