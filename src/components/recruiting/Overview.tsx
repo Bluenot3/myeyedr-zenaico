@@ -18,6 +18,11 @@ export default function Overview() {
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
+  const { profile } = useAuth();
+  const firstName = (profile?.full_name || profile?.email?.split("@")[0] || "").split(" ")[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
   const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
