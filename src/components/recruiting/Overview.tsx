@@ -330,7 +330,7 @@ export default function Overview() {
       })()}
 
 
-      <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} />
+      <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} initialTab={profileTab} />
     </div>
   );
 }
