@@ -79,60 +79,60 @@
 
   /* ============ LIGHT MODE ============ */
   :root.light {
-    --background: 210 44% 97%;
-    --foreground: 221 60% 11%;
+    --background: 210 38% 97%;
+    --foreground: 216 52% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 221 55% 12%;
+    --card-foreground: 216 50% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 221 55% 12%;
+    --popover-foreground: 216 50% 11%;
 
-    --primary: 214 100% 48%;
+    --primary: 212 66% 44%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 93%;
-    --secondary-foreground: 221 55% 14%;
+    --secondary: 210 34% 92%;
+    --secondary-foreground: 216 50% 13%;
 
-    --muted: 210 38% 92%;
-    --muted-foreground: 216 22% 40%;
+    --muted: 210 32% 91%;
+    --muted-foreground: 216 20% 40%;
 
-    --accent: 200 92% 42%;
+    --accent: 212 52% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 4 78% 54%;
+    --destructive: 4 72% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 30% 84%;
-    --input: 214 30% 82%;
-    --ring: 214 100% 48%;
+    --border: 214 26% 84%;
+    --input: 214 26% 82%;
+    --ring: 212 66% 44%;
 
     /* Brand tokens tuned for contrast on white */
-    --gold: 200 92% 40%;
-    --emerald: 214 100% 46%;
-    --holo: 200 90% 44%;
-    --cyan: 198 90% 42%;
-    --orange: 214 96% 50%;
-    --lime: 190 85% 38%;
-    --ink: 221 60% 11%;
-    --navy: 214 40% 92%;
-    --platinum: 221 55% 12%;
+    --gold: 38 54% 44%;        /* deep champagne for legibility on white */
+    --emerald: 212 68% 42%;
+    --holo: 212 56% 46%;
+    --cyan: 205 60% 42%;
+    --orange: 30 62% 46%;
+    --lime: 205 46% 40%;
+    --ink: 216 52% 10%;
+    --navy: 214 36% 92%;
+    --platinum: 216 50% 11%;
 
-    --success: 160 84% 34%;
-    --warning: 34 92% 46%;
+    --success: 158 60% 32%;
+    --warning: 34 78% 44%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 221 45% 20%;
-    --sidebar-primary: 214 100% 48%;
+    --sidebar-foreground: 216 42% 20%;
+    --sidebar-primary: 212 66% 44%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 93%;
-    --sidebar-accent-foreground: 221 55% 14%;
-    --sidebar-border: 214 30% 86%;
-    --sidebar-ring: 214 100% 48%;
+    --sidebar-accent: 210 34% 92%;
+    --sidebar-accent-foreground: 216 50% 13%;
+    --sidebar-border: 214 26% 86%;
+    --sidebar-ring: 212 66% 44%;
 
-    --shadow-cert: 0 24px 60px -34px rgba(20,60,140,0.35), 0 0 0 1px rgba(31,109,255,0.10);
-    --glow-gold: 0 0 30px -14px rgba(31,109,255,0.35);
-    --glow-emerald: 0 0 36px -16px rgba(31,109,255,0.4);
+    --shadow-cert: 0 24px 60px -34px rgba(20,52,110,0.32), 0 0 0 1px rgba(47,111,181,0.10);
+    --glow-gold: 0 0 26px -16px rgba(180,150,80,0.4);
+    --glow-emerald: 0 0 30px -18px rgba(47,111,181,0.4);
   }
 }
 
