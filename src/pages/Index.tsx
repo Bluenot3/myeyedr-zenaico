@@ -51,9 +51,11 @@ const Index = () => {
   const displayName = profile?.full_name || profile?.email?.split("@")[0] || "User";
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative aurora-grain">
+      <div className="aurora-bg" aria-hidden />
       {/* Sidebar (desktop) */}
-      <aside className="hidden lg:flex w-60 shrink-0 flex-col border-r border-border glass-panel sticky top-0 h-screen">
+      <aside className="relative z-10 hidden lg:flex w-60 shrink-0 flex-col border-r border-border glass-panel sticky top-0 h-screen">
+
         <div className="p-5 border-b border-border">
           <Logo markSize={36} sub="Talent Command" wordSize={19} />
         </div>
@@ -95,7 +97,7 @@ const Index = () => {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="relative z-10 flex-1 min-w-0 flex flex-col">
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-40 glass-panel border-b border-border">
           <div className="flex items-center justify-between px-4 h-14">
@@ -139,7 +141,7 @@ const Index = () => {
               <button
                 key={n.key}
                 onClick={() => setTab(n.key)}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 tap-target transition-colors ${active ? "text-emerald" : "text-muted-foreground"}`}
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 tap-target transition-colors ${active ? "text-emerald nav-pill-active" : "text-muted-foreground"}`}
               >
                 <n.icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition-transform`} />
                 <span className="text-[9px] font-medium">{n.label}</span>
