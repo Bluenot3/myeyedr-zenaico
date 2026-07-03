@@ -20,6 +20,8 @@ import {
   useAddNote, useUpdateNote, useDeleteNote, useLocations, usePositions,
 } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, initials, relativeTime, scoreTone, TONE_HSL, BADGE_TYPES, badgeMeta } from "@/lib/recruiting";
+import { computeMatch } from "@/lib/matchScore";
+import { FactorBreakdown, AvailabilityGauge, RiskReadiness, VerificationChecklist, MatchBadgeChip } from "./MatchVisuals";
 import BlockchainLedger from "./BlockchainLedger";
 import ScoreRing from "./ScoreRing";
 import StageBadge from "./StageBadge";
