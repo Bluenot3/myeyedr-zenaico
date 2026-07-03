@@ -231,8 +231,9 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
         {/* Tabs */}
         <Tabs value={tab} onValueChange={setTab} className="px-5 sm:px-6 py-4">
-          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 gap-1 h-auto">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-8 gap-1 h-auto">
             <TabsTrigger value="match" className="text-xs gap-1"><Gauge className="h-3.5 w-3.5" /> Match</TabsTrigger>
+            <TabsTrigger value="signals" className="text-xs gap-1"><Eye className="h-3.5 w-3.5" /> Signals</TabsTrigger>
             <TabsTrigger value="scorecards" className="text-xs gap-1"><ClipboardCheck className="h-3.5 w-3.5" /> Scores</TabsTrigger>
             <TabsTrigger value="interviews" className="text-xs gap-1"><Mic className="h-3.5 w-3.5" /> Media</TabsTrigger>
             <TabsTrigger value="ledger" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Ledger</TabsTrigger>
@@ -245,6 +246,12 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
           <TabsContent value="scorecards" className="mt-4">
             <EvaluationPanel candidate={candidate} eventId={eventId} />
           </TabsContent>
+
+          {/* AI signal scanner */}
+          <TabsContent value="signals" className="mt-4">
+            <CandidateSignals candidate={candidate} />
+          </TabsContent>
+
 
 
           {/* Match score breakdown */}
