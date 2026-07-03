@@ -33,6 +33,13 @@ export default function PipelineBoard() {
     });
   }, [candidates, search, region, view]);
 
+  const regionOptions = useMemo(
+    () => Array.from(new Set(candidates.map((c) => c.region).filter(Boolean))),
+    [candidates]
+  );
+
+
+
   const byStage = useMemo(() => {
     const map: Record<string, Candidate[]> = {};
     STAGES.forEach((s) => (map[s.key] = []));
