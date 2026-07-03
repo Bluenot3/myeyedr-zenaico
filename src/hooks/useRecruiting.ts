@@ -1004,6 +1004,7 @@ export function useCreateEvaluation() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["recent_evaluations"] });
       toast.success("Evaluation saved to candidate");
     },
     onError: (e: any) => toast.error("Failed to save evaluation: " + e.message),
@@ -1019,6 +1020,7 @@ export function useUpdateEvaluation() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["recent_evaluations"] });
       toast.success("Evaluation updated");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
@@ -1034,6 +1036,7 @@ export function useDeleteEvaluation() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["recent_evaluations"] });
       toast.success("Evaluation removed");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
