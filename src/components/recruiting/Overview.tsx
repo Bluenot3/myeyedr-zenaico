@@ -147,8 +147,8 @@ export default function Overview() {
                 <span
                   className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-2 py-1 shrink-0"
                   style={{
-                    color: action.urgency === "high" ? "hsl(28 86% 63%)" : "hsl(161 66% 57%)",
-                    background: action.urgency === "high" ? "hsl(28 86% 63% / 0.12)" : "hsl(161 66% 57% / 0.1)",
+                    color: action.urgency === "high" ? "hsl(190 100% 72%)" : "hsl(214 100% 64%)",
+                    background: action.urgency === "high" ? "hsl(190 100% 72% / 0.12)" : "hsl(214 100% 64% / 0.1)",
                   }}
                 >
                   {action.label} <ChevronRight className="h-3 w-3" />
