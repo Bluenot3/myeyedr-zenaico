@@ -549,8 +549,10 @@
 }
 :root.light .aurora-bg {
   background:
-    radial-gradient(60% 42% at 78% 8%, hsl(212 70% 55% / 0.10), transparent 62%),
-    radial-gradient(52% 40% at 10% 92%, hsl(212 46% 60% / 0.08), transparent 64%);
+    radial-gradient(58% 42% at 80% 6%, hsl(214 90% 58% / 0.20), transparent 60%),
+    radial-gradient(46% 38% at 6% 40%, hsl(192 92% 60% / 0.16), transparent 62%),
+    radial-gradient(52% 40% at 12% 94%, hsl(212 70% 58% / 0.14), transparent 64%);
+  opacity: 1;
 }
 @keyframes aurora-drift {
   0%   { transform: translate3d(0,0,0) scale(1); }
