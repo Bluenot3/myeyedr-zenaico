@@ -13,10 +13,11 @@ import {
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
   Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
-  FileText, Loader2, Mic, ClipboardCheck,
+  FileText, Loader2, Mic, ClipboardCheck, Eye,
 } from "lucide-react";
 import InterviewMedia from "./InterviewMedia";
 import EvaluationPanel from "./EvaluationPanel";
+import CandidateSignals from "./CandidateSignals";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
