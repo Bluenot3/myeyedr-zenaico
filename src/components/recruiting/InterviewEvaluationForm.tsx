@@ -169,7 +169,7 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
   const saving = createEval.isPending || updateEval.isPending;
 
   return (
-    <div className="iform" data-view={view}>
+    <div className={`iform${pdfBusy ? " exporting" : ""}`} data-view={view}>
       <div className="app-shell" ref={shellRef}>
         {/* Header */}
         <section className="top-card">
