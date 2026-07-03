@@ -141,7 +141,7 @@ export default function PipelineBoard() {
               </div>
               <div className="space-y-2 min-h-[60px]">
                 {byStage[s.key].map((c) => (
-                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
                 ))}
                 {byStage[s.key].length === 0 && <div className="rounded-lg border border-dashed border-border/60 py-6 text-center text-[10px] text-muted-foreground">Empty</div>}
               </div>
