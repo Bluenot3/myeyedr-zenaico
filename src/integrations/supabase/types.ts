@@ -581,6 +581,89 @@ export type Database = {
           },
         ]
       }
+      hiring_decisions: {
+        Row: {
+          candidate_id: string
+          contenders: Json
+          created_at: string
+          decided_by: string | null
+          decided_by_name: string | null
+          decision: string
+          fit_score: number | null
+          golden_id: string | null
+          id: string
+          location_id: string | null
+          position_id: string | null
+          power_score: number | null
+          rationale: string | null
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          candidate_id: string
+          contenders?: Json
+          created_at?: string
+          decided_by?: string | null
+          decided_by_name?: string | null
+          decision?: string
+          fit_score?: number | null
+          golden_id?: string | null
+          id?: string
+          location_id?: string | null
+          position_id?: string | null
+          power_score?: number | null
+          rationale?: string | null
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          candidate_id?: string
+          contenders?: Json
+          created_at?: string
+          decided_by?: string | null
+          decided_by_name?: string | null
+          decision?: string
+          fit_score?: number | null
+          golden_id?: string | null
+          id?: string
+          location_id?: string | null
+          position_id?: string | null
+          power_score?: number | null
+          rationale?: string | null
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hiring_decisions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hiring_decisions_golden_id_fkey"
+            columns: ["golden_id"]
+            isOneToOne: false
+            referencedRelation: "golden_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hiring_decisions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hiring_decisions_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_events: {
         Row: {
           candidate_id: string | null
