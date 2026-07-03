@@ -99,6 +99,16 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, onEv
         </span>
       </div>
 
+      {onEvaluate && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onEvaluate(); }}
+          className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald/40 bg-emerald/10 px-3 py-2 text-[11px] font-semibold text-emerald transition-all hover:bg-emerald/20 hover:border-emerald/60 active:scale-[0.98] tap-target"
+        >
+          <ClipboardCheck className="h-3.5 w-3.5" /> Evaluate candidate
+        </button>
+      )}
+
+
       {locationName && (
         <p className="mt-1.5 inline-flex items-center gap-1 text-[9px] text-muted-foreground truncate">
           <MapPin className="h-2.5 w-2.5" /> {locationName}
