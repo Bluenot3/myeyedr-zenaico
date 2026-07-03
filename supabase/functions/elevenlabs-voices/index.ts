@@ -1,4 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+async function isAdminRequest(req: Request): Promise<boolean> {
+  try {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader) return false;
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const userClient = createClient(url, anon, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } });
+    const { data } = await userClient.auth.getUser();
+    if (!data?.user) return false;
+    const db = createClient(url, service, { auth: { persistSession: false } });
+    const { data: role } = await db.from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "admin").maybeSingle();
+    return !!role;
+  } catch { return false; }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +37,10 @@ const FALLBACK = [
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  if (!(await isAdminRequest(req))) {
+    return new Response(JSON.stringify({ error: "Admins only" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   try {
     const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
