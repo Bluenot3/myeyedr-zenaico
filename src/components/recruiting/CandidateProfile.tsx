@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
-  Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight,
+  Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
 } from "lucide-react";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
