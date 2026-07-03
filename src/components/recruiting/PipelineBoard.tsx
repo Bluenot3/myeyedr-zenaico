@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search, ArrowUpDown, CheckSquare, Square, Zap, ChevronDown, Sparkles, Users } from "lucide-react";
 import { useCandidates, useLocations, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
-import { STAGES, stageMeta, stageProgress, stageIndex, REGIONS } from "@/lib/recruiting";
+import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
 import AddCandidateDialog from "./AddCandidateDialog";
@@ -32,6 +32,13 @@ export default function PipelineBoard() {
       return s && r;
     });
   }, [candidates, search, region, view]);
+
+  const regionOptions = useMemo(
+    () => Array.from(new Set(candidates.map((c) => c.region).filter(Boolean))),
+    [candidates]
+  );
+
+
 
   const byStage = useMemo(() => {
     const map: Record<string, Candidate[]> = {};
@@ -84,7 +91,7 @@ export default function PipelineBoard() {
         <div className="flex items-center gap-2 flex-wrap">
           <select value={region} onChange={(e) => setRegion(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
             <option value="All">All Regions</option>
-            {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+            {regionOptions.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
           <div className="flex rounded-lg border border-input overflow-hidden">
             <button onClick={() => setView("board")} className={`px-3 h-9 text-xs ${view === "board" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Board</button>

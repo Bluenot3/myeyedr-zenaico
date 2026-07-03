@@ -4,7 +4,7 @@ import {
   UploadCloud, PhoneOutgoing, Bot, Clock, Star, ClipboardCheck, ShieldAlert, Gauge, ChevronRight,
 } from "lucide-react";
 import { useCandidates, usePositions, useLocations, Candidate } from "@/hooks/useRecruiting";
-import { STAGES, stageMeta, initials, REGIONS } from "@/lib/recruiting";
+import { STAGES, stageMeta, initials } from "@/lib/recruiting";
 import { computeMatch, nextAction, hoursSince } from "@/lib/matchScore";
 import StatCard from "./StatCard";
 import CandidateProfile from "./CandidateProfile";
@@ -175,23 +175,40 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Regional coverage */}
-      <div className="glass-panel rounded-xl p-5">
-        <h3 className="font-display text-lg font-semibold mb-4">Regional Coverage</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {REGIONS.map((r) => {
-            const cand = active.filter((c) => c.region === r).length;
-            const opens = positions.filter((p) => p.region === r && p.status === "open").length;
-            return (
-              <div key={r} className="flex items-center gap-3 rounded-lg bg-background/40 border border-border/60 p-2.5">
-                <span className="flex-1 text-xs text-foreground truncate">{r}</span>
-                <span className="inline-flex items-center gap-1 text-[11px] text-cyan"><Users className="h-3 w-3" /> {cand}</span>
-                <span className="inline-flex items-center gap-1 text-[11px] text-emerald"><Briefcase className="h-3 w-3" /> {opens}</span>
+      {/* Regional coverage — derived from live data */}
+      {(() => {
+        const regionSet = Array.from(
+          new Set([
+            ...active.map((c) => c.region).filter(Boolean),
+            ...positions.map((p) => p.region).filter(Boolean),
+          ])
+        );
+        return (
+          <div className="glass-panel rounded-xl p-5">
+            <h3 className="font-display text-lg font-semibold mb-4">Regional Coverage</h3>
+            {regionSet.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-4 text-center">
+                No regions yet — add locations and candidates to see coverage here.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {regionSet.map((r) => {
+                  const cand = active.filter((c) => c.region === r).length;
+                  const opens = positions.filter((p) => p.region === r && p.status === "open").length;
+                  return (
+                    <div key={r} className="flex items-center gap-3 rounded-lg bg-background/40 border border-border/60 p-2.5">
+                      <span className="flex-1 text-xs text-foreground truncate">{r}</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] text-cyan"><Users className="h-3 w-3" /> {cand}</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald"><Briefcase className="h-3 w-3" /> {opens}</span>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      </div>
+            )}
+          </div>
+        );
+      })()}
+
 
       <CandidateProfile candidate={selected} open={open} onOpenChange={setOpen} />
     </div>
