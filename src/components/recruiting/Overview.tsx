@@ -4,7 +4,7 @@ import {
   UploadCloud, PhoneOutgoing, Bot, Clock, Star, ClipboardCheck, ShieldAlert, Gauge, ChevronRight,
   CalendarClock, PhoneCall, Handshake, Video, MapPin, Phone, Timer,
 } from "lucide-react";
-import { useCandidates, usePositions, useLocations, useInterviewEvents, Candidate } from "@/hooks/useRecruiting";
+import { useCandidates, usePositions, useLocations, useInterviewEvents, useRecentEvaluations, Candidate } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, initials } from "@/lib/recruiting";
 import { computeMatch, nextAction, hoursSince } from "@/lib/matchScore";
 import StatCard from "./StatCard";
