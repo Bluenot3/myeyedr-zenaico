@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Check, Save, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Check, Save, X, Download, Loader2 } from "lucide-react";
 import {
   Candidate, ScorecardTemplate, CandidateEvaluation, Competency,
   useCreateEvaluation, useUpdateEvaluation,
