@@ -11,6 +11,7 @@ import DecisionTool from "@/components/recruiting/DecisionTool";
 import UsersManager from "@/components/recruiting/UsersManager";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
+import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -78,6 +79,7 @@ const Index = () => {
               <p className="text-xs font-medium text-foreground truncate">{displayName}</p>
               <p className="text-[9px] micro-label text-emerald">{roleInfo.label}</p>
             </div>
+            <ChangePasswordDialog />
             <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
               <LogOut className="h-4 w-4" />
             </button>
@@ -98,6 +100,7 @@ const Index = () => {
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
                 <RoleIcon className="h-2.5 w-2.5" /> {roleInfo.label}
               </span>
+              <ChangePasswordDialog compact />
               <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
                 <LogOut className="h-4 w-4" />
               </button>
