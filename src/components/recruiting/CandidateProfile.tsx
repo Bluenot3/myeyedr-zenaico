@@ -143,7 +143,10 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
                 </span>
               </div>
             </div>
-            <ScoreRing score={candidate.score} size={64} label="score" />
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <ScoreRing score={m.overall} size={64} label="match" />
+              <span className="text-[8px] font-mono uppercase tracking-wide text-center leading-tight max-w-[64px]" style={{ color: `hsl(${m.categoryHsl})` }}>{m.category}</span>
+            </div>
           </div>
 
           {/* Quick contact */}
