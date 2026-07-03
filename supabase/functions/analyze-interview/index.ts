@@ -75,16 +75,23 @@ Deno.serve(async (req) => {
     const audioBlob = await audioRes.blob();
 
     // 2) Transcribe with ElevenLabs Scribe (word timestamps + diarization)
-    const fd = new FormData();
-    fd.append("file", audioBlob, "interview.audio");
-    fd.append("model_id", "scribe_v2");
-    fd.append("diarize", "true");
-    fd.append("tag_audio_events", "false");
-    const sttRes = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
-      method: "POST",
-      headers: { "xi-api-key": ELEVEN },
-      body: fd,
-    });
+    const transcribe = async (modelId: string) => {
+      const fd = new FormData();
+      fd.append("file", audioBlob, "interview.audio");
+      fd.append("model_id", modelId);
+      fd.append("diarize", "true");
+      fd.append("tag_audio_events", "false");
+      return fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+        method: "POST",
+        headers: { "xi-api-key": ELEVEN },
+        body: fd,
+      });
+    };
+    let sttRes = await transcribe("scribe_v2");
+    if (!sttRes.ok && sttRes.status === 422) {
+      // Some accounts only have the earlier Scribe model — fall back.
+      sttRes = await transcribe("scribe_v1");
+    }
     if (!sttRes.ok) {
       const t = await sttRes.text();
       throw new Error(`Transcription failed: ${sttRes.status} ${t.slice(0, 300)}`);
