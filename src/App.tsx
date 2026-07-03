@@ -31,7 +31,8 @@ function Protected({ children }: { children: JSX.Element }) {
 function PublicOnly({ children }: { children: JSX.Element }) {
   const { session, loading, mustReset } = useAuth();
   if (loading) return <FullScreenLoader />;
-  if (session && !mustReset) return <Navigate to="/" replace />;
+  if (session && mustReset) return <Navigate to="/reset-password" replace />;
+  if (session) return <Navigate to="/" replace />;
   return children;
 }
 
