@@ -86,17 +86,17 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(120% 85% at 82% -12%, rgba(246,150,79,0.14), transparent 52%),
-      radial-gradient(95% 75% at 8% 6%, rgba(69,220,174,0.14), transparent 55%),
-      radial-gradient(85% 80% at 50% 116%, rgba(149,232,255,0.12), transparent 58%),
-      linear-gradient(168deg, #0c2630 0%, #08191e 58%, #0a1f26 100%);
+      radial-gradient(120% 85% at 82% -12%, rgba(31,109,255,0.18), transparent 52%),
+      radial-gradient(95% 75% at 8% 6%, rgba(58,155,255,0.16), transparent 55%),
+      radial-gradient(85% 80% at 50% 116%, rgba(111,216,255,0.12), transparent 58%),
+      linear-gradient(168deg, #061024 0%, #030711 58%, #05101f 100%);
     background-attachment: fixed;
     font-feature-settings: "ss01", "cv01";
   }
 
   ::selection {
-    background: rgba(149,232,255,0.30);
-    color: #fcf9f2;
+    background: rgba(58,155,255,0.35);
+    color: #ffffff;
   }
 
   h1, h2, h3 {
