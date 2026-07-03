@@ -16,28 +16,28 @@ export interface StageMeta {
 }
 
 export const STAGES: StageMeta[] = [
-  { key: "applied", label: "Applied", hsl: "194 100% 79%", short: "APP",
+  { key: "applied", label: "Applied", hsl: "196 100% 80%", short: "APP",
     action: "Resume received & profile created",
     done: "Contact info verified and candidate logged to the correct site/position." },
-  { key: "screening", label: "Screening", hsl: "172 66% 71%", short: "SCR",
+  { key: "screening", label: "Screening", hsl: "190 100% 74%", short: "SCR",
     action: "Resume review & initial fit check",
     done: "Resume reviewed, match score generated, and first outreach sent." },
-  { key: "phone_screen", label: "Phone Screen", hsl: "161 66% 57%", short: "PHN",
+  { key: "phone_screen", label: "Phone Screen", hsl: "202 100% 68%", short: "PHN",
     action: "Availability & interest screening call",
     done: "Availability confirmed, interest confirmed, and screening notes logged." },
-  { key: "interview", label: "Interview", hsl: "76 72% 66%", short: "INT",
+  { key: "interview", label: "Interview", hsl: "210 100% 64%", short: "INT",
     action: "Site manager interview",
     done: "Interview completed and scorecard submitted by the hiring manager." },
-  { key: "assessment", label: "Assessment", hsl: "43 85% 66%", short: "ASM",
+  { key: "assessment", label: "Assessment", hsl: "216 100% 62%", short: "ASM",
     action: "Skills & role-fit assessment",
     done: "Assessment scored and role-fit evidence documented on the profile." },
-  { key: "reference", label: "Reference", hsl: "28 86% 63%", short: "REF",
+  { key: "reference", label: "Reference", hsl: "222 100% 64%", short: "REF",
     action: "Reference & background checks",
     done: "References contacted and background/clearance verification cleared." },
-  { key: "offer", label: "Offer", hsl: "14 82% 62%", short: "OFR",
+  { key: "offer", label: "Offer", hsl: "228 100% 68%", short: "OFR",
     action: "Offer & pre-hire paperwork",
     done: "Offer extended, accepted, and onboarding paperwork initiated." },
-  { key: "hired", label: "Hired", hsl: "152 62% 50%", short: "HIR",
+  { key: "hired", label: "Hired", hsl: "160 84% 46%", short: "HIR",
     action: "Onboarding complete",
     done: "Start date set, credentials issued, and candidate onboarded to the site." },
 ];
@@ -99,12 +99,12 @@ export function badgeMeta(type: string): BadgeMeta {
 }
 
 export const TONE_HSL: Record<BadgeTone, string> = {
-  emerald: "161 66% 57%",
-  gold: "43 85% 70%",
-  holo: "172 66% 71%",
-  cyan: "194 100% 79%",
-  orange: "28 86% 63%",
-  lime: "76 72% 66%",
+  emerald: "214 100% 62%",
+  gold: "197 100% 78%",
+  holo: "190 100% 80%",
+  cyan: "200 100% 74%",
+  orange: "216 100% 66%",
+  lime: "186 100% 72%",
 };
 
 /* ---------------- Misc ---------------- */

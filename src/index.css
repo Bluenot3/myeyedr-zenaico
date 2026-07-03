@@ -12,69 +12,69 @@
 
 @layer base {
   :root {
-    --background: 193 60% 7%;
-    --foreground: 43 44% 93%;
+    --background: 220 60% 4%;
+    --foreground: 210 40% 98%;
 
-    --card: 194 52% 12%;
-    --card-foreground: 43 44% 93%;
+    --card: 219 52% 8%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 194 53% 11%;
-    --popover-foreground: 43 44% 93%;
+    --popover: 220 54% 7%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 161 66% 57%;
-    --primary-foreground: 165 60% 8%;
+    --primary: 214 100% 60%;
+    --primary-foreground: 220 60% 5%;
 
-    --secondary: 193 45% 16%;
-    --secondary-foreground: 43 44% 93%;
+    --secondary: 218 44% 14%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 194 40% 16%;
-    --muted-foreground: 180 14% 70%;
+    --muted: 218 38% 14%;
+    --muted-foreground: 208 25% 72%;
 
-    --accent: 43 85% 70%;
-    --accent-foreground: 40 80% 7%;
+    --accent: 197 100% 76%;
+    --accent-foreground: 220 60% 6%;
 
-    --destructive: 4 73% 60%;
-    --destructive-foreground: 43 60% 96%;
+    --destructive: 4 78% 62%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 180 28% 22%;
-    --input: 180 28% 24%;
-    --ring: 194 90% 72%;
+    --border: 210 45% 20%;
+    --input: 210 45% 22%;
+    --ring: 205 100% 68%;
 
-    --radius: 0.75rem;
+    --radius: 0.85rem;
 
-    /* Brand tokens */
-    --gold: 43 85% 70%;
-    --emerald: 161 66% 57%;
-    --holo: 172 66% 71%;
-    --cyan: 194 100% 79%;
-    --orange: 28 86% 63%;
-    --lime: 76 72% 71%;
-    --ink: 193 60% 7%;
-    --navy: 194 45% 12%;
-    --platinum: 43 55% 94%;
+    /* Brand tokens — electric neon blue / light blue / white / black */
+    --gold: 197 100% 78%;      /* remapped: light-blue accent */
+    --emerald: 214 100% 62%;   /* remapped: electric neon blue */
+    --holo: 190 100% 80%;
+    --cyan: 200 100% 74%;
+    --orange: 210 100% 66%;    /* remapped: bright blue for urgency-hot */
+    --lime: 186 100% 72%;
+    --ink: 220 60% 4%;
+    --navy: 219 50% 9%;
+    --platinum: 210 40% 98%;
 
-    --success: 152 60% 48%;
-    --warning: 38 92% 60%;
+    --success: 160 84% 45%;
+    --warning: 38 96% 60%;
 
-    --sidebar-background: 194 50% 10%;
-    --sidebar-foreground: 43 40% 90%;
-    --sidebar-primary: 161 66% 57%;
-    --sidebar-primary-foreground: 165 60% 8%;
-    --sidebar-accent: 194 40% 16%;
-    --sidebar-accent-foreground: 43 44% 93%;
-    --sidebar-border: 180 28% 20%;
-    --sidebar-ring: 194 90% 72%;
+    --sidebar-background: 220 55% 6%;
+    --sidebar-foreground: 210 36% 92%;
+    --sidebar-primary: 214 100% 62%;
+    --sidebar-primary-foreground: 220 60% 5%;
+    --sidebar-accent: 218 40% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 210 45% 18%;
+    --sidebar-ring: 205 100% 68%;
 
-    /* Gradients (raw hex to preserve foil luminosity) */
-    --grad-emerald-gold: linear-gradient(135deg, #45dcae 0%, #d4ec80 48%, #f3d172 100%);
-    --grad-holo: linear-gradient(135deg, #95e8ff 0%, #7fe8da 45%, #fcf9f2 100%);
-    --grad-gold-platinum: linear-gradient(120deg, #f6964f 0%, #f3d172 48%, #fcf9f2 100%);
-    --grad-currency: linear-gradient(110deg, #95e8ff 0%, #5fdcd0 18%, #6fdc9e 36%, #d4ec80 54%, #f3d172 72%, #f6964f 88%, #fcf6e6 100%);
-    --grad-foil: linear-gradient(115deg, #fcf9f2 0%, #cfe9ff 14%, #ffd9ec 28%, #d8ffe9 42%, #fff3c4 56%, #ffe0c2 70%, #d6f0ff 84%, #fcf9f2 100%);
+    /* Gradients (raw hex to preserve luminous foil / neon energy) */
+    --grad-emerald-gold: linear-gradient(135deg, #1f8bff 0%, #5cc9ff 48%, #bfeaff 100%);
+    --grad-holo: linear-gradient(135deg, #6fdcff 0%, #3a9bff 45%, #ffffff 100%);
+    --grad-gold-platinum: linear-gradient(120deg, #2e7dff 0%, #6fd0ff 48%, #ffffff 100%);
+    --grad-currency: linear-gradient(110deg, #9fe4ff 0%, #5cc4ff 18%, #2e8bff 36%, #1f6dff 54%, #5cc9ff 72%, #bfeaff 88%, #ffffff 100%);
+    --grad-foil: linear-gradient(115deg, #ffffff 0%, #cfeaff 14%, #a3d4ff 28%, #6fb8ff 42%, #bfeaff 56%, #7fd6ff 70%, #d6f0ff 84%, #ffffff 100%);
 
-    --shadow-cert: 0 30px 80px -40px rgba(0,0,0,0.8), 0 0 0 1px rgba(127,232,218,0.12);
-    --glow-gold: 0 0 44px -12px rgba(243,209,114,0.5);
-    --glow-emerald: 0 0 50px -16px rgba(69,220,174,0.5);
+    --shadow-cert: 0 30px 80px -40px rgba(0,0,0,0.85), 0 0 0 1px rgba(58,155,255,0.16);
+    --glow-gold: 0 0 44px -12px rgba(92,201,255,0.55);
+    --glow-emerald: 0 0 52px -14px rgba(31,109,255,0.6);
   }
 }
 
@@ -86,17 +86,17 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(120% 85% at 82% -12%, rgba(246,150,79,0.14), transparent 52%),
-      radial-gradient(95% 75% at 8% 6%, rgba(69,220,174,0.14), transparent 55%),
-      radial-gradient(85% 80% at 50% 116%, rgba(149,232,255,0.12), transparent 58%),
-      linear-gradient(168deg, #0c2630 0%, #08191e 58%, #0a1f26 100%);
+      radial-gradient(120% 85% at 82% -12%, rgba(31,109,255,0.18), transparent 52%),
+      radial-gradient(95% 75% at 8% 6%, rgba(58,155,255,0.16), transparent 55%),
+      radial-gradient(85% 80% at 50% 116%, rgba(111,216,255,0.12), transparent 58%),
+      linear-gradient(168deg, #061024 0%, #030711 58%, #05101f 100%);
     background-attachment: fixed;
     font-feature-settings: "ss01", "cv01";
   }
 
   ::selection {
-    background: rgba(149,232,255,0.30);
-    color: #fcf9f2;
+    background: rgba(58,155,255,0.35);
+    color: #ffffff;
   }
 
   h1, h2, h3 {
@@ -128,16 +128,43 @@
   }
 
   .glass-panel {
-    background: linear-gradient(160deg, rgba(20,46,52,0.78), rgba(10,26,32,0.86));
-    backdrop-filter: blur(18px) saturate(135%);
-    border: 1px solid hsl(var(--border));
+    background:
+      linear-gradient(160deg, rgba(20,44,86,0.55), rgba(8,16,34,0.72)),
+      radial-gradient(140% 120% at 0% 0%, rgba(58,155,255,0.10), transparent 55%);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid hsl(var(--border) / 0.7);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 40px -30px rgba(58,155,255,0.5);
+  }
+
+  /* Premium liquid-glass surface with light refraction highlight */
+  .liquid-glass {
+    position: relative;
+    background:
+      linear-gradient(155deg, rgba(30,60,120,0.42), rgba(6,14,30,0.66));
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(120,190,255,0.16);
+    box-shadow:
+      0 20px 60px -30px rgba(0,0,0,0.9),
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -20px 40px -30px rgba(31,109,255,0.4);
+    overflow: hidden;
+  }
+  .liquid-glass::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), transparent);
+    pointer-events: none;
   }
 
   .cert-surface {
     background:
-      radial-gradient(120% 120% at 50% -10%, rgba(69,220,174,0.10), transparent 55%),
-      radial-gradient(90% 90% at 100% 0%, rgba(149,232,255,0.08), transparent 55%),
-      linear-gradient(165deg, rgba(16,42,50,0.95), rgba(9,24,30,0.97));
+      radial-gradient(120% 120% at 50% -10%, rgba(31,109,255,0.14), transparent 55%),
+      radial-gradient(90% 90% at 100% 0%, rgba(111,216,255,0.10), transparent 55%),
+      linear-gradient(165deg, rgba(12,26,54,0.95), rgba(5,11,24,0.97));
   }
 
   .text-foil {
@@ -315,10 +342,12 @@
 .holo-card {
   position: relative;
   background:
-    linear-gradient(180deg, hsl(194 52% 12% / 0.9), hsl(193 55% 9% / 0.95)),
-    radial-gradient(120% 80% at 12% -10%, hsl(172 66% 71% / 0.06), transparent 60%);
-  border: 1px solid hsl(180 28% 22%);
-  backdrop-filter: blur(10px);
+    linear-gradient(180deg, hsl(219 52% 11% / 0.72), hsl(220 55% 7% / 0.9)),
+    radial-gradient(120% 80% at 12% -10%, hsl(205 100% 68% / 0.09), transparent 60%);
+  border: 1px solid hsl(210 45% 22% / 0.8);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease, border-color 0.25s ease;
 }
 .holo-card::after {
@@ -326,12 +355,12 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(115deg, transparent 30%, hsl(190 100% 85% / 0.06) 45%, hsl(43 90% 75% / 0.05) 55%, transparent 70%);
+  background: linear-gradient(115deg, transparent 30%, hsl(200 100% 85% / 0.10) 45%, hsl(214 100% 70% / 0.08) 55%, transparent 70%);
   opacity: 0;
   transition: opacity 0.35s ease;
   pointer-events: none;
 }
 .holo-card:hover::after { opacity: 1; }
 .holo-card:hover {
-  box-shadow: 0 18px 50px -24px rgba(0,0,0,0.85), 0 0 0 1px hsl(172 66% 71% / 0.15);
+  box-shadow: 0 18px 50px -24px rgba(0,0,0,0.9), 0 0 0 1px hsl(205 100% 68% / 0.22), 0 0 40px -18px hsl(214 100% 60% / 0.5);
 }

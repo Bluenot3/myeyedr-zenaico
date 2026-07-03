@@ -23,8 +23,8 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
     >
       <defs>
         <linearGradient id="eye-brand" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#45dcae" />
-          <stop offset="1" stopColor="#95e8ff" />
+          <stop offset="0" stopColor="#1f8bff" />
+          <stop offset="1" stopColor="#9fe4ff" />
         </linearGradient>
       </defs>
       <circle cx="24" cy="24" r="22" stroke="url(#eye-brand)" strokeWidth="1" opacity="0.28" />
@@ -37,7 +37,7 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
       />
       <circle cx="24" cy="24" r="6.2" stroke="url(#eye-brand)" strokeWidth="2.2" />
       <circle cx="24" cy="24" r="2.4" fill="url(#eye-brand)" />
-      <circle cx="26.4" cy="21.6" r="1" fill="#fcf9f2" opacity="0.9" />
+      <circle cx="26.4" cy="21.6" r="1" fill="#ffffff" opacity="0.95" />
     </svg>
   );
 }
@@ -66,7 +66,7 @@ export default function Logo({ className = "", markSize = 34, sub }: LogoProps) 
         src={wordmark.url}
         alt="MyEyeDr"
         style={{ height }}
-        className="w-auto select-none drop-shadow-[0_1px_10px_rgba(149,232,255,0.15)]"
+        className="w-auto select-none drop-shadow-[0_1px_12px_rgba(58,155,255,0.28)]"
         draggable={false}
       />
       {sub && (

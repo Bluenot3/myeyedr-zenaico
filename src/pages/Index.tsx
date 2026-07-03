@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, GitBranch, Briefcase, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords } from "lucide-react";
+import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords, Glasses } from "lucide-react";
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
@@ -13,10 +13,10 @@ import ZenSignature from "@/components/recruiting/ZenSignature";
 
 type Tab = "overview" | "pipeline" | "openings" | "pool" | "agents" | "decision" | "library" | "locations";
 
-const NAV: { key: Tab; label: string; icon: typeof LayoutDashboard }[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard },
+const NAV: { key: Tab; label: string; icon: typeof ScanEye }[] = [
+  { key: "overview", label: "Overview", icon: ScanEye },
   { key: "pipeline", label: "Pipeline", icon: GitBranch },
-  { key: "openings", label: "Openings", icon: Briefcase },
+  { key: "openings", label: "Openings", icon: Glasses },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
   { key: "agents", label: "AI Agents", icon: Bot },
   { key: "decision", label: "Decision", icon: Swords },
@@ -42,9 +42,10 @@ const Index = () => {
               <button
                 key={n.key}
                 onClick={() => setTab(n.key)}
-                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all tap-target ${active ? "bg-emerald/12 text-emerald border border-emerald/30" : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-transparent"}`}
+                className={`group relative w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all tap-target ${active ? "liquid-glass text-emerald border border-emerald/40 shadow-[0_0_24px_-8px_hsl(214_100%_60%/0.6)]" : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-transparent"}`}
               >
-                <n.icon className="h-4 w-4" />
+                {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-0.5 rounded-full bg-emerald shadow-[0_0_10px_hsl(214_100%_60%)]" />}
+                <n.icon className={`h-4 w-4 transition-transform ${active ? "scale-110 drop-shadow-[0_0_6px_hsl(214_100%_60%/0.8)]" : "group-hover:scale-105"}`} />
                 {n.label}
               </button>
             );
