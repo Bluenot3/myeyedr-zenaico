@@ -84,7 +84,7 @@ export default function UsersManager() {
         <div>
           <h1 className="font-display text-3xl sm:text-4xl tracking-tight">Team & Access</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-            Invite regionals and managers, set what they can see, and reset passwords. Admins have full access and can use AI.
+            Create accounts with a name, title, role, and locations. Managers only see candidates and openings for their assigned locations — Admins and Regionals see everything.
           </p>
         </div>
         <Button onClick={() => setInviteOpen(true)} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25 tap-target">
