@@ -23,6 +23,7 @@ import { useCandidates, Candidate, usePositions } from "@/hooks/useRecruiting";
 import { useAgents, useTranscripts, useSaveTranscript, analyzeTranscript, ScreeningTranscript } from "@/hooks/useAgents";
 import {
   useGoldenProfiles, useSaveGoldenProfile, useDeleteGoldenProfile, generateGoldenProfile,
+  useHiringDecisions, useRecordDecision, useDeleteDecision,
 } from "@/hooks/useRecruiting";
 import {
   GoldenProfile, GoldenDimension, GOLDEN_DIM_KEYS, GOLDEN_DIM_LABELS,
