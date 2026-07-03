@@ -49,14 +49,24 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
   const [recommendation, setRecommendation] = useState("");
   const [notes, setNotes] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [richForm, setRichForm] = useState<{ template: ScorecardTemplate; existing: CandidateEvaluation | null } | null>(null);
 
   const startTemplate = (t: ScorecardTemplate) => {
+    if (isRich(t)) {
+      setRichForm({ template: t, existing: null });
+      return;
+    }
     setActiveTemplate(t);
     setRatings(ratingsFromTemplate(t.competencies || []));
     setRecommendation("");
     setNotes("");
   };
   const cancelFill = () => setActiveTemplate(null);
+
+  const editRich = (ev: CandidateEvaluation) => {
+    const t = templates.find((x) => x.id === ev.template_id);
+    if (t) setRichForm({ template: t, existing: ev });
+  };
 
   const liveScore = activeTemplate ? computeWeightedScore(ratings, activeTemplate.competencies || []) : 0;
   const ratedCount = ratings.filter((r) => r.score > 0).length;
