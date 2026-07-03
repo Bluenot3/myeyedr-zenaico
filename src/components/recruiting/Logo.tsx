@@ -37,7 +37,7 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
       />
       <circle cx="24" cy="24" r="6.2" stroke="url(#eye-brand)" strokeWidth="2.2" />
       <circle cx="24" cy="24" r="2.4" fill="url(#eye-brand)" />
-      <circle cx="26.4" cy="21.6" r="1" fill="#fcf9f2" opacity="0.9" />
+      <circle cx="26.4" cy="21.6" r="1" fill="#ffffff" opacity="0.95" />
     </svg>
   );
 }
