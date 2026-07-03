@@ -31,24 +31,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ctxLoading, setCtxLoading] = useState(false);
 
   const loadContext = async (uid: string) => {
+    setCtxLoading(true);
     const [{ data: prof }, { data: roleRows }] = await Promise.all([
       supabase.from("profiles").select("id, email, full_name, must_reset_password").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
     setProfile((prof as Profile) ?? null);
     setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
+    setCtxLoading(false);
   };
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
+        setCtxLoading(true);
         setTimeout(() => loadContext(s.user.id), 0);
       } else {
         setProfile(null);
         setRoles([]);
+        setCtxLoading(false);
       }
     });
 
@@ -60,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => sub.subscription.unsubscribe();
   }, []);
+
 
   const refresh = async () => {
     if (session?.user) await loadContext(session.user.id);
