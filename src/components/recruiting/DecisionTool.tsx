@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import {
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
