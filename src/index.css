@@ -341,6 +341,22 @@
     touch-action: manipulation;
   }
 
+  /* Vivid optical-blue primary CTA */
+  .btn-optic {
+    color: #fff;
+    background: linear-gradient(135deg, hsl(214 92% 52%), hsl(200 95% 50%) 55%, hsl(190 92% 52%));
+    background-size: 180% 180%;
+    border: 1px solid hsl(212 100% 66% / 0.55);
+    box-shadow: 0 12px 30px -12px hsl(212 92% 50% / 0.6), inset 0 1px 0 rgba(255,255,255,0.28);
+    transition: background-position 0.5s ease, transform 0.25s ease, box-shadow 0.3s ease;
+  }
+  .btn-optic:hover {
+    background-position: 100% 0;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 40px -12px hsl(212 92% 50% / 0.72), inset 0 1px 0 rgba(255,255,255,0.34);
+  }
+  .btn-optic:active { transform: translateY(0); }
+
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
   /* ===== Premium relevance / match bar ===== */
