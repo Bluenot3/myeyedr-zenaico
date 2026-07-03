@@ -153,7 +153,73 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Command cards */}
+      {/* Next Up — highlighted scheduled event */}
+      {nextEvent && (() => {
+        const em = evMeta(nextEvent.event_type);
+        const cand = candById(nextEvent.candidate_id);
+        const starts = new Date(nextEvent.starts_at);
+        const isToday = starts.toDateString() === new Date().toDateString();
+        const ModeIcon = nextEvent.mode === "Video" ? Video : nextEvent.mode === "In-person" ? MapPin : Phone;
+        return (
+          <button
+            onClick={() => cand && openCandidateTab(cand, "scorecards")}
+            className="w-full text-left relative overflow-hidden rounded-2xl p-5 sm:p-6 group transition-all hover:-translate-y-0.5"
+            style={{
+              background: `linear-gradient(135deg, hsl(${em.hsl} / 0.16), hsl(${em.hsl} / 0.04))`,
+              border: `1px solid hsl(${em.hsl} / 0.35)`,
+              boxShadow: `0 20px 50px -24px hsl(${em.hsl} / 0.6)`,
+            }}
+          >
+            <span className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl opacity-40" style={{ background: `hsl(${em.hsl})` }} />
+            <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={{ background: `hsl(${em.hsl} / 0.18)`, color: `hsl(${em.hsl})`, border: `1.5px solid hsl(${em.hsl} / 0.45)` }}>
+                  <em.icon className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest" style={{ color: `hsl(${em.hsl})`, background: `hsl(${em.hsl} / 0.14)` }}>
+                      <Timer className="h-2.5 w-2.5" /> Next up
+                    </span>
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">{em.label}</span>
+                  </div>
+                  <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground truncate mt-1">
+                    {cand?.full_name || nextEvent.title}
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                    {starts.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    {isToday ? " today" : ` · ${starts.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}`}
+                    {locName(nextEvent.location_id) ? ` · ${locName(nextEvent.location_id)}` : ""}
+                  </p>
+                </div>
+              </div>
+              {/* Badge stats */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="rounded-xl px-3 py-2 text-center min-w-[70px]" style={{ background: `hsl(${em.hsl} / 0.12)`, border: `1px solid hsl(${em.hsl} / 0.3)` }}>
+                  <p className="font-display text-base font-bold leading-none" style={{ color: `hsl(${em.hsl})` }}>{countdown(nextEvent.starts_at)}</p>
+                  <p className="text-[8.5px] font-mono uppercase tracking-wide text-muted-foreground mt-1">starts</p>
+                </div>
+                <div className="rounded-xl px-3 py-2 text-center min-w-[56px] bg-background/40 border border-border/60">
+                  <p className="font-display text-base font-bold leading-none text-foreground">{todayCount}</p>
+                  <p className="text-[8.5px] font-mono uppercase tracking-wide text-muted-foreground mt-1">today</p>
+                </div>
+                <div className="rounded-xl px-3 py-2 text-center min-w-[56px] bg-background/40 border border-border/60">
+                  <p className="font-display text-base font-bold leading-none text-foreground">{weekCount}</p>
+                  <p className="text-[8.5px] font-mono uppercase tracking-wide text-muted-foreground mt-1">7 days</p>
+                </div>
+                {cand && <ScoreRing score={computeMatch(cand).overall} size={48} stroke={4} />}
+              </div>
+            </div>
+            <div className="relative mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
+              {nextEvent.mode && <span className="inline-flex items-center gap-1"><ModeIcon className="h-3 w-3" /> {nextEvent.mode}</span>}
+              <span className="inline-flex items-center gap-1 ml-auto font-medium" style={{ color: `hsl(${em.hsl})` }}>
+                Open notes & scorecards <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </div>
+          </button>
+        );
+      })()}
+
       <div>
         <div className="flex items-center gap-1.5 mb-3">
           <Gauge className="h-4 w-4 text-emerald" />
