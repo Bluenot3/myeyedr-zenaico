@@ -979,9 +979,10 @@ export function useCandidateEvaluations(candidateId: string | null) {
 }
 
 /** All evaluations the current user can access (RLS-scoped) — powers the admin/regional summary. */
-export function useRecentEvaluations(limit = 200) {
+export function useRecentEvaluations(limit = 200, enabled = true) {
   return useQuery({
     queryKey: ["recent_evaluations", limit],
+    enabled,
     queryFn: async () => {
       const { data, error } = await db
         .from("candidate_evaluations")
