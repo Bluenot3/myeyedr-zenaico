@@ -208,11 +208,13 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
                   className="w-full flex items-center gap-2.5 rounded-lg bg-background/40 border border-border/60 p-2.5 text-left hover:border-emerald/40 transition-colors tap-target"
                 >
                   <div className="h-8 w-8 grid place-items-center rounded-lg bg-emerald/12 text-emerald border border-emerald/25 shrink-0">
-                    <ClipboardCheck className="h-4 w-4" />
+                    {t.kind === "phone_screen" ? <Phone className="h-4 w-4" /> : <ClipboardCheck className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-foreground truncate">{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{(t.competencies || []).length} competencies{t.role ? ` · ${t.role}` : ""}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {t.kind === "phone_screen" ? "Phone screen" : t.kind === "interview" ? "Interview" : "Scorecard"} · {(t.competencies || []).length} competencies{t.role ? ` · ${t.role}` : ""}
+                    </p>
                   </div>
                   {match && (
                     <span className="inline-flex items-center gap-0.5 text-[9px] font-mono uppercase text-emerald rounded-full px-1.5 py-0.5 bg-emerald/12 shrink-0">
