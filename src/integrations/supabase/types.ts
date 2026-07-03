@@ -156,6 +156,7 @@ export type Database = {
           best_fit_roles: string
           contact_count: number
           created_at: string
+          documents: Json
           email: string
           full_name: string
           headline: string
@@ -183,6 +184,7 @@ export type Database = {
           best_fit_roles?: string
           contact_count?: number
           created_at?: string
+          documents?: Json
           email?: string
           full_name: string
           headline?: string
@@ -210,6 +212,7 @@ export type Database = {
           best_fit_roles?: string
           contact_count?: number
           created_at?: string
+          documents?: Json
           email?: string
           full_name?: string
           headline?: string
