@@ -265,6 +265,28 @@ export interface CandidateMedia {
   updated_at: string;
 }
 
+export interface CandidateSignal {
+  category: string;
+  title: string;
+  severity: "low" | "medium" | "high";
+  observation: string;
+  why_it_matters: string;
+  questions: string[];
+}
+
+export interface CandidateSignals {
+  id: string;
+  candidate_id: string;
+  risk_level: "low" | "medium" | "high" | "unknown";
+  headline: string;
+  summary: string;
+  signals: CandidateSignal[];
+  model: string;
+  generated_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const db = supabase as any;
 
 
