@@ -1,0 +1,372 @@
+/* MyEyeDr interactive interview / phone-screen evaluation form
+   Faithful port of the standalone HTML form, scoped under .iform so it
+   renders identically on web + mobile without touching the app theme. */
+
+.iform {
+  --navy: #0d2b4a;
+  --navy-2: #123c63;
+  --blue: #1f6fa8;
+  --blue-soft: #eaf5fb;
+  --blue-soft-2: #f3f9fd;
+  --orange: #ff9f2a;
+  --orange-soft: #fff5e8;
+  --green: #16875a;
+  --green-soft: #eaf8f1;
+  --red: #bd2d2d;
+  --red-soft: #fff0f0;
+  --gold: #b97600;
+  --gold-soft: #fff7df;
+  --ink: #122236;
+  --muted: #637084;
+  --line: #b9c9d8;
+  --line-soft: #dfe8f0;
+  --paper: #ffffff;
+  --ifbg: #f5f8fb;
+  --shadow: 0 18px 55px rgba(13, 43, 74, 0.15);
+  --shadow-soft: 0 10px 28px rgba(13, 43, 74, 0.10);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --focus: 0 0 0 4px rgba(31, 111, 168, 0.18);
+
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(31,111,168,0.10), transparent 34rem),
+    radial-gradient(circle at 88% 5%, rgba(255,159,42,0.11), transparent 34rem),
+    linear-gradient(180deg, #f8fbfe 0%, var(--ifbg) 100%);
+  border-radius: var(--radius);
+}
+
+.iform * { box-sizing: border-box; }
+.iform button { cursor: pointer; }
+.iform button, .iform input, .iform textarea, .iform select { font: inherit; }
+
+.iform .app-shell {
+  width: 100%;
+  padding: 14px;
+}
+
+/* ---- Header ---- */
+.iform .top-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  border: 3px solid var(--blue);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #f0f8fe 0%, #e8f3fa 100%);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+}
+.iform .top-card::before {
+  content: "";
+  position: absolute;
+  left: 18px; top: 18px;
+  width: 9px; height: 66px;
+  border-radius: 999px;
+  background: var(--orange);
+  box-shadow: 0 0 0 6px rgba(255,159,42,0.10);
+}
+.iform .brand-line {
+  display: flex; align-items: center; gap: 22px;
+  min-width: 0; padding-left: 30px;
+}
+.iform .logo-text {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 0.95; font-weight: 800;
+  letter-spacing: -1.4px; color: var(--navy);
+  white-space: nowrap;
+}
+.iform .title-stack { min-width: 0; }
+.iform .title-stack h1 {
+  margin: 0; color: var(--navy);
+  font-size: clamp(18px, 2.6vw, 30px);
+  line-height: 1.08; letter-spacing: -0.6px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.iform .title-stack p {
+  margin: 7px 0 0; color: #526071;
+  font-size: clamp(13px, 1.5vw, 15px); line-height: 1.35;
+}
+.iform .header-actions {
+  display: flex; flex-wrap: wrap; justify-content: flex-end;
+  gap: 8px; max-width: 520px;
+}
+.iform .phi-pill {
+  width: 100%; text-align: right; font-weight: 800;
+  color: var(--navy); font-size: 13px; margin-bottom: 2px;
+}
+.iform .mini-btn {
+  border: 1.5px solid var(--line); background: var(--paper);
+  color: var(--navy); border-radius: 999px; padding: 9px 13px;
+  font-weight: 800; font-size: 13px; min-height: 38px;
+  box-shadow: 0 4px 10px rgba(13, 43, 74, 0.08);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.iform .mini-btn:hover, .iform .mini-btn:focus-visible {
+  transform: translateY(-1px); border-color: var(--blue);
+  box-shadow: var(--focus), 0 8px 18px rgba(13, 43, 74, 0.12); outline: none;
+}
+.iform .mini-btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+.iform .mini-btn.orange { background: var(--orange-soft); color: #7a4400; border-color: #f1bd78; }
+.iform .mini-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* ---- Candidate card ---- */
+.iform .candidate-card {
+  margin-top: 12px; border: 2.5px solid var(--blue);
+  border-radius: var(--radius-sm); background: var(--paper);
+  padding: 14px 16px; box-shadow: 0 8px 18px rgba(13, 43, 74, 0.06);
+}
+.iform .candidate-grid {
+  display: grid; grid-template-columns: 1.35fr 1fr 1fr 0.75fr 1fr; gap: 13px;
+}
+.iform .field { min-width: 0; }
+.iform .field label {
+  display: block; color: #5d6877; font-size: 11px; font-weight: 900;
+  letter-spacing: .045em; text-transform: uppercase; margin-bottom: 6px;
+}
+.iform .field input, .iform .field textarea, .iform .field select {
+  width: 100%; min-height: 38px; border: 0;
+  border-bottom: 2px solid var(--line);
+  background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+  color: var(--ink); padding: 8px 4px 7px; outline: none;
+  border-radius: 7px 7px 0 0; min-width: 0;
+}
+.iform .field input:focus, .iform .field textarea:focus, .iform .field select:focus {
+  border-bottom-color: var(--blue);
+  box-shadow: inset 0 -1px 0 var(--blue), var(--focus);
+}
+
+/* ---- Game bar ---- */
+.iform .game-bar {
+  margin-top: 14px; display: grid;
+  grid-template-columns: minmax(280px, 1.15fr) minmax(240px, 0.9fr) minmax(220px, 0.8fr);
+  gap: 12px; align-items: stretch;
+}
+.iform .score-scale, .iform .progress-card, .iform .mode-card {
+  border-radius: 12px; overflow: hidden; box-shadow: 0 9px 22px rgba(13, 43, 74, 0.09);
+}
+.iform .score-scale {
+  display: grid; grid-template-columns: repeat(6, minmax(0, auto));
+  align-items: center; background: var(--navy); color: #fff; min-height: 58px;
+}
+.iform .score-scale > div {
+  padding: 12px 14px; font-size: 13px;
+  border-left: 1px solid rgba(255,255,255,.14); min-width: 0;
+}
+.iform .score-scale > div:first-child { border-left: none; font-weight: 900; }
+.iform .score-scale strong { font-size: 17px; margin-right: 6px; }
+.iform .progress-card, .iform .mode-card {
+  border: 2px solid var(--blue); background: var(--paper); padding: 12px;
+}
+.iform .progress-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.iform .progress-title { font-weight: 900; color: var(--navy); font-size: 14px; }
+.iform .badge {
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 999px;
+  background: var(--gold-soft); color: #7b5100; border: 1px solid #e2bc56;
+  font-weight: 900; font-size: 12px; padding: 6px 9px; white-space: nowrap;
+}
+.iform .meter-wrap { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-top: 9px; }
+.iform .meter-track { height: 14px; background: #e6edf3; border: 1px solid var(--line-soft); border-radius: 999px; overflow: hidden; }
+.iform .meter-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--orange)); transition: width .22s ease; }
+.iform .score-big { min-width: 76px; text-align: right; font-weight: 900; color: var(--navy); font-size: 18px; }
+.iform .mode-card { display: flex; flex-direction: column; gap: 8px; }
+.iform .mode-title { font-size: 12px; color: var(--muted); font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+.iform .mode-switcher { display: flex; flex-wrap: wrap; gap: 7px; }
+.iform .mode-switcher button {
+  border: 1.5px solid var(--line); background: #fbfdff; color: var(--navy);
+  border-radius: 999px; padding: 8px 10px; font-size: 12px; font-weight: 900;
+  min-height: 36px; transition: all .16s ease;
+}
+.iform .mode-switcher button:hover, .iform .mode-switcher button:focus-visible { outline: none; border-color: var(--blue); box-shadow: var(--focus); }
+.iform .mode-switcher button.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* ---- Table ---- */
+.iform .table-header {
+  margin-top: 16px; display: grid;
+  grid-template-columns: 50px minmax(240px, 1.1fr) minmax(240px, 1fr) minmax(180px, 0.55fr) minmax(240px, 0.9fr);
+  background: var(--navy); color: #fff; font-weight: 900;
+  border-radius: 10px 10px 0 0; overflow: hidden;
+}
+.iform .table-header div { padding: 12px; border-left: 1px solid rgba(255,255,255,.16); min-width: 0; }
+.iform .table-header div:first-child { border-left: none; text-align: center; }
+.iform .quest-list { border-left: 1.5px solid var(--line); border-right: 1.5px solid var(--line); background: var(--paper); }
+.iform .quest-row {
+  display: grid;
+  grid-template-columns: 50px minmax(240px, 1.1fr) minmax(240px, 1fr) minmax(180px, 0.55fr) minmax(240px, 0.9fr);
+  min-height: 112px; border-bottom: 1px solid var(--line-soft); background: #fff;
+  transition: box-shadow .18s ease, transform .18s ease, background .18s ease;
+}
+.iform .quest-row:nth-child(even) { background: #f7f9fc; }
+.iform .quest-row.completed { background: linear-gradient(90deg, rgba(234,248,241,.80), #fff 30%, #fff 100%); }
+.iform .cell { padding: 12px 11px; border-left: 1px solid var(--line); min-width: 0; overflow-wrap: anywhere; }
+.iform .cell:first-child {
+  border-left: none; display: flex; align-items: flex-start; justify-content: center;
+  font-weight: 900; color: var(--navy); font-size: 16px; padding-top: 16px;
+}
+.iform .competency h3 { margin: 0 0 6px; color: #26303c; font-size: 16px; line-height: 1.13; letter-spacing: -.15px; font-family: Arial, Helvetica, sans-serif; }
+.iform .area-pill {
+  display: inline-flex; max-width: 100%; align-items: center; gap: 6px; border-radius: 999px;
+  background: var(--blue-soft); border: 1px solid #c6ddec; color: var(--navy-2);
+  padding: 5px 8px; font-weight: 900; font-size: 11px; line-height: 1.15; margin-bottom: 7px;
+}
+.iform .competency p, .iform .question-panel p, .iform .notes-help { margin: 0; color: #5d6877; font-size: 12.5px; line-height: 1.32; }
+.iform .complete-mark {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 9px;
+  color: var(--green); font-size: 11.5px; font-weight: 900; opacity: 0;
+  transform: translateY(3px); transition: opacity .16s ease, transform .16s ease;
+}
+.iform .quest-row.completed .complete-mark { opacity: 1; transform: translateY(0); }
+
+/* mode panes */
+.iform .mode-pane { display: none; }
+.iform[data-view="full"] .mode-pane.full,
+.iform[data-view="quick"] .mode-pane.quick,
+.iform[data-view="scoring"] .mode-pane.scoring,
+.iform[data-view="redflags"] .mode-pane.redflags { display: block; }
+.iform .q-title {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px; color: var(--navy); font-weight: 900; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.iform .tiny-chip {
+  display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-soft);
+  background: #fff; color: var(--muted); border-radius: 999px; padding: 4px 7px;
+  font-size: 10.5px; font-weight: 900; white-space: nowrap;
+}
+.iform .question-list { display: grid; gap: 8px; }
+.iform .question-item {
+  border: 1px solid var(--line-soft); background: linear-gradient(180deg, #fff, #fbfdff);
+  border-radius: 10px; padding: 9px 10px; color: #243348; font-size: 13px; line-height: 1.3;
+}
+.iform .question-item b { color: var(--navy); }
+.iform .look-for, .iform .red-box, .iform .anchor-box { margin-top: 8px; border-radius: 10px; padding: 9px 10px; font-size: 12.5px; line-height: 1.32; }
+.iform .look-for { border: 1px solid #d5e7db; background: var(--green-soft); color: #24513d; }
+.iform .red-box { border: 1px solid #f0bcbc; background: var(--red-soft); color: #6b1d1d; }
+.iform .anchor-box { border: 1px solid #d8e4ee; background: var(--blue-soft-2); color: #32445a; }
+
+/* score cell */
+.iform .score-cell { display: flex; flex-direction: column; gap: 8px; }
+.iform .score-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.iform .score-option { position: relative; }
+.iform .score-option input { position: absolute; opacity: 0; pointer-events: none; }
+.iform .score-option span {
+  display: flex; align-items: center; justify-content: center; min-height: 38px;
+  border: 1.5px solid var(--line); background: #fff; color: var(--navy);
+  border-radius: 10px; font-weight: 900; font-size: 14px; transition: all .14s ease;
+  box-shadow: 0 2px 6px rgba(13,43,74,.05); cursor: pointer;
+}
+.iform .score-option input:focus-visible + span { outline: none; box-shadow: var(--focus); border-color: var(--blue); }
+.iform .score-option input:checked + span { color: #fff; transform: translateY(-1px); box-shadow: 0 8px 16px rgba(13,43,74,.16); }
+.iform .score-option input[value="0"]:checked + span { background: var(--red); border-color: var(--red); }
+.iform .score-option input[value="1"]:checked + span { background: #d67a00; border-color: #d67a00; }
+.iform .score-option input[value="2"]:checked + span { background: var(--gold); border-color: var(--gold); }
+.iform .score-option input[value="3"]:checked + span { background: var(--blue); border-color: var(--blue); }
+.iform .score-option input[value="4"]:checked + span { background: var(--green); border-color: var(--green); }
+.iform .score-label-live {
+  min-height: 24px; border-radius: 999px; background: #edf3f8; color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; padding: 5px 8px;
+  font-size: 11px; font-weight: 900; text-align: center;
+}
+.iform .score-label-live.s0 { background: var(--red-soft); color: var(--red); }
+.iform .score-label-live.s1 { background: #fff0df; color: #9a5200; }
+.iform .score-label-live.s2 { background: var(--gold-soft); color: #7b5100; }
+.iform .score-label-live.s3 { background: var(--blue-soft); color: var(--navy); }
+.iform .score-label-live.s4 { background: var(--green-soft); color: var(--green); }
+
+/* notes */
+.iform textarea.notes {
+  width: 100%; min-height: 82px; max-height: 260px; resize: vertical;
+  border: 1.5px solid var(--line-soft); border-radius: 10px; padding: 10px;
+  background: repeating-linear-gradient(to bottom, #fff 0px, #fff 27px, #edf2f6 28px);
+  color: var(--ink); line-height: 28px; outline: none;
+}
+.iform textarea.notes:focus { border-color: var(--blue); box-shadow: var(--focus); }
+
+/* footer panels */
+.iform .footer-panels { display: grid; grid-template-columns: minmax(290px, 1.1fr) minmax(280px, 0.95fr); gap: 12px; margin-top: 13px; }
+.iform .summary-panel, .iform .risk-panel, .iform .decision-panel {
+  border-radius: 12px; background: var(--paper); border: 2px solid var(--blue); box-shadow: 0 8px 20px rgba(13,43,74,.07);
+}
+.iform .summary-panel {
+  background: var(--blue-soft); padding: 12px 16px; display: grid;
+  grid-template-columns: auto minmax(190px, 1fr) minmax(180px, 1fr); gap: 14px; align-items: center;
+}
+.iform .total-score { font-size: clamp(18px, 2vw, 23px); font-weight: 900; color: var(--navy); white-space: nowrap; }
+.iform .interp { color: var(--navy); font-size: 13px; line-height: 1.38; font-weight: 700; }
+.iform .recommendation-pill {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px;
+  border-radius: 999px; background: #fff; color: var(--navy); border: 1.5px solid #bed5e6;
+  font-size: 14px; font-weight: 900; padding: 8px 13px; text-align: center;
+}
+.iform .risk-panel { padding: 12px 14px; }
+.iform .risk-title { font-weight: 900; color: var(--navy); margin-bottom: 9px; }
+.iform .risk-grid { display: grid; grid-template-columns: repeat(5, minmax(110px, 1fr)); gap: 10px; }
+.iform .risk-item { border: 1px solid var(--line-soft); border-radius: 10px; background: #fbfdff; padding: 9px; min-width: 0; }
+.iform .risk-item > label:first-child { display: block; font-weight: 900; color: #26303c; font-size: 12px; margin-bottom: 7px; }
+.iform .risk-options { display: flex; flex-wrap: wrap; gap: 7px; }
+.iform .risk-options label { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; color: #5a6574; cursor: pointer; }
+.iform .watchout-panel { margin-top: 12px; border: 2px solid var(--orange); border-radius: 12px; background: var(--orange-soft); padding: 12px 14px; box-shadow: 0 8px 20px rgba(185,118,0,.09); }
+.iform .watchout-panel h3 { margin: 0 0 6px; color: var(--navy); font-size: 15px; font-family: Arial, Helvetica, sans-serif; }
+.iform .watchout-panel p { margin: 0; font-size: 12.5px; line-height: 1.35; color: #5b401c; }
+.iform .decision-panel { margin-top: 12px; border-color: var(--orange); padding: 13px 14px; }
+.iform .decision-grid { display: grid; grid-template-columns: minmax(220px, 0.8fr) repeat(3, minmax(200px, 1fr)); gap: 12px; }
+.iform .decision-title { color: var(--navy); font-weight: 900; margin-bottom: 8px; }
+.iform .decision-options { display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 800; }
+.iform .decision-options label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.iform .decision-panel textarea { width: 100%; min-height: 72px; border: 1.5px solid var(--line-soft); border-radius: 10px; padding: 9px; resize: vertical; outline: none; }
+.iform .decision-panel textarea:focus { border-color: var(--blue); box-shadow: var(--focus); }
+.iform .manager-final { margin-top: 12px; display: grid; grid-template-columns: 1fr 170px 170px; gap: 12px; align-items: end; }
+
+/* action bar */
+.iform .form-actions {
+  position: sticky; bottom: 0; margin-top: 14px; display: flex; flex-wrap: wrap;
+  gap: 8px; justify-content: flex-end; align-items: center;
+  padding: 12px 14px; border-radius: 14px; border: 2px solid var(--blue);
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+  box-shadow: 0 -8px 24px rgba(13,43,74,.12);
+}
+.iform .form-actions .live { margin-right: auto; font-weight: 900; color: var(--navy); font-size: 13px; }
+
+/* responsive */
+@media (max-width: 1100px) {
+  .iform .candidate-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .iform .candidate-grid .field:first-child { grid-column: span 2; }
+  .iform .game-bar { grid-template-columns: 1fr; }
+  .iform .score-scale { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .iform .table-header { display: none; }
+  .iform .quest-list { border: 0; background: transparent; display: grid; gap: 12px; margin-top: 14px; }
+  .iform .quest-row, .iform .quest-row:nth-child(even) {
+    display: grid; grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-areas: "num comp" "num question" "num score" "num notes";
+    border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden;
+    background: #fff; box-shadow: 0 8px 20px rgba(13,43,74,.07);
+  }
+  .iform .quest-row .cell { border-left: none; border-top: 1px solid var(--line-soft); }
+  .iform .quest-row .cell:first-child { grid-area: num; border-top: none; border-right: 1px solid var(--line-soft); padding-top: 16px; }
+  .iform .quest-row .competency { grid-area: comp; border-top: none; }
+  .iform .quest-row .question-cell { grid-area: question; }
+  .iform .quest-row .score-cell { grid-area: score; }
+  .iform .quest-row .notes-cell { grid-area: notes; }
+  .iform .footer-panels { grid-template-columns: 1fr; }
+  .iform .risk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .iform .summary-panel { grid-template-columns: 1fr; }
+  .iform .decision-grid { grid-template-columns: 1fr; }
+  .iform .manager-final { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .iform .app-shell { padding: 10px; }
+  .iform .top-card { grid-template-columns: 1fr; padding: 14px; }
+  .iform .top-card::before { left: 14px; top: 15px; height: 56px; width: 7px; }
+  .iform .brand-line { padding-left: 23px; gap: 12px; align-items: flex-start; }
+  .iform .logo-text { font-size: 28px; }
+  .iform .header-actions { justify-content: flex-start; max-width: none; }
+  .iform .phi-pill { text-align: left; }
+  .iform .candidate-grid { grid-template-columns: 1fr; }
+  .iform .candidate-grid .field:first-child { grid-column: auto; }
+  .iform .score-scale { grid-template-columns: 1fr 1fr; }
+  .iform .score-options { grid-template-columns: repeat(5, minmax(40px, 1fr)); }
+  .iform .risk-grid { grid-template-columns: 1fr; }
+}

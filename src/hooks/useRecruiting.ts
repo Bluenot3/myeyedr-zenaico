@@ -157,7 +157,19 @@ export interface Competency {
   label: string;
   weight: number;
   guidance: string;
+  // Rich interview / phone-screen fields (optional; used by interactive forms)
+  title?: string;
+  area?: string;
+  evidence?: string;
+  q1?: string;
+  q2?: string;
+  quick?: string;
+  lookFor?: string;
+  anchors?: string;
+  redFlags?: string;
 }
+
+export type TemplateKind = "scorecard" | "interview" | "phone_screen";
 
 export interface ScorecardTemplate {
   id: string;
@@ -165,6 +177,7 @@ export interface ScorecardTemplate {
   role: string;
   position_id: string | null;
   description: string;
+  kind: TemplateKind;
   competencies: Competency[];
   is_default: boolean;
   created_by: string;
@@ -175,8 +188,24 @@ export interface ScorecardTemplate {
 export interface EvaluationRating {
   id: string;
   label: string;
-  score: number; // 0 (unrated) .. 5
+  score: number; // 0 (unrated) .. 5 (star flow) or 0..4 (interview flow)
   comment: string;
+}
+
+export interface EvaluationDetails {
+  kind?: TemplateKind;
+  scale?: number; // max per-competency score (4 for interview forms, 5 for star)
+  total?: number; // raw total
+  maxTotal?: number;
+  recLabel?: string; // Strong Hire / Hireable / ...
+  risks?: Record<string, string>;
+  finalDecision?: string;
+  bestReason?: string;
+  biggestConcern?: string;
+  trainingPriority?: string;
+  managerInitials?: string;
+  location?: string;
+  interviewDate?: string;
 }
 
 export interface CandidateEvaluation {
@@ -191,6 +220,7 @@ export interface CandidateEvaluation {
   overall_score: number;
   recommendation: string; // strong_yes | yes | neutral | no | strong_no
   notes: string;
+  details?: EvaluationDetails;
   submitted: boolean;
   created_at: string;
   updated_at: string;

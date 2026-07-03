@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import {
-  ClipboardCheck, Plus, Star, Trash2, Save, Users, ChevronDown, ChevronUp, Sparkles,
+  ClipboardCheck, Plus, Star, Trash2, Save, Users, ChevronDown, ChevronUp, Sparkles, Phone, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   Candidate, ScorecardTemplate, EvaluationRating, CandidateEvaluation,
   useScorecardTemplates, useCandidateEvaluations, useCreateEvaluation, useDeleteEvaluation,
@@ -15,11 +16,14 @@ import {
 } from "@/lib/scorecard";
 import { initials } from "@/lib/recruiting";
 import ScoreRing from "./ScoreRing";
+import InterviewEvaluationForm from "./InterviewEvaluationForm";
 
 interface Props {
   candidate: Candidate;
   eventId?: string | null;
 }
+
+const isRich = (t: ScorecardTemplate) => t.kind === "interview" || t.kind === "phone_screen";
 
 export default function EvaluationPanel({ candidate, eventId }: Props) {
   const { profile } = useAuth();
@@ -45,14 +49,24 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
   const [recommendation, setRecommendation] = useState("");
   const [notes, setNotes] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [richForm, setRichForm] = useState<{ template: ScorecardTemplate; existing: CandidateEvaluation | null } | null>(null);
 
   const startTemplate = (t: ScorecardTemplate) => {
+    if (isRich(t)) {
+      setRichForm({ template: t, existing: null });
+      return;
+    }
     setActiveTemplate(t);
     setRatings(ratingsFromTemplate(t.competencies || []));
     setRecommendation("");
     setNotes("");
   };
   const cancelFill = () => setActiveTemplate(null);
+
+  const editRich = (ev: CandidateEvaluation) => {
+    const t = templates.find((x) => x.id === ev.template_id);
+    if (t) setRichForm({ template: t, existing: ev });
+  };
 
   const liveScore = activeTemplate ? computeWeightedScore(ratings, activeTemplate.competencies || []) : 0;
   const ratedCount = ratings.filter((r) => r.score > 0).length;
@@ -194,11 +208,13 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
                   className="w-full flex items-center gap-2.5 rounded-lg bg-background/40 border border-border/60 p-2.5 text-left hover:border-emerald/40 transition-colors tap-target"
                 >
                   <div className="h-8 w-8 grid place-items-center rounded-lg bg-emerald/12 text-emerald border border-emerald/25 shrink-0">
-                    <ClipboardCheck className="h-4 w-4" />
+                    {t.kind === "phone_screen" ? <Phone className="h-4 w-4" /> : <ClipboardCheck className="h-4 w-4" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-foreground truncate">{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{(t.competencies || []).length} competencies{t.role ? ` · ${t.role}` : ""}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {t.kind === "phone_screen" ? "Phone screen" : t.kind === "interview" ? "Interview" : "Scorecard"} · {(t.competencies || []).length} competencies{t.role ? ` · ${t.role}` : ""}
+                    </p>
                   </div>
                   {match && (
                     <span className="inline-flex items-center gap-0.5 text-[9px] font-mono uppercase text-emerald rounded-full px-1.5 py-0.5 bg-emerald/12 shrink-0">
@@ -227,17 +243,37 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
         ) : (
           <div className="space-y-2">
             {evaluations.map((ev) => (
-              <EvalCard key={ev.id} ev={ev} expanded={expanded === ev.id} onToggle={() => setExpanded((x) => (x === ev.id ? null : ev.id))} onDelete={() => deleteEval.mutate({ id: ev.id, candidate_id: candidate.id })} />
+              <EvalCard key={ev.id} ev={ev} expanded={expanded === ev.id} onToggle={() => setExpanded((x) => (x === ev.id ? null : ev.id))} onEdit={() => editRich(ev)} onDelete={() => deleteEval.mutate({ id: ev.id, candidate_id: candidate.id })} />
             ))}
           </div>
         )}
       </div>
+
+      {/* Rich interactive interview / phone-screen form */}
+      <Dialog open={!!richForm} onOpenChange={(o) => !o && setRichForm(null)}>
+        <DialogContent className="max-w-[1100px] w-[calc(100vw-16px)] h-[calc(100vh-24px)] sm:h-[92vh] overflow-y-auto p-0 gap-0 bg-transparent border-0 shadow-none">
+          <DialogTitle className="sr-only">{richForm?.template.name || "Evaluation form"}</DialogTitle>
+          {richForm && (
+            <InterviewEvaluationForm
+              candidate={candidate}
+              template={richForm.template}
+              eventId={eventId}
+              evaluatorName={evaluatorName}
+              existing={richForm.existing}
+              onDone={() => setRichForm(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function EvalCard({ ev, expanded, onToggle, onDelete }: { ev: CandidateEvaluation; expanded: boolean; onToggle: () => void; onDelete: () => void }) {
+function EvalCard({ ev, expanded, onToggle, onEdit, onDelete }: { ev: CandidateEvaluation; expanded: boolean; onToggle: () => void; onEdit: () => void; onDelete: () => void }) {
   const rec = recMeta(ev.recommendation);
+  const d = ev.details;
+  const rich = !!d?.kind && (d.kind === "interview" || d.kind === "phone_screen");
+  const scale = d?.scale || 5;
   return (
     <div className="glass-panel rounded-xl p-3">
       <button onClick={onToggle} className="w-full flex items-center gap-3 text-left">
@@ -246,12 +282,15 @@ function EvalCard({ ev, expanded, onToggle, onDelete }: { ev: CandidateEvaluatio
           <div className="flex items-center gap-2">
             <span className="h-5 w-5 grid place-items-center rounded-full bg-holo/12 text-holo text-[8px] font-bold shrink-0">{initials(ev.evaluator)}</span>
             <p className="text-xs font-semibold text-foreground truncate">{ev.evaluator}</p>
+            {rich && <span className="shrink-0 text-[8px] font-mono uppercase text-holo rounded-full px-1.5 py-0.5 bg-holo/12">{d?.kind === "phone_screen" ? "phone" : "interview"}</span>}
           </div>
-          <p className="text-[10px] text-muted-foreground truncate">{ev.template_name} · {new Date(ev.created_at).toLocaleDateString()}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{ev.template_name} · {new Date(ev.created_at).toLocaleDateString()}{rich && d?.total != null ? ` · ${d.total}/${d.maxTotal}` : ""}</p>
         </div>
-        {ev.recommendation && (
+        {rich && d?.recLabel ? (
+          <span className="shrink-0 text-[10px] font-medium rounded-md px-2 py-1" style={{ color: `hsl(${rec.hsl})`, background: `hsl(${rec.hsl} / 0.12)` }}>{d.recLabel}</span>
+        ) : ev.recommendation ? (
           <span className="shrink-0 text-[10px] font-medium rounded-md px-2 py-1" style={{ color: `hsl(${rec.hsl})`, background: `hsl(${rec.hsl} / 0.12)` }}>{rec.label}</span>
-        )}
+        ) : null}
         {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
       {expanded && (
@@ -260,19 +299,40 @@ function EvalCard({ ev, expanded, onToggle, onDelete }: { ev: CandidateEvaluatio
             <div key={r.id}>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-foreground/85 truncate">{r.label}</span>
-                <span className="inline-flex items-center gap-0.5 shrink-0">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`h-3 w-3 ${i < r.score ? "fill-gold text-gold" : "text-muted-foreground/25"}`} />
-                  ))}
-                </span>
+                {rich ? (
+                  <span className="shrink-0 text-[10px] font-bold rounded-md px-1.5 py-0.5 bg-muted text-foreground/80">{r.score}/{scale}</span>
+                ) : (
+                  <span className="inline-flex items-center gap-0.5 shrink-0">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`h-3 w-3 ${i < r.score ? "fill-gold text-gold" : "text-muted-foreground/25"}`} />
+                    ))}
+                  </span>
+                )}
               </div>
               {r.comment && <p className="text-[10px] text-muted-foreground italic mt-0.5">{r.comment}</p>}
             </div>
           ))}
-          {ev.notes && <p className="text-[11px] text-foreground/80 rounded-lg bg-background/40 border border-border/50 p-2 mt-2">{ev.notes}</p>}
-          <div className="flex justify-end">
+          {rich && d && (
+            <div className="space-y-1.5 mt-2">
+              {d.finalDecision && <p className="text-[11px] text-foreground/85"><b>Final decision:</b> {d.finalDecision}</p>}
+              {d.bestReason && <p className="text-[10px] text-foreground/75 rounded-lg bg-background/40 border border-border/50 p-2"><b>Best reason:</b> {d.bestReason}</p>}
+              {d.biggestConcern && <p className="text-[10px] text-foreground/75 rounded-lg bg-background/40 border border-border/50 p-2"><b>Biggest concern:</b> {d.biggestConcern}</p>}
+              {d.trainingPriority && <p className="text-[10px] text-foreground/75 rounded-lg bg-background/40 border border-border/50 p-2"><b>Next step:</b> {d.trainingPriority}</p>}
+              {d.risks && Object.keys(d.risks).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(d.risks).map(([area, lvl]) => (
+                    <span key={area} className="text-[9px] rounded-full px-1.5 py-0.5 bg-muted text-muted-foreground">{area}: {lvl}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {!rich && ev.notes && <p className="text-[11px] text-foreground/80 rounded-lg bg-background/40 border border-border/50 p-2 mt-2">{ev.notes}</p>}
+          <div className="flex justify-end gap-3">
+            {rich && <button onClick={onEdit} className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>}
             <button onClick={onDelete} className="text-[10px] text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Remove</button>
           </div>
+
         </div>
       )}
     </div>
