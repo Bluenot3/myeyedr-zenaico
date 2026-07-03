@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
-import { Users, Briefcase, Award, Sparkles, TrendingUp, Flame, Activity, ArrowRight } from "lucide-react";
+import {
+  Users, Briefcase, Award, Sparkles, TrendingUp, Flame, Activity, ArrowRight,
+  UploadCloud, PhoneOutgoing, Bot, Clock, Star, ClipboardCheck, ShieldAlert, Gauge, ChevronRight,
+} from "lucide-react";
 import { useCandidates, usePositions, useLocations, Candidate } from "@/hooks/useRecruiting";
-import { STAGES, stageMeta, relativeTime, initials, REGIONS } from "@/lib/recruiting";
+import { STAGES, stageMeta, initials, REGIONS } from "@/lib/recruiting";
+import { computeMatch, nextAction, hoursSince } from "@/lib/matchScore";
 import StatCard from "./StatCard";
 import CandidateProfile from "./CandidateProfile";
 import StageBadge from "./StageBadge";
+import ScoreRing from "./ScoreRing";
 import HoloStrip from "./HoloStrip";
 import { EyeMark } from "./Logo";
 
@@ -14,18 +19,56 @@ export default function Overview() {
   const { data: locations = [] } = useLocations();
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
+  const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
+  const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
 
-  const stats = useMemo(() => {
-    const active = candidates.filter((c) => c.status === "active");
+  const active = useMemo(() => candidates.filter((c) => c.status === "active"), [candidates]);
+
+  // per-candidate match compute (memoized)
+  const enriched = useMemo(
+    () => candidates.map((c) => ({ c, m: computeMatch(c), action: nextAction(c, computeMatch(c)) })),
+    [candidates]
+  );
+
+  const cmd = useMemo(() => {
+    const a = enriched.filter((e) => e.c.status === "active");
     return {
-      active: active.length,
-      openings: positions.filter((p) => p.status === "open").reduce((n, p) => n + p.openings, 0),
-      offers: candidates.filter((c) => c.stage === "offer").length,
-      hires: candidates.filter((c) => c.stage === "hired").length,
-      pool: candidates.filter((c) => c.in_talent_pool).length,
-      avgScore: active.length ? Math.round(active.reduce((s, c) => s + c.score, 0) / active.length) : 0,
+      newUploads: candidates.filter((c) => c.stage === "applied").length,
+      needOutreach: candidates.filter((c) => c.contact_count === 0 && c.status === "active").length,
+      aiReady: candidates.filter((c) => c.stage === "screening").length,
+      stuck: a.filter((e) => hoursSince(e.c.last_contacted_at) > 48 && !["hired"].includes(e.c.stage)).length,
+      highMatch: a.filter((e) => e.m.overall >= 85).length,
+      scheduleRisk: a.filter((e) => ["poor", "unavailable"].includes(e.m.availability.state)).length,
+      scorecardsMissing: candidates.filter((c) => ["interview", "assessment"].includes(c.stage) && c.rating === 0).length,
+      review: candidates.filter((c) => c.stage === "offer").length,
     };
-  }, [candidates, positions]);
+  }, [enriched, candidates]);
+
+  const stats = useMemo(() => ({
+    active: active.length,
+    openings: positions.filter((p) => p.status === "open").reduce((n, p) => n + p.openings, 0),
+    hires: candidates.filter((c) => c.stage === "hired").length,
+    pool: candidates.filter((c) => c.in_talent_pool).length,
+    avgScore: enriched.length ? Math.round(enriched.filter((e) => e.c.status === "active").reduce((s, e) => s + e.m.overall, 0) / Math.max(1, active.length)) : 0,
+  }), [active, candidates, positions, enriched]);
+
+  // Next best actions — prioritize high-urgency, then stuck, then high match
+  const nextBest = useMemo(() => {
+    return [...enriched]
+      .filter((e) => e.c.status === "active" && e.c.stage !== "hired")
+      .map((e) => {
+        const stuckH = hoursSince(e.c.last_contacted_at);
+        let priority = 0;
+        if (e.action.urgency === "high") priority += 40;
+        if (e.c.contact_count === 0) priority += 30;
+        if (stuckH > 48) priority += 25;
+        if (e.m.availability.state === "unverified") priority += 15;
+        priority += e.m.overall * 0.2;
+        return { ...e, priority };
+      })
+      .sort((x, y) => y.priority - x.priority)
+      .slice(0, 6);
+  }, [enriched]);
 
   const funnel = useMemo(
     () => STAGES.map((s) => ({ ...s, count: candidates.filter((c) => c.stage === s.key).length })),
@@ -33,27 +76,16 @@ export default function Overview() {
   );
   const funnelMax = Math.max(1, ...funnel.map((f) => f.count));
 
-  const urgent = useMemo(
-    () => positions.filter((p) => p.status === "open" && (p.priority === "urgent" || p.priority === "high")).slice(0, 5),
-    [positions]
-  );
-
-  const regionRows = useMemo(
-    () => REGIONS.map((r) => ({
-      region: r,
-      candidates: candidates.filter((c) => c.region === r && c.status === "active").length,
-      openings: positions.filter((p) => p.region === r && p.status === "open").length,
-    })),
-    [candidates, positions]
-  );
-
-  const recent = useMemo(
-    () => [...candidates].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 6),
-    [candidates]
-  );
-
-  const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
-  const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
+  const commandCards = [
+    { label: "New Uploads", value: cmd.newUploads, icon: UploadCloud, tone: "cyan" as const, sub: "just applied" },
+    { label: "Need Outreach", value: cmd.needOutreach, icon: PhoneOutgoing, tone: "orange" as const, sub: "not contacted" },
+    { label: "AI Screen Ready", value: cmd.aiReady, icon: Bot, tone: "holo" as const, sub: "queue a call" },
+    { label: "Stuck 48h+", value: cmd.stuck, icon: Clock, tone: "orange" as const, sub: "aging out" },
+    { label: "High Match", value: cmd.highMatch, icon: Star, tone: "emerald" as const, sub: "85+ score" },
+    { label: "Schedule Risk", value: cmd.scheduleRisk, icon: ShieldAlert, tone: "orange" as const, sub: "availability" },
+    { label: "Scorecards Missing", value: cmd.scorecardsMissing, icon: ClipboardCheck, tone: "gold" as const, sub: "post-interview" },
+    { label: "Ready to Review", value: cmd.review, icon: Award, tone: "gold" as const, sub: "manager call" },
+  ];
 
   return (
     <div className="space-y-6 animate-rise">
@@ -61,103 +93,103 @@ export default function Overview() {
       <div className="cert-surface rounded-2xl p-5 sm:p-7 relative overflow-hidden">
         <EyeMark size={150} className="absolute -right-8 -top-8 opacity-20" spin />
         <div className="relative">
-          <p className="micro-label text-emerald mb-2">MyEyeDr · Regional Talent Command</p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight">
-            Recruiting Command Center
-          </h1>
+          <p className="micro-label text-emerald mb-2">MyEyeDr · Candidate Command</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight">Today's Hiring Command</h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-            Full-access administrator view across every office. Track candidates through the pipeline,
-            keep a verified credential ledger, and place talent where they fit best.
+            Every candidate, every open seat, every next action in one operator view. Upload a résumé, know the next move in under 60 seconds.
           </p>
           <HoloStrip className="mt-4 max-w-xs" />
         </div>
       </div>
 
+      {/* Command cards */}
+      <div>
+        <div className="flex items-center gap-1.5 mb-3">
+          <Gauge className="h-4 w-4 text-emerald" />
+          <h2 className="font-display text-lg font-semibold">Operational Snapshot</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {commandCards.map((cc) => (
+            <StatCard key={cc.label} label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
+          ))}
+        </div>
+      </div>
+
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Active" value={stats.active} icon={Users} tone="cyan" sub="in pipeline" />
-        <StatCard label="Openings" value={stats.openings} icon={Briefcase} tone="emerald" sub="seats to fill" />
-        <StatCard label="Offers Out" value={stats.offers} icon={Award} tone="gold" sub="awaiting" />
+        <StatCard label="Open Seats" value={stats.openings} icon={Briefcase} tone="emerald" sub="to fill" />
         <StatCard label="Hired" value={stats.hires} icon={TrendingUp} tone="lime" sub="this cycle" />
         <StatCard label="Talent Pool" value={stats.pool} icon={Sparkles} tone="gold" sub="kept warm" />
-        <StatCard label="Avg Score" value={stats.avgScore} icon={Activity} tone="holo" sub="active pool" />
+        <StatCard label="Avg Match" value={stats.avgScore} icon={Activity} tone="holo" sub="active pool" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Funnel */}
+        {/* Next Best Actions */}
         <div className="lg:col-span-2 glass-panel rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display text-lg font-semibold">Pipeline Funnel</h3>
-            <span className="text-[11px] text-muted-foreground">{candidates.length} total candidates</span>
+          <div className="flex items-center gap-1.5 mb-4">
+            <Flame className="h-4 w-4 text-orange" />
+            <h3 className="font-display text-lg font-semibold">Next Best Actions</h3>
+            <span className="ml-auto text-[11px] text-muted-foreground">prioritized</span>
           </div>
-          <div className="space-y-2.5">
-            {funnel.map((f) => (
-              <div key={f.key} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[11px] font-mono uppercase tracking-wide text-right" style={{ color: `hsl(${f.hsl})` }}>{f.label}</span>
-                <div className="flex-1 h-6 rounded-md bg-secondary/50 overflow-hidden relative">
-                  <div className="h-full rounded-md transition-all duration-700 flex items-center px-2" style={{ width: `${(f.count / funnelMax) * 100}%`, background: `hsl(${f.hsl} / 0.35)`, borderRight: `2px solid hsl(${f.hsl})` }}>
+          <div className="space-y-2">
+            {nextBest.length === 0 && <p className="text-xs text-muted-foreground">All clear — no pending actions.</p>}
+            {nextBest.map(({ c, m, action }) => (
+              <button key={c.id} onClick={() => openCandidate(c)} className="w-full flex items-center gap-3 rounded-lg bg-background/40 border border-border/60 p-2.5 hover:border-emerald/40 transition-colors tap-target text-left">
+                <ScoreRing score={m.overall} size={40} stroke={4} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-foreground truncate">{c.full_name}</span>
+                    <StageBadge stage={c.stage} size="sm" />
                   </div>
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-foreground">{f.count}</span>
+                  <p className="text-[10px] text-muted-foreground truncate">{c.applied_role} · {locName(c.location_id) || c.region}</p>
                 </div>
-              </div>
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-2 py-1 shrink-0"
+                  style={{
+                    color: action.urgency === "high" ? "hsl(28 86% 63%)" : "hsl(161 66% 57%)",
+                    background: action.urgency === "high" ? "hsl(28 86% 63% / 0.12)" : "hsl(161 66% 57% / 0.1)",
+                  }}
+                >
+                  {action.label} <ChevronRight className="h-3 w-3" />
+                </span>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Urgent openings */}
+        {/* Funnel */}
         <div className="glass-panel rounded-xl p-5">
-          <div className="flex items-center gap-1.5 mb-4">
-            <Flame className="h-4 w-4 text-orange" />
-            <h3 className="font-display text-lg font-semibold">Priority Openings</h3>
-          </div>
-          <div className="space-y-2">
-            {urgent.length === 0 && <p className="text-xs text-muted-foreground">No urgent openings.</p>}
-            {urgent.map((p) => (
-              <div key={p.id} className="rounded-lg bg-background/40 border border-border/60 p-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-foreground truncate">{p.title}</span>
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full shrink-0" style={{ color: p.priority === "urgent" ? "hsl(var(--destructive))" : "hsl(var(--orange))", background: p.priority === "urgent" ? "hsl(var(--destructive)/0.12)" : "hsl(var(--orange)/0.12)" }}>{p.priority}</span>
+          <h3 className="font-display text-lg font-semibold mb-4">Pipeline Funnel</h3>
+          <div className="space-y-2.5">
+            {funnel.map((f) => (
+              <div key={f.key} className="flex items-center gap-2">
+                <span className="w-20 shrink-0 text-[10px] font-mono uppercase tracking-wide text-right truncate" style={{ color: `hsl(${f.hsl})` }}>{f.label}</span>
+                <div className="flex-1 h-5 rounded-md bg-secondary/50 overflow-hidden relative">
+                  <div className="h-full rounded-md transition-all duration-700" style={{ width: `${(f.count / funnelMax) * 100}%`, background: `hsl(${f.hsl} / 0.35)`, borderRight: `2px solid hsl(${f.hsl})` }} />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-foreground">{f.count}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{locName(p.location_id)} · {p.openings} seat{p.openings > 1 ? "s" : ""}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Regional coverage */}
-        <div className="glass-panel rounded-xl p-5">
-          <h3 className="font-display text-lg font-semibold mb-4">Regional Coverage</h3>
-          <div className="space-y-3">
-            {regionRows.map((r) => (
-              <div key={r.region} className="flex items-center gap-3">
-                <span className="w-32 shrink-0 text-xs text-foreground truncate">{r.region}</span>
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] text-cyan"><Users className="h-3 w-3" /> {r.candidates}</span>
-                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald"><Briefcase className="h-3 w-3" /> {r.openings}</span>
-                </div>
+      {/* Regional coverage */}
+      <div className="glass-panel rounded-xl p-5">
+        <h3 className="font-display text-lg font-semibold mb-4">Regional Coverage</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {REGIONS.map((r) => {
+            const cand = active.filter((c) => c.region === r).length;
+            const opens = positions.filter((p) => p.region === r && p.status === "open").length;
+            return (
+              <div key={r} className="flex items-center gap-3 rounded-lg bg-background/40 border border-border/60 p-2.5">
+                <span className="flex-1 text-xs text-foreground truncate">{r}</span>
+                <span className="inline-flex items-center gap-1 text-[11px] text-cyan"><Users className="h-3 w-3" /> {cand}</span>
+                <span className="inline-flex items-center gap-1 text-[11px] text-emerald"><Briefcase className="h-3 w-3" /> {opens}</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent activity */}
-        <div className="glass-panel rounded-xl p-5">
-          <h3 className="font-display text-lg font-semibold mb-4">Recent Activity</h3>
-          <div className="space-y-2">
-            {recent.map((c) => (
-              <button key={c.id} onClick={() => openCandidate(c)} className="w-full flex items-center gap-2.5 rounded-lg p-2 hover:bg-muted/40 transition-colors tap-target text-left">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[11px] font-bold" style={{ background: `hsl(${stageMeta(c.stage).hsl}/0.14)`, color: `hsl(${stageMeta(c.stage).hsl})` }}>{initials(c.full_name)}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{c.full_name}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{c.applied_role}</p>
-                </div>
-                <StageBadge stage={c.stage} size="sm" />
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-              </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 

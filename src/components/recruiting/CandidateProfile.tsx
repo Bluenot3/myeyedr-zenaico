@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
-  Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight,
+  Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
 } from "lucide-react";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
@@ -20,6 +20,8 @@ import {
   useAddNote, useUpdateNote, useDeleteNote, useLocations, usePositions,
 } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, initials, relativeTime, scoreTone, TONE_HSL, BADGE_TYPES, badgeMeta } from "@/lib/recruiting";
+import { computeMatch } from "@/lib/matchScore";
+import { FactorBreakdown, AvailabilityGauge, RiskReadiness, VerificationChecklist, MatchBadgeChip } from "./MatchVisuals";
 import BlockchainLedger from "./BlockchainLedger";
 import ScoreRing from "./ScoreRing";
 import StageBadge from "./StageBadge";
@@ -59,6 +61,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
   if (!candidate) return null;
   const loc = locations.find((l) => l.id === candidate.location_id);
   const sTone = TONE_HSL[scoreTone(candidate.score)];
+  const m = computeMatch(candidate);
 
   const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
 
@@ -140,7 +143,10 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
                 </span>
               </div>
             </div>
-            <ScoreRing score={candidate.score} size={64} label="score" />
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <ScoreRing score={m.overall} size={64} label="match" />
+              <span className="text-[8px] font-mono uppercase tracking-wide text-center leading-tight max-w-[64px]" style={{ color: `hsl(${m.categoryHsl})` }}>{m.category}</span>
+            </div>
           </div>
 
           {/* Quick contact */}
@@ -187,13 +193,50 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="ledger" className="px-5 sm:px-6 py-4">
-          <TabsList className="w-full grid grid-cols-4">
+        <Tabs defaultValue="match" className="px-5 sm:px-6 py-4">
+          <TabsList className="w-full grid grid-cols-5">
+            <TabsTrigger value="match" className="text-xs gap-1"><Gauge className="h-3.5 w-3.5" /> Match</TabsTrigger>
             <TabsTrigger value="ledger" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Ledger</TabsTrigger>
             <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
             <TabsTrigger value="notes" className="text-xs">Notes</TabsTrigger>
           </TabsList>
+
+          {/* Match score breakdown */}
+          <TabsContent value="match" className="mt-4 space-y-4">
+            <div className="glass-panel rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <ScoreRing score={m.overall} size={56} stroke={5} />
+                <div className="min-w-0">
+                  <p className="font-display text-lg font-bold leading-none" style={{ color: `hsl(${m.categoryHsl})` }}>{m.category}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">Weighted role-fit {m.raw} → gated {m.overall}</p>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed rounded-lg bg-background/40 border border-border/50 p-2.5">{m.explanation}</p>
+            </div>
+
+            <RiskReadiness m={m} />
+            <AvailabilityGauge m={m} />
+
+            <div className="glass-panel rounded-xl p-4">
+              <h4 className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-3">Score Breakdown</h4>
+              <FactorBreakdown factors={m.factors} />
+            </div>
+
+            {m.badges.length > 0 && (
+              <div className="glass-panel rounded-xl p-4">
+                <h4 className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-2.5">Signals & Badges</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {m.badges.map((b) => <MatchBadgeChip key={b.label} badge={b} />)}
+                </div>
+              </div>
+            )}
+
+            <div className="glass-panel rounded-xl p-4">
+              <VerificationChecklist items={m.verification.items} done={m.verification.done} total={m.verification.total} />
+            </div>
+          </TabsContent>
+
 
           {/* Ledger */}
           <TabsContent value="ledger" className="mt-4">
