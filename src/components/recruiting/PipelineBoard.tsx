@@ -157,7 +157,7 @@ export default function PipelineBoard() {
             </div>
           )}
           {filtered.sort((a, b) => stageIndex(a.stage) - stageIndex(b.stage)).map((c) => (
-            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
           ))}
         </div>
       )}
