@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import {
-  ClipboardCheck, Plus, Star, Trash2, Save, Users, ChevronDown, ChevronUp, Sparkles,
+  ClipboardCheck, Plus, Star, Trash2, Save, Users, ChevronDown, ChevronUp, Sparkles, Phone, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Candidate, ScorecardTemplate, EvaluationRating, CandidateEvaluation,
   useScorecardTemplates, useCandidateEvaluations, useCreateEvaluation, useDeleteEvaluation,
@@ -15,11 +16,14 @@ import {
 } from "@/lib/scorecard";
 import { initials } from "@/lib/recruiting";
 import ScoreRing from "./ScoreRing";
+import InterviewEvaluationForm from "./InterviewEvaluationForm";
 
 interface Props {
   candidate: Candidate;
   eventId?: string | null;
 }
+
+const isRich = (t: ScorecardTemplate) => t.kind === "interview" || t.kind === "phone_screen";
 
 export default function EvaluationPanel({ candidate, eventId }: Props) {
   const { profile } = useAuth();

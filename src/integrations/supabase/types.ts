@@ -77,6 +77,7 @@ export type Database = {
         Row: {
           candidate_id: string
           created_at: string
+          details: Json
           evaluator: string
           event_id: string | null
           id: string
@@ -93,6 +94,7 @@ export type Database = {
         Insert: {
           candidate_id: string
           created_at?: string
+          details?: Json
           evaluator?: string
           event_id?: string | null
           id?: string
@@ -109,6 +111,7 @@ export type Database = {
         Update: {
           candidate_id?: string
           created_at?: string
+          details?: Json
           evaluator?: string
           event_id?: string | null
           id?: string
@@ -698,6 +701,7 @@ export type Database = {
           description: string
           id: string
           is_default: boolean
+          kind: string
           name: string
           position_id: string | null
           role: string
@@ -710,6 +714,7 @@ export type Database = {
           description?: string
           id?: string
           is_default?: boolean
+          kind?: string
           name: string
           position_id?: string | null
           role?: string
@@ -722,6 +727,7 @@ export type Database = {
           description?: string
           id?: string
           is_default?: boolean
+          kind?: string
           name?: string
           position_id?: string | null
           role?: string
