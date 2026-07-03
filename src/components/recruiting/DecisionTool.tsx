@@ -3,10 +3,12 @@ import {
   Swords, Brain, Upload, Loader2, FileText, Sparkles, Trophy, Crown,
   Check, X as XIcon, TrendingUp, Zap, Save, Quote, AlertTriangle, Star,
   Target, Wand2, UserCheck, Plus, Trash2, Gem, Radar as RadarIcon, ArrowUpDown,
-  ShieldAlert, Lightbulb, Gauge, ListChecks,
+  ShieldAlert, Lightbulb, Gauge, ListChecks, BarChart3, ClipboardCheck,
+  ThumbsUp, ThumbsDown, MinusCircle, History,
 } from "lucide-react";
 import {
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
