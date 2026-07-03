@@ -61,6 +61,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
   if (!candidate) return null;
   const loc = locations.find((l) => l.id === candidate.location_id);
   const sTone = TONE_HSL[scoreTone(candidate.score)];
+  const m = computeMatch(candidate);
 
   const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
 
