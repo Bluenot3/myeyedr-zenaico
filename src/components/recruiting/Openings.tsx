@@ -216,8 +216,16 @@ export default function Openings() {
       {/* Postings editor dialog */}
       <Dialog open={postOpen} onOpenChange={setPostOpen}>
         <DialogContent className="sm:max-w-lg glass-panel max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display text-xl">Manage Postings{postPos ? ` — ${postPos.title}` : ""}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-display text-xl">Manage Role{postPos ? ` — ${postPos.title}` : ""}</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
+            <div>
+              <Label className="text-[10px]">Job description</Label>
+              <Textarea value={postDesc} onChange={(e) => setPostDesc(e.target.value)} className="mt-1 min-h-[130px]" placeholder="Role summary, responsibilities, schedule, what makes a great fit…" />
+            </div>
+            <div>
+              <Label className="text-[10px]">Requirements</Label>
+              <Textarea value={postReq} onChange={(e) => setPostReq(e.target.value)} className="mt-1 min-h-[70px]" placeholder="Must-haves, certifications, availability…" />
+            </div>
             <div>
               <Label className="text-[10px]">Primary posting URL</Label>
               <Input value={postUrl} onChange={(e) => setPostUrl(e.target.value)} className="mt-1" placeholder="https://indeed.com/…" />
