@@ -50,7 +50,27 @@ export default function Overview() {
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
   const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
+  const [profileTab, setProfileTab] = useState<string>("match");
+  const openCandidateTab = (c: Candidate, tab: string) => { setSelected(c); setProfileTab(tab); setOpen(true); };
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
+  const candById = (id: string | null) => candidates.find((c) => c.id === id) || null;
+
+  // Upcoming schedule (screenings, interviews, offers, hires)
+  const upcomingEvents = useMemo(
+    () => events
+      .filter((e) => e.status !== "canceled" && new Date(e.starts_at).getTime() >= Date.now() - 30 * 60000)
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
+    [events]
+  );
+  const nextEvent = upcomingEvents[0] || null;
+  const todayCount = useMemo(() => {
+    const t = new Date().toDateString();
+    return upcomingEvents.filter((e) => new Date(e.starts_at).toDateString() === t).length;
+  }, [upcomingEvents]);
+  const weekCount = useMemo(() => {
+    const wk = Date.now() + 7 * 86400000;
+    return upcomingEvents.filter((e) => new Date(e.starts_at).getTime() <= wk).length;
+  }, [upcomingEvents]);
 
   const active = useMemo(() => candidates.filter((c) => c.status === "active"), [candidates]);
 
