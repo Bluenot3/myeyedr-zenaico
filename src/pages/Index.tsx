@@ -11,6 +11,7 @@ import DecisionTool from "@/components/recruiting/DecisionTool";
 import UsersManager from "@/components/recruiting/UsersManager";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
+import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
