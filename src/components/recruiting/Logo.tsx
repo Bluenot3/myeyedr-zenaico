@@ -66,7 +66,7 @@ export default function Logo({ className = "", markSize = 34, sub }: LogoProps) 
         src={wordmark.url}
         alt="MyEyeDr"
         style={{ height }}
-        className="w-auto select-none drop-shadow-[0_1px_10px_rgba(149,232,255,0.15)]"
+        className="w-auto select-none drop-shadow-[0_1px_12px_rgba(58,155,255,0.28)]"
         draggable={false}
       />
       {sub && (
