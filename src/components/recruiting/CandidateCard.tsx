@@ -4,7 +4,7 @@ import { stageMeta, initials, relativeTime } from "@/lib/recruiting";
 import { computeMatch, nextAction } from "@/lib/matchScore";
 import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
-import { MatchBadgeChip, MeterBar } from "./MatchVisuals";
+import { MatchBadgeChip, MeterBar, MatchBar } from "./MatchVisuals";
 
 interface Props {
   candidate: Candidate;
