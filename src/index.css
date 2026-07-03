@@ -152,9 +152,22 @@
     font-feature-settings: "ss01", "cv01";
   }
 
+  :root.light body {
+    background-image:
+      radial-gradient(120% 85% at 82% -12%, rgba(31,109,255,0.12), transparent 52%),
+      radial-gradient(95% 75% at 8% 6%, rgba(58,155,255,0.10), transparent 55%),
+      radial-gradient(85% 80% at 50% 116%, rgba(111,216,255,0.10), transparent 58%),
+      linear-gradient(168deg, #eef4fc 0%, #f6f9fe 55%, #e9f1fb 100%);
+  }
+
   ::selection {
     background: rgba(58,155,255,0.35);
     color: #ffffff;
+  }
+
+  :root.light ::selection {
+    background: rgba(31,109,255,0.22);
+    color: #0a1836;
   }
 
   h1, h2, h3 {
