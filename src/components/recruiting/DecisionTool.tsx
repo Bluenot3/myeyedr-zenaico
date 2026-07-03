@@ -486,6 +486,25 @@ function GoldenLeaderboard({ golden, candidates }: { golden: GoldenProfile; cand
         </button>
       </div>
 
+      {ranked.length > 0 && (
+        <div className="glass-panel rounded-2xl border border-border p-4">
+          <div className="flex items-center gap-2 text-sm font-medium mb-2"><BarChart3 className="h-4 w-4 text-cyan" /> How the field stacks up to the golden bar</div>
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={distData} margin={{ left: -18, right: 8, top: 4, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.4} />
+                <XAxis dataKey="band" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip cursor={{ fill: "hsl(var(--muted)/0.3)" }} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {distData.map((d, i) => <Cell key={i} fill={`hsl(${d.tone})`} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {ranked.length === 0 ? (
         <div className="glass-panel rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           No candidates to benchmark yet.
