@@ -18,6 +18,7 @@ interface ManagedUser {
   id: string;
   email: string;
   full_name: string | null;
+  title: string | null;
   must_reset_password: boolean;
   roles: Role[];
   location_ids: string[];
