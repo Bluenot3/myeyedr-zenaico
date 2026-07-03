@@ -503,6 +503,84 @@ export type Database = {
           },
         ]
       }
+      golden_profiles: {
+        Row: {
+          candidate_id: string | null
+          created_at: string
+          created_by: string
+          dimensions: Json
+          id: string
+          ideal_years_experience: number
+          interview_focus: Json
+          is_active: boolean
+          must_have_skills: Json
+          name: string
+          nice_to_have_skills: Json
+          position_id: string | null
+          red_flags: Json
+          resume_text: string
+          role: string
+          source: string
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id?: string | null
+          created_at?: string
+          created_by?: string
+          dimensions?: Json
+          id?: string
+          ideal_years_experience?: number
+          interview_focus?: Json
+          is_active?: boolean
+          must_have_skills?: Json
+          name?: string
+          nice_to_have_skills?: Json
+          position_id?: string | null
+          red_flags?: Json
+          resume_text?: string
+          role?: string
+          source?: string
+          summary?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string | null
+          created_at?: string
+          created_by?: string
+          dimensions?: Json
+          id?: string
+          ideal_years_experience?: number
+          interview_focus?: Json
+          is_active?: boolean
+          must_have_skills?: Json
+          name?: string
+          nice_to_have_skills?: Json
+          position_id?: string | null
+          red_flags?: Json
+          resume_text?: string
+          role?: string
+          source?: string
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "golden_profiles_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "golden_profiles_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_events: {
         Row: {
           candidate_id: string | null
