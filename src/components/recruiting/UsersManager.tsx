@@ -109,6 +109,7 @@ export default function UsersManager() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium truncate">{u.full_name || u.email}{isSelf && <span className="text-[10px] text-muted-foreground ml-1.5">(you)</span>}</p>
+                    {u.title && <p className="text-[11px] text-emerald/90 truncate">{u.title}</p>}
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[9px] micro-label" style={{ color: `hsl(var(--${meta.color}))` }}>{meta.label}</span>
