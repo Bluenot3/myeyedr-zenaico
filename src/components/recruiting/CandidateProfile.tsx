@@ -13,7 +13,9 @@ import {
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
   Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
+  FileText, Loader2,
 } from "lucide-react";
+import { uploadCandidateFile, CandidateDocument } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
   useUpdateCandidate, useDeleteCandidate, useAddBadge, useLogContact,
