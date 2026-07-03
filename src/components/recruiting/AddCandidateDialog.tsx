@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  UserPlus, Loader2, UploadCloud, FileText, Sparkles, X, Paperclip, CheckCircle2, ScanEye,
+  UserPlus, Loader2, UploadCloud, FileText, Sparkles, X, Paperclip, CheckCircle2, ScanEye, Link2, ExternalLink,
 } from "lucide-react";
 import { useCreateCandidate, useLocations, usePositions } from "@/hooks/useRecruiting";
 import { SOURCES } from "@/lib/recruiting";
@@ -20,7 +20,7 @@ interface Props {
 const EMPTY = {
   full_name: "", email: "", phone: "", applied_role: "", position_id: "",
   location_id: "", region: "", source: "Indeed", headline: "", years_experience: 0,
-  best_fit_roles: "",
+  best_fit_roles: "", apply_url: "",
 };
 
 export default function AddCandidateDialog({ compact }: Props) {
@@ -102,6 +102,10 @@ export default function AddCandidateDialog({ compact }: Props) {
     if (!form.full_name.trim()) { toast.error("Name is required"); return; }
     const loc = locations.find((l) => l.id === form.location_id);
     const resume = docs.find((d) => d.kind === "resume");
+    const linkUrl = form.apply_url.trim();
+    const linkDocs: DocEntry[] = linkUrl
+      ? [{ name: `${form.source || "Application"} link`, url: linkUrl, type: "link", size: 0, kind: "attachment" }]
+      : [];
     await createCandidate.mutateAsync({
       full_name: form.full_name,
       email: form.email,
@@ -115,7 +119,7 @@ export default function AddCandidateDialog({ compact }: Props) {
       years_experience: form.years_experience,
       best_fit_roles: form.best_fit_roles,
       resume_url: resume?.url || "",
-      documents: docs as any,
+      documents: [...docs, ...linkDocs] as any,
       stage: "applied",
       status: "active",
       score: 0,
@@ -135,12 +139,13 @@ export default function AddCandidateDialog({ compact }: Props) {
           <span className={compact ? "hidden sm:inline" : ""}>Add Candidate</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl max-h-[92vh] overflow-y-auto glass-panel">
+      <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-xl max-h-[94vh] overflow-y-auto glass-panel liquid-glass rounded-2xl sm:rounded-3xl p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl flex items-center gap-2">
-            <ScanEye className="h-5 w-5 text-emerald" /> Candidate Intake
+          <DialogTitle className="font-display text-2xl flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald/15 border border-emerald/30"><ScanEye className="h-4 w-4 text-emerald" /></span>
+            Candidate Intake
           </DialogTitle>
-          <p className="text-xs text-muted-foreground">Drop a résumé to auto-fill, attach anything else, or enter details by hand.</p>
+          <p className="text-xs text-muted-foreground">Drop a résumé to auto-fill, paste an Indeed link, attach anything, or type it in.</p>
         </DialogHeader>
 
         {/* Résumé dropzone */}
@@ -151,7 +156,7 @@ export default function AddCandidateDialog({ compact }: Props) {
           onClick={() => !parsing && resumeInput.current?.click()}
           className={`relative mt-1 cursor-pointer rounded-xl border border-dashed p-5 text-center transition-all ${dragOver ? "border-emerald bg-emerald/10" : "border-border hover:border-emerald/50 bg-background/40"}`}
         >
-          <input ref={resumeInput} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleResume(f); e.target.value = ""; }} />
+          <input ref={resumeInput} type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleResume(f); e.target.value = ""; }} />
           {parsing ? (
             <div className="flex flex-col items-center gap-2 py-2">
               <Loader2 className="h-6 w-6 animate-spin text-emerald" />
@@ -169,7 +174,7 @@ export default function AddCandidateDialog({ compact }: Props) {
                 <UploadCloud className="h-5 w-5 text-emerald" />
               </div>
               <p className="text-sm font-medium text-foreground">Drop résumé here or click to upload</p>
-              <p className="text-[11px] text-muted-foreground">PDF or image · we'll auto-fill the fields below <Sparkles className="inline h-3 w-3 text-gold" /></p>
+              <p className="text-[11px] text-muted-foreground">PDF, Word, or image · we'll auto-fill the fields below <Sparkles className="inline h-3 w-3 text-gold" /></p>
             </div>
           )}
         </div>
@@ -192,6 +197,26 @@ export default function AddCandidateDialog({ compact }: Props) {
           <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs w-full" disabled={attaching} onClick={() => attachInput.current?.click()}>
             {attaching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />} Attach other documents
           </Button>
+        </div>
+
+        {/* Indeed / application link */}
+        <div className="rounded-xl border border-holo/25 bg-holo/[0.06] p-3">
+          <Label className="text-[10px] flex items-center gap-1.5 text-holo"><Link2 className="h-3 w-3" /> Indeed / application link</Label>
+          <div className="mt-1.5 flex items-center gap-2">
+            <Input
+              value={form.apply_url}
+              onChange={(e) => set({ apply_url: e.target.value })}
+              placeholder="Paste the Indeed applicant or job posting URL"
+              className="h-10 flex-1"
+              inputMode="url"
+            />
+            {form.apply_url.trim() && (
+              <a href={form.apply_url} target="_blank" rel="noreferrer" className="tap-target flex h-10 w-10 items-center justify-center rounded-md border border-holo/30 text-holo hover:bg-holo/10">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5">Saved with the candidate so you can jump back to Indeed in one tap.</p>
         </div>
 
         {/* Fields */}
@@ -246,9 +271,9 @@ export default function AddCandidateDialog({ compact }: Props) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
-          <Button variant="outline" onClick={() => { setOpen(false); reset(); }}>Cancel</Button>
-          <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="bg-emerald text-primary-foreground hover:bg-emerald/90">
+        <div className="sticky bottom-0 -mx-4 sm:mx-0 mt-4 flex gap-2 border-t border-border bg-background/70 px-4 sm:px-0 py-3 backdrop-blur-md sm:static sm:bg-transparent sm:backdrop-blur-none">
+          <Button variant="outline" onClick={() => { setOpen(false); reset(); }} className="flex-1 sm:flex-none tap-target h-11 sm:h-10">Cancel</Button>
+          <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="flex-1 sm:flex-none tap-target h-11 sm:h-10 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_24px_-8px_hsl(var(--emerald))]">
             {createCandidate.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Add to Pipeline
           </Button>
