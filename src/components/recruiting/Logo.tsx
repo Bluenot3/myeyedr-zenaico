@@ -23,8 +23,8 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
     >
       <defs>
         <linearGradient id="eye-brand" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#45dcae" />
-          <stop offset="1" stopColor="#95e8ff" />
+          <stop offset="0" stopColor="#1f8bff" />
+          <stop offset="1" stopColor="#9fe4ff" />
         </linearGradient>
       </defs>
       <circle cx="24" cy="24" r="22" stroke="url(#eye-brand)" strokeWidth="1" opacity="0.28" />
