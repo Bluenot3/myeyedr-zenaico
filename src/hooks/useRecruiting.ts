@@ -1107,3 +1107,76 @@ export async function generateGoldenProfile(opts: {
   if (data?.error) throw new Error(data.error);
   return data.profile as Partial<GoldenProfile>;
 }
+
+/* ============================ Hiring decisions (cloud-persisted verdicts) ============================ */
+export interface HiringDecision {
+  id: string;
+  candidate_id: string;
+  position_id: string | null;
+  location_id: string | null;
+  golden_id: string | null;
+  decision: "hire" | "hold" | "pass";
+  power_score: number | null;
+  fit_score: number | null;
+  contenders: any[];
+  weights: Record<string, number>;
+  rationale: string | null;
+  decided_by: string | null;
+  decided_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// All decisions the signed-in user can see (RLS-scoped). Powers team-wide visibility.
+export function useHiringDecisions(candidateId?: string | null) {
+  return useQuery({
+    queryKey: ["hiring_decisions", candidateId ?? "all"],
+    queryFn: async () => {
+      let q = db.from("hiring_decisions").select("*").order("created_at", { ascending: false });
+      if (candidateId) q = q.eq("candidate_id", candidateId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as HiringDecision[];
+    },
+  });
+}
+
+export function useRecordDecision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (d: Partial<HiringDecision> & { candidate_id: string }) => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id ?? null;
+      let name = userRes.user?.email ?? null;
+      if (uid) {
+        const { data: prof } = await supabase.from("profiles").select("full_name, email").eq("id", uid).maybeSingle();
+        name = (prof as any)?.full_name || (prof as any)?.email || name;
+      }
+      const payload = { ...d, decided_by: uid, decided_by_name: name };
+      const { data, error } = await db.from("hiring_decisions").insert([payload]).select().single();
+      if (error) throw error;
+      return data as HiringDecision;
+    },
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: ["hiring_decisions"] });
+      qc.invalidateQueries({ queryKey: ["hiring_decisions", row.candidate_id] });
+      toast.success("Decision recorded to the team ledger");
+    },
+    onError: (e: any) => toast.error("Could not record decision: " + e.message),
+  });
+}
+
+export function useDeleteDecision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("hiring_decisions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["hiring_decisions"] });
+      toast.success("Decision removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
