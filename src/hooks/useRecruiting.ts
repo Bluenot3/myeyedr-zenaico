@@ -978,6 +978,22 @@ export function useCandidateEvaluations(candidateId: string | null) {
   });
 }
 
+/** All evaluations the current user can access (RLS-scoped) — powers the admin/regional summary. */
+export function useRecentEvaluations(limit = 200) {
+  return useQuery({
+    queryKey: ["recent_evaluations", limit],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("candidate_evaluations")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data as CandidateEvaluation[];
+    },
+  });
+}
+
 export function useCreateEvaluation() {
   const qc = useQueryClient();
   return useMutation({
