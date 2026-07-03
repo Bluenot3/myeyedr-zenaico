@@ -73,6 +73,86 @@ export type Database = {
           },
         ]
       }
+      candidate_media: {
+        Row: {
+          candidate_id: string
+          content_type: string | null
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          error: string | null
+          fit_score: number | null
+          id: string
+          label: string | null
+          media_type: string
+          name: string
+          recommendation: string | null
+          sentiment: string | null
+          size: number
+          soundbites: Json
+          status: string
+          summary: string | null
+          transcript: string | null
+          updated_at: string
+          url: string
+          words: Json
+        }
+        Insert: {
+          candidate_id: string
+          content_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          error?: string | null
+          fit_score?: number | null
+          id?: string
+          label?: string | null
+          media_type?: string
+          name: string
+          recommendation?: string | null
+          sentiment?: string | null
+          size?: number
+          soundbites?: Json
+          status?: string
+          summary?: string | null
+          transcript?: string | null
+          updated_at?: string
+          url: string
+          words?: Json
+        }
+        Update: {
+          candidate_id?: string
+          content_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          error?: string | null
+          fit_score?: number | null
+          id?: string
+          label?: string | null
+          media_type?: string
+          name?: string
+          recommendation?: string | null
+          sentiment?: string | null
+          size?: number
+          soundbites?: Json
+          status?: string
+          summary?: string | null
+          transcript?: string | null
+          updated_at?: string
+          url?: string
+          words?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_media_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_notes: {
         Row: {
           author: string

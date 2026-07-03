@@ -10,13 +10,19 @@ import StatCard from "./StatCard";
 import CandidateProfile from "./CandidateProfile";
 import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
-import HoloStrip from "./HoloStrip";
+
 import { EyeMark } from "./Logo";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Overview() {
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
+  const { profile } = useAuth();
+  const firstName = (profile?.full_name || profile?.email?.split("@")[0] || "").split(" ")[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
   const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
@@ -90,15 +96,16 @@ export default function Overview() {
   return (
     <div className="space-y-6 animate-rise">
       {/* Hero */}
-      <div className="cert-surface rounded-2xl p-5 sm:p-7 relative overflow-hidden">
-        <EyeMark size={150} className="absolute -right-8 -top-8 opacity-20" spin />
+      <div className="cert-surface rounded-2xl p-5 sm:p-7 relative overflow-hidden group">
+        <EyeMark size={140} className="absolute -right-8 -top-8 opacity-[0.14] transition-transform duration-700 group-hover:scale-105" />
         <div className="relative">
-          <p className="micro-label text-emerald mb-2">MyEyeDr · Candidate Command</p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight">Today's Hiring Command</h1>
+          <p className="text-xs font-medium text-muted-foreground">{today}</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight mt-1">
+            {greeting}{firstName ? `, ${firstName}` : ""}.
+          </h1>
           <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-            Every candidate, every open seat, every next action in one operator view. Upload a résumé, know the next move in under 60 seconds.
+            Here's where your candidates stand today. The cards below show exactly what needs your attention — tap any name to open their profile.
           </p>
-          <HoloStrip className="mt-4 max-w-xs" />
         </div>
       </div>
 
@@ -106,14 +113,17 @@ export default function Overview() {
       <div>
         <div className="flex items-center gap-1.5 mb-3">
           <Gauge className="h-4 w-4 text-emerald" />
-          <h2 className="font-display text-lg font-semibold">Operational Snapshot</h2>
+          <h2 className="font-display text-lg font-semibold">What needs attention</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {commandCards.map((cc) => (
-            <StatCard key={cc.label} label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
+          {commandCards.map((cc, i) => (
+            <div key={cc.label} className="animate-rise" style={{ animationDelay: `${i * 40}ms` }}>
+              <StatCard label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
+            </div>
           ))}
         </div>
       </div>
+
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
