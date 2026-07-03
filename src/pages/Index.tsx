@@ -57,7 +57,10 @@ const Index = () => {
       <aside className="relative z-10 hidden lg:flex w-60 shrink-0 flex-col border-r border-border glass-panel sticky top-0 h-screen">
 
         <div className="p-5 border-b border-border">
-          <Logo markSize={36} sub="Talent Command" wordSize={19} />
+          <Logo markSize={36} wordSize={19} />
+          <div className="mt-3 h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+          <p className="mt-2.5 micro-label text-[8.5px] text-gold/90">Talent Command</p>
+          <p className="micro-label text-[7px] text-muted-foreground/70 mt-1">Institutional Recruiting Desk</p>
         </div>
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {nav.map((n) => {
