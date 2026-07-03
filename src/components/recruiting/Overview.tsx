@@ -12,6 +12,7 @@ import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
 import HoloStrip from "./HoloStrip";
 import { EyeMark } from "./Logo";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Overview() {
   const { data: candidates = [] } = useCandidates();
