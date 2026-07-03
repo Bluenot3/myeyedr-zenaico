@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
 const priorityColor: Record<string, string> = {
   urgent: "hsl(var(--destructive))",
@@ -31,11 +32,13 @@ export default function Openings() {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "" });
 
-  // Postings editor state
+  // Postings + description editor state
   const [postOpen, setPostOpen] = useState(false);
   const [postPos, setPostPos] = useState<Position | null>(null);
   const [postUrl, setPostUrl] = useState("");
   const [postLocs, setPostLocs] = useState<PostingLocation[]>([]);
+  const [postDesc, setPostDesc] = useState("");
+  const [postReq, setPostReq] = useState("");
 
   const filtered = useMemo(() => positions.filter((p) => region === "All" || p.region === region), [positions, region]);
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
@@ -53,6 +56,8 @@ export default function Openings() {
     setPostPos(p);
     setPostUrl(p.posting_url || "");
     setPostLocs(Array.isArray(p.posting_locations) ? [...p.posting_locations] : []);
+    setPostDesc(p.description || "");
+    setPostReq(p.requirements || "");
     setPostOpen(true);
   };
   const savePostings = async () => {
@@ -61,6 +66,8 @@ export default function Openings() {
       id: postPos.id,
       posting_url: postUrl.trim(),
       posting_locations: postLocs.filter((l) => l.label.trim() || l.url.trim()),
+      description: postDesc.trim(),
+      requirements: postReq.trim(),
     });
     setPostOpen(false);
   };
@@ -101,6 +108,7 @@ export default function Openings() {
               <div><Label className="text-[10px]">Pay range</Label><Input value={form.pay_range} onChange={(e) => setForm({ ...form, pay_range: e.target.value })} className="mt-1" placeholder="$18–20/hr" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Primary posting URL</Label><Input value={form.posting_url} onChange={(e) => setForm({ ...form, posting_url: e.target.value })} className="mt-1" placeholder="https://indeed.com/…" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Requirements</Label><Input value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} className="mt-1" /></div>
+              <div className="sm:col-span-2"><Label className="text-[10px]">Job description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[120px]" placeholder="Role summary, responsibilities, schedule, what makes a great fit…" /></div>
             </div>
             <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
               <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
@@ -148,6 +156,14 @@ export default function Openings() {
                   {p.pay_range && <span className="text-gold">{p.pay_range}</span>}
                   <span>· {p.openings} seat{p.openings > 1 ? "s" : ""}</span>
                 </div>
+
+                {p.description ? (
+                  <p className="mt-2.5 text-[11px] text-muted-foreground/90 leading-relaxed line-clamp-3">{p.description}</p>
+                ) : (
+                  <button onClick={() => openPostings(p)} className="mt-2.5 text-[10px] text-emerald hover:underline inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add job description</button>
+                )}
+
+
 
                 {/* Postings */}
                 <div className="mt-3 rounded-lg bg-background/40 border border-border/60 p-2.5">
@@ -200,8 +216,16 @@ export default function Openings() {
       {/* Postings editor dialog */}
       <Dialog open={postOpen} onOpenChange={setPostOpen}>
         <DialogContent className="sm:max-w-lg glass-panel max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display text-xl">Manage Postings{postPos ? ` — ${postPos.title}` : ""}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-display text-xl">Manage Role{postPos ? ` — ${postPos.title}` : ""}</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
+            <div>
+              <Label className="text-[10px]">Job description</Label>
+              <Textarea value={postDesc} onChange={(e) => setPostDesc(e.target.value)} className="mt-1 min-h-[130px]" placeholder="Role summary, responsibilities, schedule, what makes a great fit…" />
+            </div>
+            <div>
+              <Label className="text-[10px]">Requirements</Label>
+              <Textarea value={postReq} onChange={(e) => setPostReq(e.target.value)} className="mt-1 min-h-[70px]" placeholder="Must-haves, certifications, availability…" />
+            </div>
             <div>
               <Label className="text-[10px]">Primary posting URL</Label>
               <Input value={postUrl} onChange={(e) => setPostUrl(e.target.value)} className="mt-1" placeholder="https://indeed.com/…" />

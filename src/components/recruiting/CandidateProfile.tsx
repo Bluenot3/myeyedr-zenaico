@@ -23,7 +23,7 @@ import {
 } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, initials, relativeTime, scoreTone, TONE_HSL, BADGE_TYPES, badgeMeta } from "@/lib/recruiting";
 import { computeMatch } from "@/lib/matchScore";
-import { FactorBreakdown, AvailabilityGauge, RiskReadiness, VerificationChecklist, MatchBadgeChip } from "./MatchVisuals";
+import { FactorBreakdown, AvailabilityGauge, RiskReadiness, VerificationChecklist, MatchBadgeChip, MatchBar } from "./MatchVisuals";
 import BlockchainLedger from "./BlockchainLedger";
 import ScoreRing from "./ScoreRing";
 import StageBadge from "./StageBadge";
@@ -240,8 +240,10 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
                   <p className="text-[11px] text-muted-foreground mt-1">Weighted role-fit {m.raw} → gated {m.overall}</p>
                 </div>
               </div>
+              <div className="mb-3"><MatchBar m={m} height={12} /></div>
               <p className="text-[11px] text-muted-foreground leading-relaxed rounded-lg bg-background/40 border border-border/50 p-2.5">{m.explanation}</p>
             </div>
+
 
             <RiskReadiness m={m} />
             <AvailabilityGauge m={m} />

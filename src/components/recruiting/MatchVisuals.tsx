@@ -27,6 +27,49 @@ export function MeterBar({ value, hsl, height = 6 }: { value: number; hsl: strin
   );
 }
 
+/* -------- Signature relevance & match bar --------
+ * Fills from the initial AI analysis (overall match) and its milestone pips
+ * light up as screenings, scorecards and references are added to the process. */
+export function MatchBar({ m, height = 10, showPips = true, label = "Relevance & Match" }: { m: MatchResult; height?: number; showPips?: boolean; label?: string }) {
+  const hsl = m.categoryHsl;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[9px] font-mono uppercase tracking-[0.22em] text-muted-foreground">{label}</span>
+        <span className="text-[11px] font-bold tabular-nums leading-none" style={{ color: `hsl(${hsl})` }}>
+          {m.overall}<span className="text-muted-foreground font-normal text-[9px]">/100</span>
+        </span>
+      </div>
+      <div className="match-track" style={{ height }}>
+        <div
+          className="match-fill"
+          style={{
+            width: `${Math.max(4, m.overall)}%`,
+            background: `linear-gradient(90deg, hsl(${hsl} / 0.75), hsl(${hsl}))`,
+            boxShadow: `0 0 14px hsl(${hsl} / 0.6)`,
+          }}
+        />
+      </div>
+      {showPips && (
+        <div className="flex items-center gap-1 mt-1.5" title={`${m.verification.done}/${m.verification.total} process milestones complete`}>
+          {m.verification.items.map((it, i) => (
+            <div
+              key={i}
+              className="pip h-1 flex-1 rounded-full"
+              style={{
+                background: it.done ? `hsl(${hsl})` : "hsl(var(--border))",
+                boxShadow: it.done ? `0 0 6px hsl(${hsl} / 0.55)` : "none",
+                transform: it.done ? "scaleY(1.4)" : "scaleY(1)",
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 /* -------- Score factor breakdown -------- */
 export function FactorBreakdown({ factors }: { factors: ScoreFactor[] }) {
   return (
