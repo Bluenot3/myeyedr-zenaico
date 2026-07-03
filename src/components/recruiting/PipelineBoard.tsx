@@ -49,7 +49,7 @@ export default function PipelineBoard() {
   }, [filtered]);
 
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
-  const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
+  const openCandidate = (c: Candidate, tab: string = "match") => { setSelected(c); setProfileTab(tab); setOpen(true); };
 
   const toggle = (id: string) => setIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const clearSel = () => setIds(new Set());
