@@ -293,6 +293,82 @@ export type Database = {
           },
         ]
       }
+      interview_events: {
+        Row: {
+          candidate_id: string | null
+          created_at: string
+          created_by: string
+          ends_at: string | null
+          event_type: string
+          id: string
+          location_detail: string
+          location_id: string | null
+          mode: string
+          notes: string
+          position_id: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id?: string | null
+          created_at?: string
+          created_by?: string
+          ends_at?: string | null
+          event_type?: string
+          id?: string
+          location_detail?: string
+          location_id?: string | null
+          mode?: string
+          notes?: string
+          position_id?: string | null
+          starts_at: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string | null
+          created_at?: string
+          created_by?: string
+          ends_at?: string | null
+          event_type?: string
+          id?: string
+          location_detail?: string
+          location_id?: string | null
+          mode?: string
+          notes?: string
+          position_id?: string | null
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_events_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_events_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_events_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_questions: {
         Row: {
           category: string
@@ -369,6 +445,8 @@ export type Database = {
           location_id: string | null
           openings: number
           pay_range: string
+          posting_locations: Json
+          posting_url: string
           priority: string
           region: string
           requirements: string
@@ -385,6 +463,8 @@ export type Database = {
           location_id?: string | null
           openings?: number
           pay_range?: string
+          posting_locations?: Json
+          posting_url?: string
           priority?: string
           region?: string
           requirements?: string
@@ -401,6 +481,8 @@ export type Database = {
           location_id?: string | null
           openings?: number
           pay_range?: string
+          posting_locations?: Json
+          posting_url?: string
           priority?: string
           region?: string
           requirements?: string

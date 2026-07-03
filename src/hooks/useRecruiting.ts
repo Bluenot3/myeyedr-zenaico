@@ -16,6 +16,11 @@ export interface Location {
   created_at: string;
 }
 
+export interface PostingLocation {
+  label: string;
+  url: string;
+}
+
 export interface Position {
   id: string;
   title: string;
@@ -29,6 +34,26 @@ export interface Position {
   description: string;
   requirements: string;
   pay_range: string;
+  posting_url: string;
+  posting_locations: PostingLocation[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InterviewEvent {
+  id: string;
+  candidate_id: string | null;
+  position_id: string | null;
+  location_id: string | null;
+  title: string;
+  event_type: string; // screening | interview | hire | offer | other
+  starts_at: string;
+  ends_at: string | null;
+  status: string; // scheduled | completed | canceled
+  mode: string;
+  location_detail: string;
+  notes: string;
+  created_by: string;
   created_at: string;
   updated_at: string;
 }
@@ -555,6 +580,64 @@ export function useDeleteQuestion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["interview_questions"] });
       toast.success("Question removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/* ============================ Interview / calendar events ============================ */
+export function useInterviewEvents() {
+  return useQuery({
+    queryKey: ["interview_events"],
+    queryFn: async () => {
+      const { data, error } = await db.from("interview_events").select("*").order("starts_at", { ascending: true });
+      if (error) throw error;
+      return data as InterviewEvent[];
+    },
+  });
+}
+
+export function useCreateEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (e: Partial<InterviewEvent>) => {
+      const { data, error } = await db.from("interview_events").insert([e]).select().single();
+      if (error) throw error;
+      return data as InterviewEvent;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["interview_events"] });
+      toast.success("Event scheduled");
+    },
+    onError: (e: any) => toast.error("Failed to schedule: " + e.message),
+  });
+}
+
+export function useUpdateEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<InterviewEvent> & { id: string }) => {
+      const { error } = await db.from("interview_events").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["interview_events"] });
+      toast.success("Event updated");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useDeleteEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("interview_events").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["interview_events"] });
+      toast.success("Event removed");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
   });

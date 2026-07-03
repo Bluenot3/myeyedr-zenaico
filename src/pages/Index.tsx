@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords, Glasses, Users, LogOut, Crown, Globe, Building2 } from "lucide-react";
+import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords, Glasses, Users, LogOut, Crown, Globe, Building2, CalendarDays } from "lucide-react";
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
+import CalendarView from "@/components/recruiting/CalendarView";
 import TalentPool from "@/components/recruiting/TalentPool";
 import ScreeningLibrary from "@/components/recruiting/ScreeningLibrary";
 import LocationsManager from "@/components/recruiting/LocationsManager";
@@ -16,12 +17,13 @@ import ThemeToggle from "@/components/recruiting/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-type Tab = "overview" | "pipeline" | "openings" | "pool" | "agents" | "decision" | "library" | "locations" | "users";
+type Tab = "overview" | "pipeline" | "openings" | "calendar" | "pool" | "agents" | "decision" | "library" | "locations" | "users";
 
 const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean }[] = [
   { key: "overview", label: "Overview", icon: ScanEye },
   { key: "pipeline", label: "Pipeline", icon: GitBranch },
   { key: "openings", label: "Openings", icon: Glasses },
+  { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
   { key: "agents", label: "AI Agents", icon: Bot, adminOnly: true },
   { key: "decision", label: "Decision", icon: Swords, adminOnly: true },
@@ -115,6 +117,7 @@ const Index = () => {
           {activeTab === "overview" && <Overview />}
           {activeTab === "pipeline" && <PipelineBoard />}
           {activeTab === "openings" && <Openings />}
+          {activeTab === "calendar" && <CalendarView />}
           {activeTab === "pool" && <TalentPool />}
           {activeTab === "agents" && isAdmin && <AgentStudio />}
           {activeTab === "decision" && isAdmin && <DecisionTool />}
