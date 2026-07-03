@@ -238,6 +238,45 @@
       linear-gradient(165deg, rgba(12,26,54,0.95), rgba(5,11,24,0.97));
   }
 
+  /* ===== Light-mode surface overrides ===== */
+  :root.light .glass-panel {
+    background:
+      linear-gradient(160deg, rgba(255,255,255,0.92), rgba(240,246,253,0.88)),
+      radial-gradient(140% 120% at 0% 0%, rgba(31,109,255,0.06), transparent 55%);
+    border: 1px solid hsl(var(--border) / 0.9);
+    box-shadow: 0 12px 32px -24px rgba(20,60,140,0.28), inset 0 1px 0 rgba(255,255,255,0.8);
+  }
+  :root.light .liquid-glass {
+    background: linear-gradient(155deg, rgba(255,255,255,0.94), rgba(234,242,252,0.9));
+    border: 1px solid rgba(31,109,255,0.18);
+    box-shadow: 0 16px 40px -26px rgba(20,60,140,0.3), inset 0 1px 0 rgba(255,255,255,0.9);
+  }
+  :root.light .liquid-glass::before {
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+  }
+  :root.light .cert-surface {
+    background:
+      radial-gradient(120% 120% at 50% -10%, rgba(31,109,255,0.10), transparent 55%),
+      radial-gradient(90% 90% at 100% 0%, rgba(111,216,255,0.10), transparent 55%),
+      linear-gradient(165deg, rgba(255,255,255,0.96), rgba(238,245,253,0.98));
+  }
+  :root.light .holo-card {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.95), rgba(240,246,253,0.92)),
+      radial-gradient(120% 80% at 12% -10%, rgba(31,109,255,0.05), transparent 60%);
+    border: 1px solid hsl(var(--border) / 0.9);
+    box-shadow: 0 10px 26px -20px rgba(20,60,140,0.22), inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+  :root.light .holo-card:hover {
+    box-shadow: 0 16px 40px -22px rgba(20,60,140,0.3), 0 0 0 1px hsl(214 100% 55% / 0.3);
+  }
+  /* Keep foil/currency text readable on white */
+  :root.light .text-foil,
+  :root.light .text-engrave {
+    filter: drop-shadow(0 1px 1px rgba(20,60,140,0.25)) saturate(1.3) brightness(0.7);
+  }
+
+
   .text-foil {
     background: var(--grad-foil);
     background-size: 200% 100%;
