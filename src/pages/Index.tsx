@@ -80,6 +80,7 @@ const Index = () => {
               <p className="text-xs font-medium text-foreground truncate">{displayName}</p>
               <p className="text-[9px] micro-label text-emerald">{roleInfo.label}</p>
             </div>
+            <ThemeToggle />
             <ChangePasswordDialog />
             <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
               <LogOut className="h-4 w-4" />
