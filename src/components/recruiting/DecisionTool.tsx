@@ -3,10 +3,12 @@ import {
   Swords, Brain, Upload, Loader2, FileText, Sparkles, Trophy, Crown,
   Check, X as XIcon, TrendingUp, Zap, Save, Quote, AlertTriangle, Star,
   Target, Wand2, UserCheck, Plus, Trash2, Gem, Radar as RadarIcon, ArrowUpDown,
-  ShieldAlert, Lightbulb, Gauge, ListChecks,
+  ShieldAlert, Lightbulb, Gauge, ListChecks, BarChart3, ClipboardCheck,
+  ThumbsUp, ThumbsDown, MinusCircle, History,
 } from "lucide-react";
 import {
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +23,7 @@ import { useCandidates, Candidate, usePositions } from "@/hooks/useRecruiting";
 import { useAgents, useTranscripts, useSaveTranscript, analyzeTranscript, ScreeningTranscript } from "@/hooks/useAgents";
 import {
   useGoldenProfiles, useSaveGoldenProfile, useDeleteGoldenProfile, generateGoldenProfile,
+  useHiringDecisions, useRecordDecision, useDeleteDecision,
 } from "@/hooks/useRecruiting";
 import {
   GoldenProfile, GoldenDimension, GOLDEN_DIM_KEYS, GOLDEN_DIM_LABELS,
@@ -423,6 +426,23 @@ function GoldenLeaderboard({ golden, candidates }: { golden: GoldenProfile; cand
 
   const focusName = focus?.candidate.full_name.split(" ")[0] || "Candidate";
 
+  // Fit distribution across the benchmarked pool — a quick read on bench strength
+  const distData = useMemo(() => {
+    const buckets = [
+      { band: "Golden 90+", tone: "152 62% 50%", count: 0 },
+      { band: "Strong 75-89", tone: "88 60% 55%", count: 0 },
+      { band: "Fair 60-74", tone: "43 90% 62%", count: 0 },
+      { band: "Weak <60", tone: "18 90% 62%", count: 0 },
+    ];
+    ranked.forEach((r) => {
+      if (r.fit >= 90) buckets[0].count++;
+      else if (r.fit >= 75) buckets[1].count++;
+      else if (r.fit >= 60) buckets[2].count++;
+      else buckets[3].count++;
+    });
+    return buckets;
+  }, [ranked]);
+
   return (
     <div className="space-y-5">
       {/* Golden summary header */}
@@ -465,6 +485,25 @@ function GoldenLeaderboard({ golden, candidates }: { golden: GoldenProfile; cand
           {roleOnly ? "Matching this role only" : "All candidates"}
         </button>
       </div>
+
+      {ranked.length > 0 && (
+        <div className="glass-panel rounded-2xl border border-border p-4">
+          <div className="flex items-center gap-2 text-sm font-medium mb-2"><BarChart3 className="h-4 w-4 text-cyan" /> How the field stacks up to the golden bar</div>
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={distData} margin={{ left: -18, right: 8, top: 4, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.4} />
+                <XAxis dataKey="band" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <Tooltip cursor={{ fill: "hsl(var(--muted)/0.3)" }} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {distData.map((d, i) => <Cell key={i} fill={`hsl(${d.tone})`} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {ranked.length === 0 ? (
         <div className="glass-panel rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
@@ -786,12 +825,22 @@ function Chip({ label, tone }: { label: string; tone: string }) {
 }
 
 /* ============================ Arena Mode ============================ */
+interface ArenaDim { key: string; label: string; value: number }
 interface Contender {
   candidate: Candidate;
   power: number;
-  dims: { label: string; value: number }[];
+  dims: ArenaDim[];
+  contrib: Record<string, number>;
   transcripts: ScreeningTranscript[];
 }
+
+const ARENA_DIMS = [
+  { key: "screening", label: "Screening", w: 30 },
+  { key: "rating", label: "Rating", w: 20 },
+  { key: "fit", label: "Interview fit", w: 25 },
+  { key: "experience", label: "Experience", w: 15 },
+  { key: "engagement", label: "Engagement", w: 10 },
+];
 
 function ArenaMode() {
   const { data: candidates = [] } = useCandidates();
@@ -842,6 +891,13 @@ function ArenaMode() {
 }
 
 const RADAR_COLORS = ["200 100% 70%", "152 62% 50%", "43 90% 62%", "280 80% 70%"];
+const DIM_HSL: Record<string, string> = {
+  Screening: "200 100% 70%",
+  Rating: "280 80% 70%",
+  "Interview fit": "152 62% 50%",
+  Experience: "43 90% 62%",
+  Engagement: "18 90% 62%",
+};
 
 function Arena({ candidateIds, candidates }: { candidateIds: string[]; candidates: Candidate[] }) {
   // Pull transcripts for each contender
@@ -852,25 +908,49 @@ function Arena({ candidateIds, candidates }: { candidateIds: string[]; candidate
   const transcriptsById: Record<string, ScreeningTranscript[]> = {};
   [t0, t1, t2, t3].forEach((q, i) => { if (candidateIds[i]) transcriptsById[candidateIds[i]] = q.data ?? []; });
 
+  // Interactive weighting — evaluators tune what matters for this role
+  const [weights, setWeights] = useState<Record<string, number>>(
+    Object.fromEntries(ARENA_DIMS.map((d) => [d.key, d.w]))
+  );
+  const totalWeight = Object.values(weights).reduce((s, w) => s + w, 0) || 1;
+  const resetWeights = () => setWeights(Object.fromEntries(ARENA_DIMS.map((d) => [d.key, d.w])));
+
   const contenders: Contender[] = useMemo(() => {
     return candidateIds.map((id) => {
       const c = candidates.find((x) => x.id === id)!;
       const ts = transcriptsById[id] ?? [];
       const avgFit = ts.length ? Math.round(ts.reduce((s, t) => s + (t.fit_score ?? 0), 0) / ts.length) : 0;
-      const dims = [
-        { label: "Screening", value: c.score || 0 },
-        { label: "Rating", value: (c.rating || 0) * 20 },
-        { label: "Interview fit", value: avgFit },
-        { label: "Experience", value: Math.min(100, (c.years_experience || 0) * 12) },
-        { label: "Engagement", value: Math.min(100, (c.contact_count || 0) * 25) },
+      const dims: ArenaDim[] = [
+        { key: "screening", label: "Screening", value: c.score || 0 },
+        { key: "rating", label: "Rating", value: (c.rating || 0) * 20 },
+        { key: "fit", label: "Interview fit", value: avgFit },
+        { key: "experience", label: "Experience", value: Math.min(100, (c.years_experience || 0) * 12) },
+        { key: "engagement", label: "Engagement", value: Math.min(100, (c.contact_count || 0) * 25) },
       ];
-      const weights = [0.3, 0.2, 0.25, 0.15, 0.1];
-      const power = Math.round(dims.reduce((s, d, i) => s + d.value * weights[i], 0));
-      return { candidate: c, power, dims, transcripts: ts };
+      const contrib: Record<string, number> = {};
+      let power = 0;
+      dims.forEach((d) => {
+        const share = (d.value * (weights[d.key] ?? 0)) / totalWeight;
+        contrib[d.label] = Math.round(share * 10) / 10;
+        power += share;
+      });
+      return { candidate: c, power: Math.round(power), dims, contrib, transcripts: ts };
     }).sort((a, b) => b.power - a.power);
-  }, [candidateIds, candidates, JSON.stringify(transcriptsById)]);
+  }, [candidateIds, candidates, JSON.stringify(transcriptsById), JSON.stringify(weights)]);
 
   const top = contenders[0];
+  const runnerUp = contenders[1];
+  const margin = runnerUp ? top.power - runnerUp.power : top.power;
+
+  // Where the leader beats the runner-up — the "why"
+  const leadReasons = useMemo(() => {
+    if (!runnerUp) return [];
+    return top.dims
+      .map((d) => ({ label: d.label, delta: Math.round(d.value - (runnerUp.dims.find((x) => x.key === d.key)?.value ?? 0)) }))
+      .filter((r) => r.delta > 0)
+      .sort((a, b) => b.delta - a.delta)
+      .slice(0, 3);
+  }, [top, runnerUp]);
 
   const radarData = useMemo(() => {
     const labels = ["Screening", "Rating", "Interview fit", "Experience", "Engagement"];
@@ -882,6 +962,13 @@ function Arena({ candidateIds, candidates }: { candidateIds: string[]; candidate
       return row;
     });
   }, [contenders]);
+
+  const barData = useMemo(
+    () => contenders.map((c) => ({ name: c.candidate.full_name.split(" ")[0], ...c.contrib })),
+    [contenders]
+  );
+
+  const confidence = Math.min(100, Math.round(40 + margin * 2 + (top.transcripts.length ? 15 : 0)));
 
   return (
     <div className="space-y-5">
@@ -896,32 +983,102 @@ function Arena({ candidateIds, candidates }: { candidateIds: string[]; candidate
             <div className="text-[10px] micro-label text-gold mb-1">Current front-runner</div>
             <h2 className="font-display text-3xl">{top.candidate.full_name}</h2>
             <p className="text-sm text-muted-foreground">{top.candidate.applied_role || "—"} · {top.candidate.region}</p>
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs"
-              style={{ color: `hsl(var(--${tierOf(top.power).color}))`, background: `hsl(var(--${tierOf(top.power).color})/0.12)`, border: `1px solid hsl(var(--${tierOf(top.power).color})/0.35)` }}>
-              <Star className="h-3.5 w-3.5" /> {tierOf(top.power).label} tier
+            <div className="mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs"
+                style={{ color: `hsl(var(--${tierOf(top.power).color}))`, background: `hsl(var(--${tierOf(top.power).color})/0.12)`, border: `1px solid hsl(var(--${tierOf(top.power).color})/0.35)` }}>
+                <Star className="h-3.5 w-3.5" /> {tierOf(top.power).label} tier
+              </span>
+              {runnerUp && (
+                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs bg-background/40 border border-border text-muted-foreground">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald" /> +{margin} over {runnerUp.candidate.full_name.split(" ")[0]}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Radar overlay */}
+      {/* Recommendation summary — the analytical "why" */}
+      <div className="glass-panel rounded-2xl border border-emerald/30 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-sm font-medium"><Lightbulb className="h-4 w-4 text-emerald" /> Recommendation</div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] micro-label text-muted-foreground">confidence</span>
+            <span className="font-display text-lg" style={{ color: `hsl(${confidence >= 66 ? "152 62% 50%" : confidence >= 40 ? "43 90% 62%" : "18 90% 62%"})` }}>{confidence}%</span>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          <b className="text-foreground">{top.candidate.full_name}</b>{" "}
+          {margin >= 12 ? "is the clear standout" : margin >= 5 ? "edges ahead" : "leads by a razor-thin margin"}{" "}
+          under your current weighting{leadReasons.length ? ", driven by " : "."}
+          {leadReasons.map((r, i) => (
+            <span key={r.label}>
+              <b className="text-emerald">{r.label.toLowerCase()}</b> (+{r.delta}){i < leadReasons.length - 1 ? ", " : ""}
+            </span>
+          ))}
+          {leadReasons.length ? "." : ""}
+          {margin < 5 && runnerUp && " Consider one more signal before deciding — the field is tight."}
+        </p>
+      </div>
+
+      {/* Weight controls — many options, easy to follow */}
       <div className="glass-panel rounded-2xl border border-border p-4">
-        <div className="flex items-center gap-2 text-sm font-medium mb-1"><RadarIcon className="h-4 w-4 text-cyan" /> Head-to-head shape</div>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={radarData} outerRadius="70%">
-              <PolarGrid stroke="hsl(var(--border))" />
-              <PolarAngleAxis dataKey="dim" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-              <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-              {contenders.map((c, i) => {
-                const name = c.candidate.full_name.split(" ")[0];
-                const hsl = RADAR_COLORS[i % RADAR_COLORS.length];
-                return <Radar key={c.candidate.id} name={name} dataKey={name} stroke={`hsl(${hsl})`} fill={`hsl(${hsl})`} fillOpacity={0.18} />;
-              })}
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
-            </RadarChart>
-          </ResponsiveContainer>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-sm font-medium"><Gauge className="h-4 w-4 text-cyan" /> Tune what matters for this role</div>
+          <button onClick={resetWeights} className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1"><ArrowUpDown className="h-3 w-3" /> Reset</button>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-x-5 gap-y-3">
+          {ARENA_DIMS.map((d) => (
+            <div key={d.key} className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-medium">{d.label}</span>
+                <span className="font-mono" style={{ color: `hsl(${DIM_HSL[d.label]})` }}>{Math.round(((weights[d.key] ?? 0) / totalWeight) * 100)}%</span>
+              </div>
+              <Slider value={[weights[d.key] ?? 0]} min={0} max={20} step={1} onValueChange={([v]) => setWeights((w) => ({ ...w, [d.key]: v }))} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-5">
+        {/* Radar overlay */}
+        <div className="glass-panel rounded-2xl border border-border p-4">
+          <div className="flex items-center gap-2 text-sm font-medium mb-1"><RadarIcon className="h-4 w-4 text-cyan" /> Head-to-head shape</div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} outerRadius="70%">
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis dataKey="dim" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                {contenders.map((c, i) => {
+                  const name = c.candidate.full_name.split(" ")[0];
+                  const hsl = RADAR_COLORS[i % RADAR_COLORS.length];
+                  return <Radar key={c.candidate.id} name={name} dataKey={name} stroke={`hsl(${hsl})`} fill={`hsl(${hsl})`} fillOpacity={0.18} />;
+                })}
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Weighted contribution — what makes up each power score */}
+        <div className="glass-panel rounded-2xl border border-border p-4">
+          <div className="flex items-center gap-2 text-sm font-medium mb-1"><BarChart3 className="h-4 w-4 text-gold" /> What builds each power score</div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} layout="vertical" margin={{ left: 4, right: 12, top: 8, bottom: 4 }}>
+                <CartesianGrid horizontal={false} stroke="hsl(var(--border))" strokeOpacity={0.4} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                {ARENA_DIMS.map((d) => (
+                  <Bar key={d.key} dataKey={d.label} stackId="p" fill={`hsl(${DIM_HSL[d.label]})`} radius={0} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -929,6 +1086,104 @@ function Arena({ candidateIds, candidates }: { candidateIds: string[]; candidate
       <div className={`grid gap-4 ${contenders.length === 2 ? "sm:grid-cols-2" : contenders.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
         {contenders.map((c, rank) => <ContenderCard key={c.candidate.id} c={c} rank={rank} />)}
       </div>
+
+      {/* Record the decision to the cloud */}
+      <DecisionRecorder contenders={contenders} weights={weights} />
+    </div>
+  );
+}
+
+function DecisionRecorder({ contenders, weights }: { contenders: Contender[]; weights: Record<string, number> }) {
+  const record = useRecordDecision();
+  const [pickId, setPickId] = useState<string>(contenders[0]?.candidate.id || "");
+  const [verdict, setVerdict] = useState<"hire" | "hold" | "pass">("hire");
+  const [rationale, setRationale] = useState("");
+
+  const picked = contenders.find((c) => c.candidate.id === pickId) || contenders[0];
+  const { data: decisions = [] } = useHiringDecisions(picked?.candidate.id || null);
+  const del = useDeleteDecision();
+
+  const submit = async () => {
+    if (!picked) return;
+    await record.mutateAsync({
+      candidate_id: picked.candidate.id,
+      position_id: (picked.candidate as any).position_id ?? null,
+      location_id: (picked.candidate as any).location_id ?? null,
+      decision: verdict,
+      power_score: picked.power,
+      weights,
+      contenders: contenders.map((c) => ({ id: c.candidate.id, name: c.candidate.full_name, power: c.power })),
+      rationale: rationale.trim() || null,
+    });
+    setRationale("");
+  };
+
+  const VERDICTS = [
+    { key: "hire" as const, label: "Advance / Hire", icon: <ThumbsUp className="h-4 w-4" />, tone: "emerald" },
+    { key: "hold" as const, label: "Hold", icon: <MinusCircle className="h-4 w-4" />, tone: "gold" },
+    { key: "pass" as const, label: "Pass", icon: <ThumbsDown className="h-4 w-4" />, tone: "orange" },
+  ];
+
+  return (
+    <div className="glass-panel rounded-2xl border border-emerald/30 p-5 space-y-4">
+      <div className="flex items-center gap-2 text-sm font-medium"><ClipboardCheck className="h-4 w-4 text-emerald" /> Record the call</div>
+      <p className="text-xs text-muted-foreground -mt-2">Saved to Lovable Cloud so admins, regionals and the hiring team all see the same verdict.</p>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">Candidate</Label>
+          <Select value={pickId} onValueChange={setPickId}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Pick" /></SelectTrigger>
+            <SelectContent>
+              {contenders.map((c) => <SelectItem key={c.candidate.id} value={c.candidate.id}>{c.candidate.full_name} · {c.power}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Verdict</Label>
+          <div className="grid grid-cols-3 gap-1.5 mt-1">
+            {VERDICTS.map((v) => (
+              <button key={v.key} onClick={() => setVerdict(v.key)}
+                className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-[11px] border transition-all tap-target ${verdict === v.key ? "" : "border-border bg-background/30 text-muted-foreground"}`}
+                style={verdict === v.key ? { color: `hsl(var(--${v.tone}))`, background: `hsl(var(--${v.tone})/0.12)`, borderColor: `hsl(var(--${v.tone})/0.4)` } : undefined}>
+                {v.icon} {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Rationale (optional)</Label>
+        <Textarea rows={2} value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="Why this call? What tipped it?" />
+      </div>
+
+      <Button onClick={submit} disabled={record.isPending} className="w-full bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25">
+        {record.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Save className="h-4 w-4 mr-1.5" />}
+        Record decision
+      </Button>
+
+      {decisions.length > 0 && (
+        <div className="pt-1 space-y-2">
+          <div className="flex items-center gap-2 text-[11px] micro-label text-muted-foreground"><History className="h-3.5 w-3.5" /> Decision ledger for {picked?.candidate.full_name.split(" ")[0]}</div>
+          {decisions.map((d) => {
+            const tone = d.decision === "hire" ? "emerald" : d.decision === "pass" ? "orange" : "gold";
+            return (
+              <div key={d.id} className="flex items-center gap-3 rounded-lg border border-border bg-background/30 px-3 py-2">
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] capitalize shrink-0"
+                  style={{ color: `hsl(var(--${tone}))`, background: `hsl(var(--${tone})/0.12)`, border: `1px solid hsl(var(--${tone})/0.35)` }}>
+                  {d.decision}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs truncate">{d.rationale || "No note"}</p>
+                  <p className="text-[10px] text-muted-foreground">{d.decided_by_name || "Someone"} · {relativeTime(d.created_at)} · power {d.power_score ?? "—"}</p>
+                </div>
+                <button onClick={() => del.mutate(d.id)} className="p-1 rounded hover:bg-destructive/15 text-destructive shrink-0" title="Remove"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
