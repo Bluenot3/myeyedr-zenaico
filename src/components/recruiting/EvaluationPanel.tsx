@@ -268,8 +268,11 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
   );
 }
 
-function EvalCard({ ev, expanded, onToggle, onDelete }: { ev: CandidateEvaluation; expanded: boolean; onToggle: () => void; onDelete: () => void }) {
+function EvalCard({ ev, expanded, onToggle, onEdit, onDelete }: { ev: CandidateEvaluation; expanded: boolean; onToggle: () => void; onEdit: () => void; onDelete: () => void }) {
   const rec = recMeta(ev.recommendation);
+  const d = ev.details;
+  const rich = !!d?.kind && (d.kind === "interview" || d.kind === "phone_screen");
+  const scale = d?.scale || 5;
   return (
     <div className="glass-panel rounded-xl p-3">
       <button onClick={onToggle} className="w-full flex items-center gap-3 text-left">
@@ -278,12 +281,15 @@ function EvalCard({ ev, expanded, onToggle, onDelete }: { ev: CandidateEvaluatio
           <div className="flex items-center gap-2">
             <span className="h-5 w-5 grid place-items-center rounded-full bg-holo/12 text-holo text-[8px] font-bold shrink-0">{initials(ev.evaluator)}</span>
             <p className="text-xs font-semibold text-foreground truncate">{ev.evaluator}</p>
+            {rich && <span className="shrink-0 text-[8px] font-mono uppercase text-holo rounded-full px-1.5 py-0.5 bg-holo/12">{d?.kind === "phone_screen" ? "phone" : "interview"}</span>}
           </div>
-          <p className="text-[10px] text-muted-foreground truncate">{ev.template_name} · {new Date(ev.created_at).toLocaleDateString()}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{ev.template_name} · {new Date(ev.created_at).toLocaleDateString()}{rich && d?.total != null ? ` · ${d.total}/${d.maxTotal}` : ""}</p>
         </div>
-        {ev.recommendation && (
+        {rich && d?.recLabel ? (
+          <span className="shrink-0 text-[10px] font-medium rounded-md px-2 py-1" style={{ color: `hsl(${rec.hsl})`, background: `hsl(${rec.hsl} / 0.12)` }}>{d.recLabel}</span>
+        ) : ev.recommendation ? (
           <span className="shrink-0 text-[10px] font-medium rounded-md px-2 py-1" style={{ color: `hsl(${rec.hsl})`, background: `hsl(${rec.hsl} / 0.12)` }}>{rec.label}</span>
-        )}
+        ) : null}
         {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </button>
       {expanded && (
@@ -292,19 +298,40 @@ function EvalCard({ ev, expanded, onToggle, onDelete }: { ev: CandidateEvaluatio
             <div key={r.id}>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-foreground/85 truncate">{r.label}</span>
-                <span className="inline-flex items-center gap-0.5 shrink-0">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`h-3 w-3 ${i < r.score ? "fill-gold text-gold" : "text-muted-foreground/25"}`} />
-                  ))}
-                </span>
+                {rich ? (
+                  <span className="shrink-0 text-[10px] font-bold rounded-md px-1.5 py-0.5 bg-muted text-foreground/80">{r.score}/{scale}</span>
+                ) : (
+                  <span className="inline-flex items-center gap-0.5 shrink-0">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`h-3 w-3 ${i < r.score ? "fill-gold text-gold" : "text-muted-foreground/25"}`} />
+                    ))}
+                  </span>
+                )}
               </div>
               {r.comment && <p className="text-[10px] text-muted-foreground italic mt-0.5">{r.comment}</p>}
             </div>
           ))}
-          {ev.notes && <p className="text-[11px] text-foreground/80 rounded-lg bg-background/40 border border-border/50 p-2 mt-2">{ev.notes}</p>}
-          <div className="flex justify-end">
+          {rich && d && (
+            <div className="space-y-1.5 mt-2">
+              {d.finalDecision && <p className="text-[11px] text-foreground/85"><b>Final decision:</b> {d.finalDecision}</p>}
+              {d.bestReason && <p className="text-[10px] text-foreground/75 rounded-lg bg-background/40 border border-border/50 p-2"><b>Best reason:</b> {d.bestReason}</p>}
+              {d.biggestConcern && <p className="text-[10px] text-foreground/75 rounded-lg bg-background/40 border border-border/50 p-2"><b>Biggest concern:</b> {d.biggestConcern}</p>}
+              {d.trainingPriority && <p className="text-[10px] text-foreground/75 rounded-lg bg-background/40 border border-border/50 p-2"><b>Next step:</b> {d.trainingPriority}</p>}
+              {d.risks && Object.keys(d.risks).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(d.risks).map(([area, lvl]) => (
+                    <span key={area} className="text-[9px] rounded-full px-1.5 py-0.5 bg-muted text-muted-foreground">{area}: {lvl}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {!rich && ev.notes && <p className="text-[11px] text-foreground/80 rounded-lg bg-background/40 border border-border/50 p-2 mt-2">{ev.notes}</p>}
+          <div className="flex justify-end gap-3">
+            {rich && <button onClick={onEdit} className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><Pencil className="h-3 w-3" /> Edit</button>}
             <button onClick={onDelete} className="text-[10px] text-muted-foreground hover:text-destructive inline-flex items-center gap-1"><Trash2 className="h-3 w-3" /> Remove</button>
           </div>
+
         </div>
       )}
     </div>
