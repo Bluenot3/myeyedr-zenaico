@@ -68,6 +68,54 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
   const [location, setLocation] = useState(existing?.details?.location || "");
   const [interviewDate, setInterviewDate] = useState(existing?.details?.interviewDate || new Date().toISOString().slice(0, 10));
   const [view, setView] = useState<string>("full");
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+
+  const downloadPdf = async () => {
+    const node = shellRef.current;
+    if (!node) return;
+    setPdfBusy(true);
+    const prevView = view;
+    try {
+      // Force the full reference view so every question/anchor is captured.
+      setView("full");
+      await new Promise((r) => setTimeout(r, 60));
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        windowWidth: Math.max(node.scrollWidth, 1100),
+      });
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const imgData = canvas.toDataURL("image/png");
+      let heightLeft = imgH;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        position -= pageH;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+      const safeName = candidate.full_name.replace(/[^a-z0-9]+/gi, "_");
+      const kindLabel = isPhone ? "Phone_Screen" : "Interview";
+      pdf.save(`${safeName}_${kindLabel}_Evaluation.pdf`);
+    } catch (e) {
+      console.error("PDF export failed", e);
+    } finally {
+      setView(prevView);
+      setPdfBusy(false);
+    }
+  };
 
   const { total, completed, maxTotal, percent, recLabel } = useMemo(() => {
     const scored = comps.filter((c) => scores[c.id] !== undefined);
