@@ -117,6 +117,7 @@ const Index = () => {
           {activeTab === "overview" && <Overview />}
           {activeTab === "pipeline" && <PipelineBoard />}
           {activeTab === "openings" && <Openings />}
+          {activeTab === "calendar" && <CalendarView />}
           {activeTab === "pool" && <TalentPool />}
           {activeTab === "agents" && isAdmin && <AgentStudio />}
           {activeTab === "decision" && isAdmin && <DecisionTool />}
