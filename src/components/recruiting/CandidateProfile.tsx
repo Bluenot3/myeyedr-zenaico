@@ -69,6 +69,30 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
 
   const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
 
+  const handleDocUpload = async (files: FileList | null) => {
+    if (!files?.length || !candidate) return;
+    setUploadingDoc(true);
+    try {
+      const added: UploadedDoc[] = [];
+      for (const file of Array.from(files)) {
+        const { url } = await uploadCandidateFile(file);
+        added.push({ name: file.name, url, type: file.type, size: file.size, kind: "attachment" });
+      }
+      const next = [...(candidate.documents || []), ...added];
+      updateCandidate.mutate({ id: candidate.id, documents: next as any, resume_url: candidate.resume_url || next.find((d) => d.kind === "resume")?.url || "" });
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const removeDoc = (url: string) => {
+    if (!candidate) return;
+    const next = (candidate.documents || []).filter((d) => d.url !== url);
+    updateCandidate.mutate({ id: candidate.id, documents: next as any });
+  };
+
+
+
   const handleStage = (stage: string) => {
     const score = Math.max(candidate.score, stageProgress(stage));
     updateCandidate.mutate({ id: candidate.id, stage, score });
