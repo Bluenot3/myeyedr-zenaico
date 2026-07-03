@@ -26,6 +26,10 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  if (!(await isAdminRequest(req))) {
+    return new Response(JSON.stringify({ error: "Admins only" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   try {
     const { text, voiceId, stability, similarity } = await req.json();
     if (!text || typeof text !== "string") {
