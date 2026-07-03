@@ -38,6 +38,10 @@ const FALLBACK = [
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  if (!(await isAdminRequest(req))) {
+    return new Response(JSON.stringify({ error: "Admins only" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   try {
     const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
     if (!apiKey) {
