@@ -87,7 +87,7 @@ export default function UsersManager() {
             Create accounts with a name, title, role, and locations. Managers only see candidates and openings for their assigned locations — Admins and Regionals see everything.
           </p>
         </div>
-        <Button onClick={() => setInviteOpen(true)} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25 tap-target">
+        <Button onClick={() => setInviteOpen(true)} className="btn-optic tap-target">
           <UserPlus className="h-4 w-4 mr-1.5" /> Invite user
         </Button>
       </div>
@@ -227,7 +227,7 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={invite} disabled={busy} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25">
+          <Button onClick={invite} disabled={busy} className="btn-optic">
             {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UserPlus className="h-4 w-4 mr-1" />} Create account
           </Button>
         </div>
@@ -286,7 +286,7 @@ function CredentialDialog({ email, password, onClose }: { email: string; passwor
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="outline" onClick={copy}>{copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}{copied ? "Copied" : "Copy"}</Button>
-          <Button onClick={onClose} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25">Done</Button>
+          <Button onClick={onClose} className="btn-optic">Done</Button>
         </div>
       </DialogContent>
     </Dialog>
