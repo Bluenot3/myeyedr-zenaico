@@ -21,6 +21,7 @@ export default function PipelineBoard() {
   const [region, setRegion] = useState("All");
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
+  const [profileTab, setProfileTab] = useState<string>("match");
   const [ids, setIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<ViewMode>("board");
 
