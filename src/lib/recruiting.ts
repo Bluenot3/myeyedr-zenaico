@@ -99,12 +99,12 @@ export function badgeMeta(type: string): BadgeMeta {
 }
 
 export const TONE_HSL: Record<BadgeTone, string> = {
-  emerald: "161 66% 57%",
-  gold: "43 85% 70%",
-  holo: "172 66% 71%",
-  cyan: "194 100% 79%",
-  orange: "28 86% 63%",
-  lime: "76 72% 66%",
+  emerald: "214 100% 62%",
+  gold: "197 100% 78%",
+  holo: "190 100% 80%",
+  cyan: "200 100% 74%",
+  orange: "216 100% 66%",
+  lime: "186 100% 72%",
 };
 
 /* ---------------- Misc ---------------- */
