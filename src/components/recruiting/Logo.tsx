@@ -1,3 +1,5 @@
+import wordmark from "@/assets/myeyedr-wordmark.png.asset.json";
+
 interface MarkProps {
   size?: number;
   className?: string;
@@ -6,7 +8,8 @@ interface MarkProps {
 
 /**
  * MyEyeDr eye-mark — minimalist single-weight eye glyph.
- * Modern, brand-aligned, works at any size.
+ * Used as a compact brand token (favicon-style) where the full wordmark
+ * does not fit.
  */
 export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) {
   return (
@@ -24,9 +27,7 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
           <stop offset="1" stopColor="#95e8ff" />
         </linearGradient>
       </defs>
-      {/* soft outer ring */}
       <circle cx="24" cy="24" r="22" stroke="url(#eye-brand)" strokeWidth="1" opacity="0.28" />
-      {/* eye almond */}
       <path
         d="M8 24C8 24 14.5 14 24 14C33.5 14 40 24 40 24C40 24 33.5 34 24 34C14.5 34 8 24 8 24Z"
         stroke="url(#eye-brand)"
@@ -34,11 +35,8 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* iris */}
       <circle cx="24" cy="24" r="6.2" stroke="url(#eye-brand)" strokeWidth="2.2" />
-      {/* pupil */}
       <circle cx="24" cy="24" r="2.4" fill="url(#eye-brand)" />
-      {/* catchlight */}
       <circle cx="26.4" cy="21.6" r="1" fill="#fcf9f2" opacity="0.9" />
     </svg>
   );
@@ -46,34 +44,34 @@ export function EyeMark({ size = 40, className = "", spin = false }: MarkProps) 
 
 interface LogoProps {
   className?: string;
+  /** height of the wordmark in px */
   markSize?: number;
-  /** show the "Talent Command" sublabel under the wordmark */
+  /** show a sublabel under the wordmark */
   sub?: string;
-  /** wordmark font-size in px */
+  /** @deprecated kept for API compatibility */
   wordSize?: number;
 }
 
 /**
- * Full MyEyeDr lockup — eye-mark + lowercase wordmark in a modern,
- * rounded, minimalist treatment.
+ * Official MyEyeDr wordmark lockup, tuned for dark surfaces.
+ * The `markSize` prop maps to the rendered wordmark height so existing
+ * call sites keep working.
  */
-export default function Logo({ className = "", markSize = 34, sub, wordSize = 20 }: LogoProps) {
+export default function Logo({ className = "", markSize = 34, sub }: LogoProps) {
+  // wordmark aspect ratio ~ 1658 / 292 = 5.68
+  const height = Math.round(markSize * 0.82);
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <EyeMark size={markSize} />
-      <div className="leading-none">
-        <span
-          className="font-sans font-extrabold tracking-tight lowercase select-none"
-          style={{ fontSize: wordSize }}
-        >
-          <span className="text-foreground">myeye</span>
-          <span className="text-emerald">dr</span>
-          <span className="text-gold">.</span>
-        </span>
-        {sub && (
-          <p className="micro-label text-[8px] text-muted-foreground mt-1">{sub}</p>
-        )}
-      </div>
+    <div className={`flex flex-col ${className}`}>
+      <img
+        src={wordmark.url}
+        alt="MyEyeDr"
+        style={{ height }}
+        className="w-auto select-none drop-shadow-[0_1px_10px_rgba(149,232,255,0.15)]"
+        draggable={false}
+      />
+      {sub && (
+        <p className="micro-label text-[8px] text-muted-foreground mt-1.5 pl-0.5">{sub}</p>
+      )}
     </div>
   );
 }
