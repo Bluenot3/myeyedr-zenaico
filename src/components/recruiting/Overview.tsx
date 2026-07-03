@@ -276,6 +276,65 @@ export default function Overview() {
         <StatCard label="Avg Match" value={stats.avgScore} icon={Activity} tone="holo" sub="active pool" />
       </div>
 
+      {/* Evaluation summary — Admins & Regionals see every evaluator's submissions, live from the cloud */}
+      {evalSummary && (
+        <div className="glass-panel rounded-xl p-5">
+          <div className="flex items-center gap-1.5 mb-4">
+            <ClipboardCheck className="h-4 w-4 text-holo" />
+            <h3 className="font-display text-lg font-semibold">Evaluation Summary</h3>
+            <span className="ml-auto text-[10px] font-mono uppercase tracking-wide text-muted-foreground">team-wide · live</span>
+          </div>
+          {evalSummary.total === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">
+              No evaluations submitted yet. As invited evaluators complete scorecards, every submission collects here across all candidates.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                {[
+                  { label: "Submitted", value: evalSummary.total, sub: "scorecards", hsl: "197 100% 66%" },
+                  { label: "Candidates", value: evalSummary.candidates, sub: "evaluated", hsl: "214 100% 62%" },
+                  { label: "Evaluators", value: evalSummary.evaluators, sub: "contributing", hsl: "160 84% 42%" },
+                  { label: "Avg Score", value: evalSummary.avg, sub: `${evalSummary.hirePct}% lean hire`, hsl: "42 100% 58%" },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: `hsl(${s.hsl} / 0.1)`, border: `1px solid hsl(${s.hsl} / 0.28)` }}>
+                    <p className="font-display text-2xl font-bold leading-none" style={{ color: `hsl(${s.hsl})` }}>{s.value}</p>
+                    <p className="text-[10px] font-medium text-foreground mt-1.5">{s.label}</p>
+                    <p className="text-[9px] text-muted-foreground">{s.sub}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground mb-2">Latest submissions</p>
+              <div className="space-y-1.5">
+                {evalSummary.recent.map(({ e, name }) => {
+                  const cand = candById(e.candidate_id);
+                  return (
+                    <button
+                      key={e.id}
+                      onClick={() => cand && openCandidateTab(cand, "scorecards")}
+                      className="w-full flex items-center gap-3 rounded-lg bg-background/40 border border-border/60 p-2.5 hover:border-holo/40 transition-colors tap-target text-left"
+                    >
+                      <ScoreRing score={e.overall_score} size={38} stroke={4} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-foreground truncate">{name}</span>
+                          <span className="text-[9px] font-mono uppercase text-muted-foreground rounded-full px-1.5 py-0.5 bg-muted shrink-0">{e.template_name}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          by {e.evaluator} · {new Date(e.created_at).toLocaleDateString()}{e.recommendation ? ` · ${e.recommendation}` : ""}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Next Best Actions */}
         <div className="lg:col-span-2 glass-panel rounded-xl p-5">
