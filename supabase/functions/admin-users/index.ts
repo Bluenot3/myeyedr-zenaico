@@ -169,6 +169,3 @@ serve(async (req) => {
     return json({ error: String(e) }, 500);
   }
 });
-
-// Deno serve shim
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
