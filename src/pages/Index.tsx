@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, GitBranch, Briefcase, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords } from "lucide-react";
+import { ScanEye, GitBranch, Briefcase, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords, Glasses } from "lucide-react";
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
