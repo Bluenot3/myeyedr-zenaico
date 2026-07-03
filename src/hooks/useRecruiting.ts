@@ -57,8 +57,17 @@ export interface Candidate {
   tags: string[];
   headline: string;
   years_experience: number;
+  documents: CandidateDocument[];
   created_at: string;
   updated_at: string;
+}
+
+export interface CandidateDocument {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  kind: "resume" | "attachment";
 }
 
 export interface CandidateBadge {
