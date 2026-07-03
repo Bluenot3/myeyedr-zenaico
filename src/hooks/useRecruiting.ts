@@ -152,6 +152,50 @@ export interface InterviewQuestion {
   created_at: string;
 }
 
+export interface Competency {
+  id: string;
+  label: string;
+  weight: number;
+  guidance: string;
+}
+
+export interface ScorecardTemplate {
+  id: string;
+  name: string;
+  role: string;
+  position_id: string | null;
+  description: string;
+  competencies: Competency[];
+  is_default: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvaluationRating {
+  id: string;
+  label: string;
+  score: number; // 0 (unrated) .. 5
+  comment: string;
+}
+
+export interface CandidateEvaluation {
+  id: string;
+  candidate_id: string;
+  template_id: string | null;
+  event_id: string | null;
+  position_id: string | null;
+  template_name: string;
+  evaluator: string;
+  ratings: EvaluationRating[];
+  overall_score: number;
+  recommendation: string; // strong_yes | yes | neutral | no | strong_no
+  notes: string;
+  submitted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Soundbite {
   quote: string;
   label: string; // strength | concern | skill | red_flag | logistics | culture
@@ -768,5 +812,127 @@ export function useAnalyzeInterview() {
       toast.success("Interview analyzed — soundbites ready");
     },
     onError: (e: any) => toast.error("Analysis failed: " + (e?.message || e)),
+  });
+}
+
+/* ============================ Scorecard templates ============================ */
+export function useScorecardTemplates() {
+  return useQuery({
+    queryKey: ["scorecard_templates"],
+    queryFn: async () => {
+      const { data, error } = await db.from("scorecard_templates").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as ScorecardTemplate[];
+    },
+  });
+}
+
+export function useCreateScorecardTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (t: Partial<ScorecardTemplate>) => {
+      const { data, error } = await db.from("scorecard_templates").insert([t]).select().single();
+      if (error) throw error;
+      return data as ScorecardTemplate;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["scorecard_templates"] });
+      toast.success("Scorecard template saved");
+    },
+    onError: (e: any) => toast.error("Failed to save template: " + e.message),
+  });
+}
+
+export function useUpdateScorecardTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<ScorecardTemplate> & { id: string }) => {
+      const { error } = await db.from("scorecard_templates").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["scorecard_templates"] });
+      toast.success("Template updated");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useDeleteScorecardTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("scorecard_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["scorecard_templates"] });
+      toast.success("Template removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/* ============================ Candidate evaluations (filled scorecards) ============================ */
+export function useCandidateEvaluations(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["candidate_evaluations", candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+      const { data, error } = await db
+        .from("candidate_evaluations")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as CandidateEvaluation[];
+    },
+    enabled: !!candidateId,
+  });
+}
+
+export function useCreateEvaluation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (e: Partial<CandidateEvaluation>) => {
+      const { data, error } = await db.from("candidate_evaluations").insert([e]).select().single();
+      if (error) throw error;
+      return data as CandidateEvaluation;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      toast.success("Evaluation saved to candidate");
+    },
+    onError: (e: any) => toast.error("Failed to save evaluation: " + e.message),
+  });
+}
+
+export function useUpdateEvaluation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<CandidateEvaluation> & { id: string }) => {
+      const { error } = await db.from("candidate_evaluations").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      toast.success("Evaluation updated");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useDeleteEvaluation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; candidate_id: string }) => {
+      const { error } = await db.from("candidate_evaluations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_evaluations", vars.candidate_id] });
+      toast.success("Evaluation removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
   });
 }

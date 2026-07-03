@@ -2,16 +2,18 @@ import { useMemo, useState } from "react";
 import {
   CalendarDays, ChevronLeft, ChevronRight, Plus, Clock, MapPin, Phone, Video,
   Trash2, Loader2, CheckCircle2, XCircle, CalendarClock, PhoneCall, Handshake, Star, Users,
+  ClipboardCheck, ExternalLink,
 } from "lucide-react";
 import {
   useInterviewEvents, useCreateEvent, useUpdateEvent, useDeleteEvent,
-  useCandidates, usePositions, useLocations, InterviewEvent,
+  useCandidates, usePositions, useLocations, InterviewEvent, Candidate,
 } from "@/hooks/useRecruiting";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import CandidateProfile from "./CandidateProfile";
 
 const EVENT_TYPES: { key: string; label: string; hsl: string; icon: typeof CalendarClock }[] = [
   { key: "screening", label: "Screening", hsl: "190 100% 74%", icon: PhoneCall },
@@ -73,6 +75,16 @@ export default function CalendarView() {
   const [cursor, setCursor] = useState({ y: today.getFullYear(), m: today.getMonth() });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
+  const [profileCand, setProfileCand] = useState<Candidate | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const openScorecard = () => {
+    const c = candidates.find((x) => x.id === form.candidate_id);
+    if (!c) return;
+    setDialogOpen(false);
+    setProfileCand(c);
+    setProfileOpen(true);
+  };
 
   const candName = (id: string | null) => candidates.find((c) => c.id === id)?.full_name;
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
@@ -343,6 +355,21 @@ export default function CalendarView() {
                 </div>
               </div>
             )}
+            {form.candidate_id && (
+              <button
+                onClick={openScorecard}
+                className="sm:col-span-2 flex items-center gap-2.5 rounded-lg border border-emerald/40 bg-emerald/8 p-3 text-left hover:bg-emerald/12 transition-colors tap-target"
+              >
+                <span className="h-8 w-8 grid place-items-center rounded-lg bg-emerald/15 text-emerald border border-emerald/30 shrink-0">
+                  <ClipboardCheck className="h-4 w-4" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground">Open evaluation scorecards</p>
+                  <p className="text-[10px] text-muted-foreground">Add notes & score {candName(form.candidate_id)} for this interview</p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-emerald shrink-0" />
+              </button>
+            )}
           </div>
           <DialogFooter className="mt-4 pt-3 border-t border-border gap-2 sm:justify-between">
             {form.id ? (
@@ -359,6 +386,8 @@ export default function CalendarView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CandidateProfile candidate={profileCand} open={profileOpen} onOpenChange={setProfileOpen} initialTab="scorecards" eventId={form.id} />
     </div>
   );
 }

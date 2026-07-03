@@ -73,6 +73,86 @@ export type Database = {
           },
         ]
       }
+      candidate_evaluations: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          evaluator: string
+          event_id: string | null
+          id: string
+          notes: string
+          overall_score: number
+          position_id: string | null
+          ratings: Json
+          recommendation: string
+          submitted: boolean
+          template_id: string | null
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          evaluator?: string
+          event_id?: string | null
+          id?: string
+          notes?: string
+          overall_score?: number
+          position_id?: string | null
+          ratings?: Json
+          recommendation?: string
+          submitted?: boolean
+          template_id?: string | null
+          template_name?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          evaluator?: string
+          event_id?: string | null
+          id?: string
+          notes?: string
+          overall_score?: number
+          position_id?: string | null
+          ratings?: Json
+          recommendation?: string
+          submitted?: boolean
+          template_id?: string | null
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_evaluations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_evaluations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "interview_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_evaluations_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_evaluations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "scorecard_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_media: {
         Row: {
           candidate_id: string
@@ -609,6 +689,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      scorecard_templates: {
+        Row: {
+          competencies: Json
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          is_default: boolean
+          name: string
+          position_id: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          competencies?: Json
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          position_id?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          competencies?: Json
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          position_id?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scorecard_templates_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       screening_agents: {
         Row: {
