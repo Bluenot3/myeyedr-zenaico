@@ -42,7 +42,8 @@ export default function Overview() {
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
   const { data: events = [] } = useInterviewEvents();
-  const { profile } = useAuth();
+  const { profile, hasAllAccess } = useAuth();
+  const { data: allEvals = [] } = useRecentEvaluations(hasAllAccess ? 300 : 0);
   const firstName = (profile?.full_name || profile?.email?.split("@")[0] || "").split(" ")[0];
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
