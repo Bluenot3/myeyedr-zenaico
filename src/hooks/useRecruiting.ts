@@ -1043,3 +1043,67 @@ export function useDeleteEvaluation() {
     onError: (e: any) => toast.error("Failed: " + e.message),
   });
 }
+
+/* ============================ Golden profiles (ideal candidate) ============================ */
+import type { GoldenProfile } from "@/lib/golden";
+
+export function useGoldenProfiles() {
+  return useQuery({
+    queryKey: ["golden_profiles"],
+    queryFn: async () => {
+      const { data, error } = await db.from("golden_profiles").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as GoldenProfile[];
+    },
+  });
+}
+
+export function useSaveGoldenProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (g: Partial<GoldenProfile> & { id?: string }) => {
+      if (g.id) {
+        const { id, created_at, updated_at, ...updates } = g as any;
+        const { data, error } = await db.from("golden_profiles").update(updates).eq("id", id).select().single();
+        if (error) throw error;
+        return data as GoldenProfile;
+      }
+      const { data, error } = await db.from("golden_profiles").insert([g]).select().single();
+      if (error) throw error;
+      return data as GoldenProfile;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["golden_profiles"] });
+      toast.success("Golden example saved");
+    },
+    onError: (e: any) => toast.error("Failed to save golden example: " + e.message),
+  });
+}
+
+export function useDeleteGoldenProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("golden_profiles").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["golden_profiles"] });
+      toast.success("Golden example removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export async function generateGoldenProfile(opts: {
+  mode: "from_position" | "from_resume" | "from_candidate";
+  role?: string;
+  context?: string;
+  fileBase64?: string;
+  mimeType?: string;
+}): Promise<Partial<GoldenProfile>> {
+  const { data, error } = await supabase.functions.invoke("generate-golden-profile", { body: opts });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data.profile as Partial<GoldenProfile>;
+}
