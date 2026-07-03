@@ -61,6 +61,9 @@ const Index = () => {
             </div>
           </div>
         </div>
+        <div className="px-3 pb-4 pt-1">
+          <ZenSignature />
+        </div>
       </aside>
 
       {/* Main */}
