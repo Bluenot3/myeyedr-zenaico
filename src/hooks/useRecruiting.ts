@@ -152,7 +152,48 @@ export interface InterviewQuestion {
   created_at: string;
 }
 
+export interface Soundbite {
+  quote: string;
+  label: string; // strength | concern | skill | red_flag | logistics | culture
+  note: string;
+  start: number | null;
+  end: number | null;
+}
+
+export interface TranscriptWord {
+  text: string;
+  start: number;
+  end: number;
+  speaker?: string;
+}
+
+export interface CandidateMedia {
+  id: string;
+  candidate_id: string;
+  name: string;
+  url: string;
+  media_type: string; // audio | video | image | document
+  content_type: string | null;
+  size: number;
+  label: string | null;
+  duration_seconds: number | null;
+  status: string; // processing | ready | error
+  transcript: string | null;
+  words: TranscriptWord[];
+  soundbites: Soundbite[];
+  summary: string | null;
+  sentiment: string | null;
+  recommendation: string | null;
+  fit_score: number | null;
+  error: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const db = supabase as any;
+
+
 
 /* ============================ Queries ============================ */
 export function useLocations() {
@@ -640,5 +681,92 @@ export function useDeleteEvent() {
       toast.success("Event removed");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/* ============================ Candidate media (interviews / uploads) ============================ */
+export function useCandidateMedia(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["candidate_media", candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+      const { data, error } = await db
+        .from("candidate_media")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as CandidateMedia[];
+    },
+    enabled: !!candidateId,
+  });
+}
+
+export function useCreateMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (m: Partial<CandidateMedia>) => {
+      const { data, error } = await db.from("candidate_media").insert([m]).select().single();
+      if (error) throw error;
+      return data as CandidateMedia;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_media", vars.candidate_id] });
+    },
+    onError: (e: any) => toast.error("Upload failed: " + e.message),
+  });
+}
+
+export function useUpdateMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<CandidateMedia> & { id: string }) => {
+      const { error } = await db.from("candidate_media").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_media", vars.candidate_id] });
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useDeleteMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; candidate_id: string }) => {
+      const { error } = await db.from("candidate_media").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_media", vars.candidate_id] });
+      toast.success("Removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/** Kick off interview transcription + soundbite analysis for a media row. */
+export function useAnalyzeInterview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { mediaId: string; candidateId: string; url: string; candidate?: Partial<Candidate> }) => {
+      const { data, error } = await supabase.functions.invoke("analyze-interview", {
+        body: {
+          mediaId: payload.mediaId,
+          candidateId: payload.candidateId,
+          url: payload.url,
+          candidate: payload.candidate,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_media", vars.candidateId] });
+      toast.success("Interview analyzed — soundbites ready");
+    },
+    onError: (e: any) => toast.error("Analysis failed: " + (e?.message || e)),
   });
 }
