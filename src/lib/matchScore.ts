@@ -220,11 +220,11 @@ export function computeMatch(c: Candidate): MatchResult {
 }
 
 const CATEGORY_HSL: Record<MatchCategory, string> = {
-  "Excellent Match": "152 62% 50%",
-  "Strong Match": "161 66% 57%",
-  "Possible Match": "43 85% 66%",
-  "Risk / Needs Review": "28 86% 63%",
-  "Poor Match": "4 73% 60%",
+  "Excellent Match": "190 100% 66%",
+  "Strong Match": "214 100% 62%",
+  "Possible Match": "43 90% 64%",
+  "Risk / Needs Review": "28 90% 62%",
+  "Poor Match": "4 78% 62%",
 };
 
 export function categoryFor(score: number): MatchCategory {
