@@ -21,7 +21,7 @@ export default function HoloStrip({ className = "", height = 3 }: Props) {
       />
       <div
         className="absolute -inset-x-10 top-0 h-full w-1/3 animate-shimmer"
-        style={{ background: "linear-gradient(90deg, transparent, rgba(248,247,242,0.7), transparent)", filter: "blur(4px)" }}
+        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent)", filter: "blur(4px)" }}
       />
     </div>
   );
