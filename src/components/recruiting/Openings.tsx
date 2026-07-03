@@ -56,6 +56,8 @@ export default function Openings() {
     setPostPos(p);
     setPostUrl(p.posting_url || "");
     setPostLocs(Array.isArray(p.posting_locations) ? [...p.posting_locations] : []);
+    setPostDesc(p.description || "");
+    setPostReq(p.requirements || "");
     setPostOpen(true);
   };
   const savePostings = async () => {
@@ -64,6 +66,8 @@ export default function Openings() {
       id: postPos.id,
       posting_url: postUrl.trim(),
       posting_locations: postLocs.filter((l) => l.label.trim() || l.url.trim()),
+      description: postDesc.trim(),
+      requirements: postReq.trim(),
     });
     setPostOpen(false);
   };
