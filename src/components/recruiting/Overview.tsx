@@ -41,6 +41,7 @@ export default function Overview() {
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
+  const { data: events = [] } = useInterviewEvents();
   const { profile } = useAuth();
   const firstName = (profile?.full_name || profile?.email?.split("@")[0] || "").split(" ")[0];
   const hour = new Date().getHours();
