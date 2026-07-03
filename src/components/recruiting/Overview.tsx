@@ -10,7 +10,7 @@ import StatCard from "./StatCard";
 import CandidateProfile from "./CandidateProfile";
 import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
-import HoloStrip from "./HoloStrip";
+
 import { EyeMark } from "./Logo";
 import { useAuth } from "@/hooks/useAuth";
 
