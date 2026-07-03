@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Search, ArrowUpDown, CheckSquare, Square, Zap, ChevronDown, Sparkles, Users } from "lucide-react";
 import { useCandidates, useLocations, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
-import { STAGES, stageMeta, stageProgress, stageIndex, REGIONS } from "@/lib/recruiting";
+import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
 import AddCandidateDialog from "./AddCandidateDialog";
