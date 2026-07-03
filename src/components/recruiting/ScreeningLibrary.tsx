@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Copy, Trash2, ClipboardList, MessageSquareQuote, Search, X, GripVertical } from "lucide-react";
+import { Plus, Copy, Trash2, ClipboardList, MessageSquareQuote, Search, X, GripVertical, ClipboardCheck } from "lucide-react";
 import { useScreeningTemplates, useInterviewQuestions, useCreateTemplate, useCreateQuestion, useDeleteQuestion } from "@/hooks/useRecruiting";
+import ScorecardTemplatesManager from "./ScorecardTemplatesManager";
 import { toast } from "sonner";
 
 export default function ScreeningLibrary() {
@@ -61,11 +62,18 @@ export default function ScreeningLibrary() {
         <p className="text-xs text-muted-foreground mt-0.5">Standardized templates and a shared question bank for consistent, fair evaluations.</p>
       </div>
 
-      <Tabs defaultValue="templates">
+      <Tabs defaultValue="scorecards">
         <TabsList>
+          <TabsTrigger value="scorecards" className="gap-1.5 text-xs"><ClipboardCheck className="h-3.5 w-3.5" /> Scorecards</TabsTrigger>
           <TabsTrigger value="templates" className="gap-1.5 text-xs"><ClipboardList className="h-3.5 w-3.5" /> Templates</TabsTrigger>
           <TabsTrigger value="questions" className="gap-1.5 text-xs"><MessageSquareQuote className="h-3.5 w-3.5" /> Question Bank</TabsTrigger>
         </TabsList>
+
+        {/* Scorecards */}
+        <TabsContent value="scorecards" className="mt-4">
+          <ScorecardTemplatesManager />
+        </TabsContent>
+
 
         {/* Templates */}
         <TabsContent value="templates" className="mt-4 space-y-3">

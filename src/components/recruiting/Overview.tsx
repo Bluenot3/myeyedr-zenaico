@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import {
   Users, Briefcase, Award, Sparkles, TrendingUp, Flame, Activity, ArrowRight,
   UploadCloud, PhoneOutgoing, Bot, Clock, Star, ClipboardCheck, ShieldAlert, Gauge, ChevronRight,
+  CalendarClock, PhoneCall, Handshake, Video, MapPin, Phone, Timer,
 } from "lucide-react";
-import { useCandidates, usePositions, useLocations, Candidate } from "@/hooks/useRecruiting";
+import { useCandidates, usePositions, useLocations, useInterviewEvents, Candidate } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, initials } from "@/lib/recruiting";
 import { computeMatch, nextAction, hoursSince } from "@/lib/matchScore";
 import StatCard from "./StatCard";
@@ -13,6 +14,28 @@ import ScoreRing from "./ScoreRing";
 
 import { EyeMark } from "./Logo";
 import { useAuth } from "@/hooks/useAuth";
+
+const EVENT_META: Record<string, { label: string; hsl: string; icon: typeof CalendarClock }> = {
+  screening: { label: "Screening", hsl: "190 100% 66%", icon: PhoneCall },
+  interview: { label: "Interview", hsl: "210 100% 60%", icon: Users },
+  offer: { label: "Offer", hsl: "228 100% 66%", icon: Star },
+  hire: { label: "Hire / Start", hsl: "160 84% 42%", icon: Handshake },
+  other: { label: "Event", hsl: "197 100% 70%", icon: CalendarClock },
+};
+const evMeta = (k: string) => EVENT_META[k] || EVENT_META.other;
+
+function countdown(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now();
+  const abs = Math.abs(diff);
+  const mins = Math.round(abs / 60000);
+  const label = (v: string) => (diff < 0 ? `${v} ago` : `in ${v}`);
+  if (mins < 1) return "now";
+  if (mins < 60) return label(`${mins}m`);
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return label(`${hrs}h ${mins % 60}m`);
+  const days = Math.floor(hrs / 24);
+  return label(`${days}d ${hrs % 24}h`);
+}
 
 export default function Overview() {
   const { data: candidates = [] } = useCandidates();

@@ -13,9 +13,10 @@ import {
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
   Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
-  FileText, Loader2, Mic,
+  FileText, Loader2, Mic, ClipboardCheck,
 } from "lucide-react";
 import InterviewMedia from "./InterviewMedia";
+import EvaluationPanel from "./EvaluationPanel";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
@@ -35,9 +36,11 @@ interface Props {
   candidate: Candidate | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  initialTab?: string;
+  eventId?: string | null;
 }
 
-export default function CandidateProfile({ candidate, open, onOpenChange }: Props) {
+export default function CandidateProfile({ candidate, open, onOpenChange, initialTab, eventId }: Props) {
   const { data: badges = [] } = useCandidateBadges(candidate?.id ?? null);
   const { data: contacts = [] } = useContactLog(candidate?.id ?? null);
   const { data: notes = [] } = useCandidateNotes(candidate?.id ?? null);
@@ -57,11 +60,16 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
   const [showSeal, setShowSeal] = useState(false);
   const [seal, setSeal] = useState({ badge_type: "evaluation", title: "", score: "", summary: "", status: "verified" });
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [tab, setTab] = useState(initialTab || "match");
   const docInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (candidate) setForm({ ...candidate });
   }, [candidate]);
+
+  useEffect(() => {
+    if (open) setTab(initialTab || "match");
+  }, [open, initialTab, candidate?.id]);
 
   if (!candidate) return null;
   const loc = locations.find((l) => l.id === candidate.location_id);
@@ -222,15 +230,22 @@ export default function CandidateProfile({ candidate, open, onOpenChange }: Prop
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="match" className="px-5 sm:px-6 py-4">
-          <TabsList className="w-full grid grid-cols-6">
+        <Tabs value={tab} onValueChange={setTab} className="px-5 sm:px-6 py-4">
+          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 gap-1 h-auto">
             <TabsTrigger value="match" className="text-xs gap-1"><Gauge className="h-3.5 w-3.5" /> Match</TabsTrigger>
-            <TabsTrigger value="interviews" className="text-xs gap-1"><Mic className="h-3.5 w-3.5" /> Interviews</TabsTrigger>
+            <TabsTrigger value="scorecards" className="text-xs gap-1"><ClipboardCheck className="h-3.5 w-3.5" /> Scores</TabsTrigger>
+            <TabsTrigger value="interviews" className="text-xs gap-1"><Mic className="h-3.5 w-3.5" /> Media</TabsTrigger>
             <TabsTrigger value="ledger" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Ledger</TabsTrigger>
             <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
             <TabsTrigger value="notes" className="text-xs">Notes</TabsTrigger>
           </TabsList>
+
+          {/* Scorecards / evaluations */}
+          <TabsContent value="scorecards" className="mt-4">
+            <EvaluationPanel candidate={candidate} eventId={eventId} />
+          </TabsContent>
+
 
           {/* Match score breakdown */}
           <TabsContent value="match" className="mt-4 space-y-4">
