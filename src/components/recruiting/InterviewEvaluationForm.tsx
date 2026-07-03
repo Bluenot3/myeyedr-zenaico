@@ -170,7 +170,7 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
 
   return (
     <div className="iform" data-view={view}>
-      <div className="app-shell">
+      <div className="app-shell" ref={shellRef}>
         {/* Header */}
         <section className="top-card">
           <div className="brand-line">
@@ -182,6 +182,9 @@ export default function InterviewEvaluationForm({ candidate, template, eventId, 
           </div>
           <div className="header-actions">
             <div className="phi-pill">Do not record PHI</div>
+            <button className="mini-btn" type="button" onClick={downloadPdf} disabled={pdfBusy}>
+              {pdfBusy ? <Loader2 className="inline h-3.5 w-3.5 -mt-0.5 animate-spin" /> : <Download className="inline h-3.5 w-3.5 -mt-0.5" />} {pdfBusy ? "Building…" : "Download PDF"}
+            </button>
             <button className="mini-btn orange" type="button" onClick={onDone}>
               <X className="inline h-3.5 w-3.5 -mt-0.5" /> Close
             </button>
