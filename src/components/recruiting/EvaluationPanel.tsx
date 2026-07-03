@@ -243,11 +243,27 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
         ) : (
           <div className="space-y-2">
             {evaluations.map((ev) => (
-              <EvalCard key={ev.id} ev={ev} expanded={expanded === ev.id} onToggle={() => setExpanded((x) => (x === ev.id ? null : ev.id))} onDelete={() => deleteEval.mutate({ id: ev.id, candidate_id: candidate.id })} />
+              <EvalCard key={ev.id} ev={ev} expanded={expanded === ev.id} onToggle={() => setExpanded((x) => (x === ev.id ? null : ev.id))} onEdit={() => editRich(ev)} onDelete={() => deleteEval.mutate({ id: ev.id, candidate_id: candidate.id })} />
             ))}
           </div>
         )}
       </div>
+
+      {/* Rich interactive interview / phone-screen form */}
+      <Dialog open={!!richForm} onOpenChange={(o) => !o && setRichForm(null)}>
+        <DialogContent className="max-w-[1100px] w-[calc(100vw-16px)] h-[calc(100vh-24px)] sm:h-[92vh] overflow-y-auto p-0 gap-0 bg-transparent border-0 shadow-none">
+          {richForm && (
+            <InterviewEvaluationForm
+              candidate={candidate}
+              template={richForm.template}
+              eventId={eventId}
+              evaluatorName={evaluatorName}
+              existing={richForm.existing}
+              onDone={() => setRichForm(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
