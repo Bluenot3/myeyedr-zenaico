@@ -155,10 +155,11 @@
 
   :root.light body {
     background-image:
-      radial-gradient(120% 92% at 84% -14%, rgba(29,111,255,0.16), transparent 52%),
-      radial-gradient(96% 80% at 2% 2%, rgba(74,168,255,0.14), transparent 55%),
-      radial-gradient(92% 85% at 50% 122%, rgba(29,111,255,0.10), transparent 60%),
-      linear-gradient(168deg, #ffffff 0%, #eef5ff 52%, #e2eeff 100%);
+      radial-gradient(120% 92% at 86% -16%, rgba(29,111,255,0.30), transparent 52%),
+      radial-gradient(80% 70% at 8% 6%, rgba(90,176,255,0.24), transparent 55%),
+      radial-gradient(70% 60% at 96% 40%, rgba(111,216,255,0.18), transparent 58%),
+      radial-gradient(95% 88% at 50% 124%, rgba(29,111,255,0.20), transparent 60%),
+      linear-gradient(165deg, #ffffff 0%, #eaf3ff 46%, #d6e8ff 100%);
   }
 
   ::selection {
@@ -548,8 +549,10 @@
 }
 :root.light .aurora-bg {
   background:
-    radial-gradient(60% 42% at 78% 8%, hsl(212 70% 55% / 0.10), transparent 62%),
-    radial-gradient(52% 40% at 10% 92%, hsl(212 46% 60% / 0.08), transparent 64%);
+    radial-gradient(58% 42% at 80% 6%, hsl(214 90% 58% / 0.20), transparent 60%),
+    radial-gradient(46% 38% at 6% 40%, hsl(192 92% 60% / 0.16), transparent 62%),
+    radial-gradient(52% 40% at 12% 94%, hsl(212 70% 58% / 0.14), transparent 64%);
+  opacity: 1;
 }
 @keyframes aurora-drift {
   0%   { transform: translate3d(0,0,0) scale(1); }

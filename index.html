@@ -15,6 +15,22 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="MyEyeDr Recruiting Command Center" />
     <meta name="twitter:description" content="Regional recruiting command center for MyEyeDr hiring managers." />
+
+    <script>
+      // Light-first paint: default to the light optical gradient unless the
+      // user has explicitly chosen dark. Prevents a dark flash before mount.
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t !== "dark") {
+            document.documentElement.classList.add("light");
+            document.documentElement.style.colorScheme = "light";
+          }
+        } catch (e) {
+          document.documentElement.classList.add("light");
+        }
+      })();
+    </script>
   </head>
 
   <body>
