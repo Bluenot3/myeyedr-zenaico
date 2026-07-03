@@ -18,6 +18,7 @@ interface ManagedUser {
   id: string;
   email: string;
   full_name: string | null;
+  title: string | null;
   must_reset_password: boolean;
   roles: Role[];
   location_ids: string[];
@@ -83,10 +84,10 @@ export default function UsersManager() {
         <div>
           <h1 className="font-display text-3xl sm:text-4xl tracking-tight">Team & Access</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-            Invite regionals and managers, set what they can see, and reset passwords. Admins have full access and can use AI.
+            Create accounts with a name, title, role, and locations. Managers only see candidates and openings for their assigned locations — Admins and Regionals see everything.
           </p>
         </div>
-        <Button onClick={() => setInviteOpen(true)} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25 tap-target">
+        <Button onClick={() => setInviteOpen(true)} className="btn-optic tap-target">
           <UserPlus className="h-4 w-4 mr-1.5" /> Invite user
         </Button>
       </div>
@@ -108,6 +109,7 @@ export default function UsersManager() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium truncate">{u.full_name || u.email}{isSelf && <span className="text-[10px] text-muted-foreground ml-1.5">(you)</span>}</p>
+                    {u.title && <p className="text-[11px] text-emerald/90 truncate">{u.title}</p>}
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[9px] micro-label" style={{ color: `hsl(var(--${meta.color}))` }}>{meta.label}</span>
@@ -167,6 +169,7 @@ type Loc = { id: string; site_name: string; region: string | null; city: string 
 function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onClose: () => void; onInvited: (c: { email: string; password: string }) => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [role, setRole] = useState<Role>("manager");
   const [locIds, setLocIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -177,7 +180,7 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
     if (!email.trim() || !name.trim()) { toast.error("Name and email required"); return; }
     setBusy(true);
     try {
-      const res = await callAdmin("invite", { email, full_name: name, role, location_ids: role === "manager" ? locIds : [] });
+      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [] });
       onInvited({ email: res.email, password: res.temp_password });
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
@@ -189,8 +192,9 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
         <div className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
             <div><Label className="text-xs">Full name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" /></div>
-            <div><Label className="text-xs">Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@myeyedr.com" /></div>
+            <div><Label className="text-xs">Email (their username)</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@myeyedr.com" /></div>
           </div>
+          <div><Label className="text-xs">Job title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Office Manager · Patient Services Coordinator" /></div>
           <div>
             <Label className="text-xs mb-1.5 block">Role</Label>
             <div className="grid grid-cols-3 gap-2">
@@ -223,7 +227,7 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={invite} disabled={busy} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25">
+          <Button onClick={invite} disabled={busy} className="btn-optic">
             {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <UserPlus className="h-4 w-4 mr-1" />} Create account
           </Button>
         </div>
@@ -282,7 +286,7 @@ function CredentialDialog({ email, password, onClose }: { email: string; passwor
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="outline" onClick={copy}>{copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}{copied ? "Copied" : "Copy"}</Button>
-          <Button onClick={onClose} className="bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25">Done</Button>
+          <Button onClick={onClose} className="btn-optic">Done</Button>
         </div>
       </DialogContent>
     </Dialog>

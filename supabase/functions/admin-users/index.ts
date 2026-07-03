@@ -96,6 +96,7 @@ serve(async (req) => {
       case "invite": {
         const email = String(body.email ?? "").trim().toLowerCase();
         const full_name = String(body.full_name ?? "").trim();
+        const title = String(body.title ?? "").trim();
         const role: Role = ROLES.includes(body.role) ? body.role : "manager";
         const location_ids: string[] = Array.isArray(body.location_ids) ? body.location_ids : [];
         if (!email || !email.includes("@")) return json({ error: "Valid email required" }, 400);
@@ -106,11 +107,12 @@ serve(async (req) => {
           email,
           password: pw,
           email_confirm: true,
-          user_metadata: { full_name, must_reset_password: true },
+          user_metadata: { full_name, title, must_reset_password: true },
         });
         if (error || !newUser?.user) return json({ error: error?.message ?? "Could not create user" }, 400);
         const uid = newUser.user.id;
 
+        if (title) await db.from("profiles").update({ title }).eq("id", uid);
         await db.from("user_roles").delete().eq("user_id", uid);
         await db.from("user_roles").insert({ user_id: uid, role });
         if (role === "manager" && location_ids.length) {

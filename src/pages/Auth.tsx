@@ -86,7 +86,7 @@ export default function Auth() {
             <Button
               type="submit"
               disabled={busy}
-              className="w-full bg-emerald/15 text-emerald border border-emerald/30 hover:bg-emerald/25 tap-target"
+              className="w-full btn-optic tap-target"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <LogIn className="h-4 w-4 mr-1.5" />}
               Sign in

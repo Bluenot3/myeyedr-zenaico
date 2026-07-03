@@ -11,128 +11,129 @@
  */
 
 @layer base {
+  /* ============ DARK MODE — deep blue → black gradient ============ */
   :root {
-    --background: 216 52% 4%;
-    --foreground: 210 30% 96%;
+    --background: 222 64% 4%;
+    --foreground: 210 40% 98%;
 
-    --card: 216 40% 7%;
-    --card-foreground: 210 30% 96%;
+    --card: 221 52% 7%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 216 42% 6%;
-    --popover-foreground: 210 30% 96%;
+    --popover: 222 54% 6%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 212 84% 55%;
-    --primary-foreground: 216 52% 5%;
+    --primary: 212 100% 60%;
+    --primary-foreground: 222 64% 5%;
 
-    --secondary: 216 32% 12%;
-    --secondary-foreground: 210 30% 96%;
+    --secondary: 219 40% 13%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 216 28% 12%;
-    --muted-foreground: 212 16% 68%;
+    --muted: 219 36% 13%;
+    --muted-foreground: 213 26% 72%;
 
-    --accent: 212 46% 66%;
-    --accent-foreground: 216 52% 6%;
+    --accent: 200 92% 62%;
+    --accent-foreground: 222 64% 6%;
 
-    --destructive: 4 72% 58%;
-    --destructive-foreground: 210 30% 96%;
+    --destructive: 4 78% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 213 30% 17%;
-    --input: 213 30% 19%;
-    --ring: 212 66% 60%;
+    --border: 216 40% 18%;
+    --input: 216 40% 20%;
+    --ring: 212 100% 64%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Brand tokens — MyEyeDr blue + Goldman powder-blue + champagne platinum */
-    --gold: 40 44% 66%;        /* champagne platinum — wealth accent */
-    --emerald: 212 84% 57%;    /* MyEyeDr signature blue */
-    --holo: 208 52% 74%;
-    --cyan: 205 50% 70%;
-    --orange: 34 58% 60%;      /* muted amber for urgency-hot */
-    --lime: 205 44% 66%;
-    --ink: 216 52% 4%;
-    --navy: 216 42% 8%;
-    --platinum: 210 30% 96%;
+    /* Brand tokens — electric optical blue family */
+    --gold: 202 90% 74%;       /* icy sky accent (repurposed) */
+    --emerald: 212 100% 62%;   /* primary optical blue */
+    --holo: 198 90% 70%;
+    --cyan: 190 92% 60%;
+    --orange: 28 90% 62%;
+    --lime: 160 70% 52%;
+    --ink: 222 64% 4%;
+    --navy: 221 50% 9%;
+    --platinum: 210 40% 98%;
 
-    --success: 158 62% 44%;
-    --warning: 38 78% 58%;
+    --success: 158 68% 48%;
+    --warning: 38 92% 60%;
 
-    --sidebar-background: 216 46% 5%;
-    --sidebar-foreground: 210 28% 90%;
-    --sidebar-primary: 212 84% 57%;
-    --sidebar-primary-foreground: 216 52% 5%;
-    --sidebar-accent: 216 30% 12%;
-    --sidebar-accent-foreground: 210 30% 96%;
-    --sidebar-border: 213 30% 15%;
-    --sidebar-ring: 212 66% 60%;
+    --sidebar-background: 222 58% 5%;
+    --sidebar-foreground: 210 34% 92%;
+    --sidebar-primary: 212 100% 62%;
+    --sidebar-primary-foreground: 222 64% 5%;
+    --sidebar-accent: 219 38% 13%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 40% 16%;
+    --sidebar-ring: 212 100% 64%;
 
-    /* Gradients — refined institutional blue with a platinum sheen */
-    --grad-emerald-gold: linear-gradient(135deg, #2f6fb5 0%, #6f9bd1 50%, #d6e3f2 100%);
-    --grad-holo: linear-gradient(135deg, #7fa6d3 0%, #3a72b5 45%, #f2f6fb 100%);
-    --grad-gold-platinum: linear-gradient(120deg, #b99a5b 0%, #e8d6a8 48%, #ffffff 100%);
-    --grad-currency: linear-gradient(110deg, #d6e3f2 0%, #9fbbdd 20%, #4f83c0 40%, #2f6fb5 56%, #7fa6d3 72%, #e8d6a8 88%, #ffffff 100%);
-    --grad-foil: linear-gradient(115deg, #ffffff 0%, #e2ecf7 14%, #b6cbe6 28%, #7fa6d3 42%, #d6e3f2 56%, #e8d6a8 72%, #eef3fa 86%, #ffffff 100%);
+    /* Gradients — vivid optical blue with a luminous edge */
+    --grad-emerald-gold: linear-gradient(135deg, #1d6fff 0%, #4aa8ff 50%, #bfe0ff 100%);
+    --grad-holo: linear-gradient(135deg, #3aa8ff 0%, #1d6fff 45%, #eaf4ff 100%);
+    --grad-gold-platinum: linear-gradient(120deg, #4aa8ff 0%, #bfe0ff 48%, #ffffff 100%);
+    --grad-currency: linear-gradient(110deg, #eaf4ff 0%, #9fc9ff 20%, #3a8bff 42%, #1d6fff 58%, #5cb0ff 74%, #bfe0ff 88%, #ffffff 100%);
+    --grad-foil: linear-gradient(115deg, #ffffff 0%, #eaf4ff 14%, #bfe0ff 28%, #5cb0ff 42%, #1d6fff 56%, #9fc9ff 72%, #eaf4ff 86%, #ffffff 100%);
 
-    --shadow-cert: 0 30px 80px -40px rgba(0,0,0,0.88), 0 0 0 1px rgba(111,155,209,0.14);
-    --glow-gold: 0 0 30px -16px rgba(232,214,168,0.42);
-    --glow-emerald: 0 0 34px -18px rgba(47,111,181,0.5);
+    --shadow-cert: 0 30px 80px -40px rgba(0,0,0,0.9), 0 0 0 1px rgba(74,168,255,0.16);
+    --glow-gold: 0 0 32px -14px rgba(90,176,255,0.5);
+    --glow-emerald: 0 0 38px -16px rgba(29,111,255,0.6);
   }
 
-  /* ============ LIGHT MODE ============ */
+  /* ============ LIGHT MODE (DEFAULT) — white → electric blue gradient ============ */
   :root.light {
-    --background: 210 38% 97%;
-    --foreground: 216 52% 10%;
+    --background: 210 60% 98%;
+    --foreground: 220 55% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 216 50% 11%;
+    --card-foreground: 220 52% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 216 50% 11%;
+    --popover-foreground: 220 52% 13%;
 
-    --primary: 212 66% 44%;
+    --primary: 214 92% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 34% 92%;
-    --secondary-foreground: 216 50% 13%;
+    --secondary: 211 60% 95%;
+    --secondary-foreground: 220 52% 15%;
 
-    --muted: 210 32% 91%;
-    --muted-foreground: 216 20% 40%;
+    --muted: 211 48% 94%;
+    --muted-foreground: 218 22% 42%;
 
-    --accent: 212 52% 52%;
+    --accent: 200 92% 48%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 4 72% 52%;
+    --destructive: 4 74% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 26% 84%;
-    --input: 214 26% 82%;
-    --ring: 212 66% 44%;
+    --border: 214 40% 88%;
+    --input: 214 40% 86%;
+    --ring: 214 92% 50%;
 
     /* Brand tokens tuned for contrast on white */
-    --gold: 38 54% 44%;        /* deep champagne for legibility on white */
-    --emerald: 212 68% 42%;
-    --holo: 212 56% 46%;
-    --cyan: 205 60% 42%;
-    --orange: 30 62% 46%;
-    --lime: 205 46% 40%;
-    --ink: 216 52% 10%;
-    --navy: 214 36% 92%;
-    --platinum: 216 50% 11%;
+    --gold: 206 84% 46%;       /* deep sky accent */
+    --emerald: 214 92% 48%;
+    --holo: 208 82% 50%;
+    --cyan: 192 88% 42%;
+    --orange: 24 84% 50%;
+    --lime: 158 62% 38%;
+    --ink: 220 55% 12%;
+    --navy: 212 52% 94%;
+    --platinum: 220 52% 13%;
 
-    --success: 158 60% 32%;
-    --warning: 34 78% 44%;
+    --success: 158 64% 34%;
+    --warning: 34 90% 46%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 216 42% 20%;
-    --sidebar-primary: 212 66% 44%;
+    --sidebar-foreground: 220 44% 22%;
+    --sidebar-primary: 214 92% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 34% 92%;
-    --sidebar-accent-foreground: 216 50% 13%;
-    --sidebar-border: 214 26% 86%;
-    --sidebar-ring: 212 66% 44%;
+    --sidebar-accent: 211 60% 95%;
+    --sidebar-accent-foreground: 220 52% 15%;
+    --sidebar-border: 214 40% 90%;
+    --sidebar-ring: 214 92% 50%;
 
-    --shadow-cert: 0 24px 60px -34px rgba(20,52,110,0.32), 0 0 0 1px rgba(47,111,181,0.10);
-    --glow-gold: 0 0 26px -16px rgba(180,150,80,0.4);
-    --glow-emerald: 0 0 30px -18px rgba(47,111,181,0.4);
+    --shadow-cert: 0 28px 64px -34px rgba(20,80,200,0.28), 0 0 0 1px rgba(29,111,255,0.10);
+    --glow-gold: 0 0 28px -14px rgba(29,111,255,0.32);
+    --glow-emerald: 0 0 34px -16px rgba(29,111,255,0.4);
   }
 }
 
@@ -144,30 +145,30 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image:
-      radial-gradient(120% 85% at 82% -12%, rgba(47,111,181,0.15), transparent 52%),
-      radial-gradient(95% 75% at 8% 6%, rgba(111,155,209,0.10), transparent 55%),
-      radial-gradient(85% 80% at 50% 116%, rgba(111,155,209,0.06), transparent 58%),
-      linear-gradient(168deg, #08152a 0%, #030811 58%, #06101f 100%);
+      radial-gradient(120% 90% at 84% -14%, rgba(29,111,255,0.28), transparent 54%),
+      radial-gradient(95% 78% at 4% 4%, rgba(74,168,255,0.16), transparent 56%),
+      radial-gradient(90% 85% at 50% 120%, rgba(29,111,255,0.14), transparent 60%),
+      linear-gradient(168deg, #071433 0%, #030713 56%, #050c1f 100%);
     background-attachment: fixed;
     font-feature-settings: "ss01", "cv01";
   }
 
   :root.light body {
     background-image:
-      radial-gradient(120% 85% at 82% -12%, rgba(47,111,181,0.08), transparent 52%),
-      radial-gradient(95% 75% at 8% 6%, rgba(111,155,209,0.07), transparent 55%),
-      radial-gradient(85% 80% at 50% 116%, rgba(111,155,209,0.06), transparent 58%),
-      linear-gradient(168deg, #eef3fa 0%, #f7f9fd 55%, #eaf0f8 100%);
+      radial-gradient(120% 92% at 84% -14%, rgba(29,111,255,0.16), transparent 52%),
+      radial-gradient(96% 80% at 2% 2%, rgba(74,168,255,0.14), transparent 55%),
+      radial-gradient(92% 85% at 50% 122%, rgba(29,111,255,0.10), transparent 60%),
+      linear-gradient(168deg, #ffffff 0%, #eef5ff 52%, #e2eeff 100%);
   }
 
   ::selection {
-    background: rgba(111,155,209,0.34);
+    background: rgba(74,168,255,0.38);
     color: #ffffff;
   }
 
   :root.light ::selection {
-    background: rgba(47,111,181,0.20);
-    color: #0a1836;
+    background: rgba(29,111,255,0.22);
+    color: #06183a;
   }
 
   h1, h2, h3 {
@@ -339,6 +340,22 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+
+  /* Vivid optical-blue primary CTA */
+  .btn-optic {
+    color: #fff;
+    background: linear-gradient(135deg, hsl(214 92% 52%), hsl(200 95% 50%) 55%, hsl(190 92% 52%));
+    background-size: 180% 180%;
+    border: 1px solid hsl(212 100% 66% / 0.55);
+    box-shadow: 0 12px 30px -12px hsl(212 92% 50% / 0.6), inset 0 1px 0 rgba(255,255,255,0.28);
+    transition: background-position 0.5s ease, transform 0.25s ease, box-shadow 0.3s ease;
+  }
+  .btn-optic:hover {
+    background-position: 100% 0;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 40px -12px hsl(212 92% 50% / 0.72), inset 0 1px 0 rgba(255,255,255,0.34);
+  }
+  .btn-optic:active { transform: translateY(0); }
 
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
