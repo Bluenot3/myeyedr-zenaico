@@ -438,73 +438,80 @@
 .animate-float { animation: float 9s ease-in-out infinite; }
 .animate-spin-slow { animation: spin-slow 90s linear infinite; }
 
-/* ============ ZEN neon signature ============ */
-.zen-neon {
-  position: relative;
-  display: inline-block;
+/* ============ ZEN corporate signature ============ */
+.zen-sig {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.zen-sig-mark {
+  height: 15px;
+  width: auto;
+  object-fit: contain;
+  /* black mark on light surfaces (default) */
+  filter: drop-shadow(0 1px 1px rgba(255,255,255,0.55));
+  transition: filter 0.4s ease, transform 0.4s ease;
+}
+:root:not(.light) .zen-sig-mark {
+  /* invert to luminous on dark surfaces so the mark stays visible */
+  filter: invert(1) brightness(1.25) drop-shadow(0 0 6px rgba(120,190,255,0.55));
+}
+.zen-sig:hover .zen-sig-mark { transform: translateY(-0.5px) scale(1.04); }
+
+.zen-sig-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   font-family: theme('fontFamily.sans');
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
 }
-/* dim, unlit tubing */
-.zen-neon-base {
-  color: hsl(172 40% 55% / 0.28);
+.zen-sig-prefix {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: hsl(220 30% 30% / 0.72);
 }
-/* lit neon, revealed left-to-right by the traveling beam, then loops */
-.zen-neon-lit {
-  position: absolute;
-  inset: 0;
-  color: hsl(165 90% 72%);
+:root:not(.light) .zen-sig-prefix {
+  color: hsl(210 40% 88% / 0.7);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.zen-sig-brand {
+  position: relative;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(214 96% 46%);
+  /* crisp black outline for legibility on any backdrop */
+  -webkit-text-stroke: 0.6px rgba(6,14,30,0.92);
   text-shadow:
-    0 0 4px hsl(165 95% 65% / 0.9),
-    0 0 10px hsl(172 90% 60% / 0.7),
-    0 0 20px hsl(190 95% 60% / 0.45);
-  clip-path: inset(0 100% 0 0);
-  animation: zen-build 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    0 1px 0 rgba(255,255,255,0.35),
+    0 0 10px hsl(212 100% 60% / 0.25);
 }
-/* the light beam edge sweeping across the sign */
-.zen-neon-beam {
-  position: absolute;
-  top: -30%;
-  left: -6%;
-  height: 160%;
-  width: 14px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, hsl(190 100% 85% / 0.95), hsl(172 100% 70% / 0.4), transparent 75%);
-  filter: blur(2px);
-  animation: zen-beam 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+:root:not(.light) .zen-sig-brand {
+  color: hsl(200 100% 66%);
+  -webkit-text-stroke: 0.7px rgba(0,0,0,0.95);
+  text-shadow:
+    0 1px 1px rgba(0,0,0,0.8),
+    0 0 14px hsl(200 100% 62% / 0.4);
 }
-@keyframes zen-build {
-  0%   { clip-path: inset(0 100% 0 0); }
-  70%  { clip-path: inset(0 0 0 0); }
-  86%  { clip-path: inset(0 0 0 0); opacity: 1; }
-  93%  { opacity: 0.55; }
-  100% { clip-path: inset(0 0 0 0); opacity: 0; }
-}
-@keyframes zen-beam {
-  0%   { left: -6%; opacity: 0; }
-  6%   { opacity: 1; }
-  70%  { left: 100%; opacity: 1; }
-  76%  { opacity: 0; }
-  100% { left: 100%; opacity: 0; }
-}
-
-/* ZEN mark crisp shimmer */
-.zen-mark-shine {
+/* restrained sheen sweeping across the brand word */
+.zen-sig-sheen {
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, transparent 35%, hsl(0 0% 100% / 0.85) 50%, transparent 65%);
-  transform: translateX(-120%);
-  animation: zen-shine 4.2s ease-in-out infinite;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.75) 50%, transparent 62%);
+  transform: translateX(-130%);
+  animation: zen-sheen 5.5s ease-in-out infinite;
+  pointer-events: none;
 }
-@keyframes zen-shine {
-  0%, 55% { transform: translateX(-120%); }
-  78%     { transform: translateX(120%); }
-  100%    { transform: translateX(120%); }
+@keyframes zen-sheen {
+  0%, 60% { transform: translateX(-130%); }
+  80%     { transform: translateX(130%); }
+  100%    { transform: translateX(130%); }
 }
 
 /* ============ Holographic candidate card ============ */
