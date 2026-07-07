@@ -445,15 +445,37 @@ export function useCreateCandidate() {
     mutationFn: async (c: Partial<Candidate>) => {
       const { data, error } = await db.from("candidates").insert([c]).select().single();
       if (error) throw error;
-      return data as Candidate;
+      const cand = data as Candidate;
+      // Record the initial application + timeline event so history exists from day one.
+      await db.from("candidate_requisitions").insert([{
+        candidate_id: cand.id,
+        position_id: cand.position_id,
+        location_id: cand.location_id,
+        source: cand.source ?? "",
+        stage: cand.stage ?? "applied",
+        status: "active",
+        is_primary: true,
+        created_by: "Administrator",
+      }]);
+      await db.from("candidate_events").insert([{
+        candidate_id: cand.id,
+        event_type: "applied",
+        title: "Candidate created",
+        requisition_id: cand.position_id,
+        location_id: cand.location_id,
+        actor: "Administrator",
+      }]);
+      return cand;
     },
-    onSuccess: () => {
+    onSuccess: (_d, _v, ) => {
       qc.invalidateQueries({ queryKey: ["candidates"] });
+      qc.invalidateQueries({ queryKey: ["candidate_requisitions", "all"] });
       toast.success("Candidate added to pipeline");
     },
     onError: (e: any) => toast.error("Failed to add candidate: " + e.message),
   });
 }
+
 
 export function useUpdateCandidate() {
   const qc = useQueryClient();
