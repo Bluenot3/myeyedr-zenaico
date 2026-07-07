@@ -67,6 +67,9 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const [seal, setSeal] = useState({ badge_type: "evaluation", title: "", score: "", summary: "", status: "verified" });
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [tab, setTab] = useState(initialTab || "match");
+  const [decisionMode, setDecisionMode] = useState<null | "reject" | "pool">(null);
+  const [decisionReason, setDecisionReason] = useState("");
+  const [poolRoles, setPoolRoles] = useState("");
   const docInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
