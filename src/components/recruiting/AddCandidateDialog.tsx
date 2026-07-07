@@ -62,14 +62,31 @@ export default function AddCandidateDialog({ compact }: Props) {
       if (data?.error) throw new Error(data.error);
 
       const d = data?.data || {};
+
+      // Years may arrive as a number, "4", or "4 years" — pull the first integer.
+      const yearsRaw = d.years_experience;
+      const yearsNum = typeof yearsRaw === "number"
+        ? yearsRaw
+        : parseFloat(String(yearsRaw ?? "").replace(/[^0-9.]/g, ""));
+      const years = Number.isFinite(yearsNum) ? Math.round(yearsNum) : 0;
+
+      // Skills may arrive as an array or a comma/newline separated string.
+      const skills = Array.isArray(d.skills)
+        ? d.skills
+        : String(d.skills ?? "").split(/[,\n;]+/).map((s: string) => s.trim()).filter(Boolean);
+
+      // Merge onto whatever is there — only overwrite a field when the parser
+      // actually found something, so a partial parse never wipes good data.
       set({
-        full_name: d.full_name || "",
-        email: d.email || "",
-        phone: d.phone || "",
-        applied_role: d.applied_role || "",
-        headline: d.headline || (d.summary ? String(d.summary).slice(0, 90) : ""),
-        years_experience: Math.round(Number(d.years_experience)) || 0,
-        best_fit_roles: Array.isArray(d.skills) ? d.skills.slice(0, 6).join(", ") : "",
+        ...(d.full_name ? { full_name: String(d.full_name) } : {}),
+        ...(d.email ? { email: String(d.email) } : {}),
+        ...(d.phone ? { phone: String(d.phone) } : {}),
+        ...(d.applied_role ? { applied_role: String(d.applied_role) } : {}),
+        ...(d.headline || d.summary
+          ? { headline: String(d.headline || String(d.summary).slice(0, 90)) }
+          : {}),
+        ...(years ? { years_experience: years } : {}),
+        ...(skills.length ? { best_fit_roles: skills.slice(0, 6).join(", ") } : {}),
       });
       setParsed(true);
       toast.success("Résumé parsed — review and adjust below");

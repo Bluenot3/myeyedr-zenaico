@@ -6,6 +6,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** Robustly pull a JSON object out of an LLM response that may be wrapped in
+ * markdown fences, prose, or contain trailing commas / control characters. */
+function extractJson(raw: string): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "string") return null;
+  let cleaned = raw
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  cleaned = cleaned.substring(start, end + 1);
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    try {
+      const repaired = cleaned
+        .replace(/,\s*}/g, "}")
+        .replace(/,\s*]/g, "]")
+        .replace(/[\u0000-\u001F\u007F]/g, " ");
+      return JSON.parse(repaired);
+    } catch {
+      return null;
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -36,7 +65,9 @@ serve(async (req) => {
             role: "system",
             content: `You are an expert recruiting assistant for MyEyeDr, an optometry / eye care company. You read candidate résumés and extract clean, structured data for a hiring pipeline. Roles include Patient Service Coordinator (PSC), Optician, Optometric Technician, Front Desk, and similar eye-care / retail-healthcare positions.
 
-Extract the candidate's information accurately. Never invent data — if a field is not present, return an empty string (or 0 for years_experience). Write concise, professional prose for headline, summary, and evidence. Always return valid data only.`,
+Extract the candidate's information accurately. Never invent data — if a field is not present, return an empty string (or 0 for years_experience). Write concise, professional prose for headline, summary, and evidence.
+
+You MUST call the extract_candidate function with the data. If for any reason you cannot call the function, respond with ONLY a raw JSON object with the same fields — no markdown, no prose.`,
           },
           {
             role: "user",
@@ -98,14 +129,36 @@ Extract the candidate's information accurately. Never invent data — if a field
     }
 
     const data = await response.json();
-    let extracted: Record<string, unknown> = {};
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    const message = data.choices?.[0]?.message ?? {};
+    let extracted: Record<string, unknown> | null = null;
+
+    // Path 1: structured tool call (preferred)
+    const toolCall = message.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
-      try { extracted = JSON.parse(toolCall.function.arguments); } catch { /* ignore */ }
+      extracted = extractJson(toolCall.function.arguments);
     }
-    if (!extracted.full_name) {
-      const content = data.choices?.[0]?.message?.content;
-      if (content) { try { extracted = JSON.parse(content); } catch { /* ignore */ } }
+
+    // Path 2: model returned JSON in the message content instead
+    if (!extracted?.full_name && typeof message.content === "string") {
+      const fromContent = extractJson(message.content);
+      if (fromContent?.full_name) extracted = fromContent;
+    }
+
+    // Path 3: content is an array of parts (multimodal responses)
+    if (!extracted?.full_name && Array.isArray(message.content)) {
+      const joined = message.content
+        .map((p: { text?: string }) => p?.text || "")
+        .join("\n");
+      const fromParts = extractJson(joined);
+      if (fromParts?.full_name) extracted = fromParts;
+    }
+
+    if (!extracted || !extracted.full_name) {
+      console.error("Could not extract candidate. Raw message:", JSON.stringify(message).slice(0, 2000));
+      return new Response(
+        JSON.stringify({ error: "The résumé was read but no clear candidate details were found. Please enter them manually or try a clearer file." }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(JSON.stringify({ success: true, data: extracted }), {
