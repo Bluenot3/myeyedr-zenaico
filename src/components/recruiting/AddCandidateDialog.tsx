@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import { useCreateCandidate, useLocations, usePositions } from "@/hooks/useRecruiting";
 import { SOURCES } from "@/lib/recruiting";
-import { supabase } from "@/integrations/supabase/client";
-import { uploadCandidateFile as uploadFile, fileToBase64, UploadedDoc as DocEntry } from "@/lib/storage";
+import { uploadCandidateFile as uploadFile, UploadedDoc as DocEntry } from "@/lib/storage";
+import { uploadAndParseResume } from "@/lib/resume";
 import { toast } from "sonner";
 
 interface Props {
