@@ -193,6 +193,9 @@ You MUST call the extract_candidate function with the data. If for any reason yo
       );
     }
 
+    // Carry the raw text through so the app can store it on the candidate record.
+    if (hasText && !extracted.raw_text) extracted.raw_text = resumeText.slice(0, 60000);
+
     return new Response(JSON.stringify({ success: true, data: extracted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
