@@ -273,14 +273,18 @@ export default function AddCandidateDialog({ compact }: Props) {
           </div>
         </div>
 
-        <div className="sticky bottom-0 -mx-4 sm:mx-0 mt-4 flex gap-2 border-t border-border bg-background/70 px-4 sm:px-0 py-3 backdrop-blur-md sm:static sm:bg-transparent sm:backdrop-blur-none">
-          <Button variant="outline" onClick={() => { setOpen(false); reset(); }} className="flex-1 sm:flex-none tap-target h-11 sm:h-10">Cancel</Button>
-          <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="flex-1 sm:flex-none tap-target h-11 sm:h-10 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_24px_-8px_hsl(var(--emerald))]">
-            {createCandidate.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            Add to Pipeline
-          </Button>
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background/85 backdrop-blur-md">
+          <div className="mx-auto w-full max-w-2xl flex gap-2 px-4 sm:px-8 py-3 justify-end">
+            <Button variant="outline" onClick={() => { setOpen(false); reset(); }} className="flex-1 sm:flex-none tap-target h-11 sm:h-10">Cancel</Button>
+            <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="flex-1 sm:flex-none tap-target h-11 sm:h-10 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_24px_-8px_hsl(var(--emerald))]">
+              {createCandidate.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Add to Pipeline
+            </Button>
+          </div>
+        </div>
         </div>
       </DialogContent>
+
     </Dialog>
   );
 }
