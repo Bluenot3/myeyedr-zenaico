@@ -163,7 +163,7 @@ export default function CandidateTable({ candidates, locations, positions, onOpe
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={() => onOpen(c)}><Eye className="h-3.5 w-3.5 mr-2" /> View profile</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onOpen(c, "profile")}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit details</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onOpen(c, "details")}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit details</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onOpen(c, "history")}><ArrowRightLeft className="h-3.5 w-3.5 mr-2" /> Assign / history</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onOpen(c, "notes")}><MessageSquarePlus className="h-3.5 w-3.5 mr-2" /> Add note</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onOpen(c, "scorecards")}><ClipboardCheck className="h-3.5 w-3.5 mr-2" /> Evaluate</DropdownMenuItem>
@@ -173,7 +173,7 @@ export default function CandidateTable({ candidates, locations, positions, onOpe
                         ) : (
                           <DropdownMenuItem disabled><FileText className="h-3.5 w-3.5 mr-2" /> No résumé</DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => onOpen(c, "profile")} className="text-destructive focus:text-destructive"><Archive className="h-3.5 w-3.5 mr-2" /> Reject / archive</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onOpen(c, "details")} className="text-destructive focus:text-destructive"><Archive className="h-3.5 w-3.5 mr-2" /> Reject / archive</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
