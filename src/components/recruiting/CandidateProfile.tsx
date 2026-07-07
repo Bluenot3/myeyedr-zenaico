@@ -98,10 +98,6 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
     : []);
   const isReapplicant = priorArchived.length > 0 && !isRejected;
 
-  const [decisionMode, setDecisionMode] = useState<null | "reject" | "pool">(null);
-  const [decisionReason, setDecisionReason] = useState("");
-  const [poolRoles, setPoolRoles] = useState("");
-
   const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
 
   const handleDocUpload = async (files: FileList | null) => {
