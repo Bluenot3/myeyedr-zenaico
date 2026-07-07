@@ -30,7 +30,7 @@ export default function Openings() {
   const updatePosition = useUpdatePosition();
   const [region, setRegion] = useState("All");
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "" });
+  const [form, setForm] = useState({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "", hiring_manager: "" });
 
   // Postings + description editor state
   const [postOpen, setPostOpen] = useState(false);
