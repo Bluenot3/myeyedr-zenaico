@@ -48,7 +48,7 @@ export default function Openings() {
     if (!form.title.trim()) return;
     const loc = locations.find((l) => l.id === form.location_id);
     await createPosition.mutateAsync({ ...form, region: loc?.region || "", status: "open", posting_locations: [] });
-    setForm({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "" });
+    setForm({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "", hiring_manager: "" });
     setAddOpen(false);
   };
 
