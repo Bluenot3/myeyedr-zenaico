@@ -84,9 +84,46 @@ export interface Candidate {
   tags: string[];
   headline: string;
   years_experience: number;
+  address: string;
+  current_employer: string;
+  work_history: { employer?: string; title?: string; dates?: string }[];
+  education: { school?: string; credential?: string; dates?: string }[];
+  certifications: string[];
+  resume_summary: string;
+  resume_text: string;
+  parse_confidence: number | null;
+  screening_status: string;
+  interview_status: string;
   documents: CandidateDocument[];
   created_at: string;
   updated_at: string;
+}
+
+export interface CandidateRequisition {
+  id: string;
+  candidate_id: string;
+  position_id: string | null;
+  location_id: string | null;
+  stage: string;
+  status: string;
+  source: string;
+  is_primary: boolean;
+  notes: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateEvent {
+  id: string;
+  candidate_id: string;
+  event_type: string;
+  title: string;
+  detail: Record<string, unknown>;
+  requisition_id: string | null;
+  location_id: string | null;
+  actor: string;
+  created_at: string;
 }
 
 export interface CandidateDocument {
