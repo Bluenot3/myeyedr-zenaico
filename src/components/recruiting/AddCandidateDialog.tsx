@@ -274,6 +274,8 @@ export default function AddCandidateDialog({ compact }: Props) {
           </div>
         </div>
         </div>
+        </div>
+
 
         <div className="shrink-0 border-t border-border bg-background/85 backdrop-blur-md">
           <div className="mx-auto w-full max-w-2xl flex gap-2 px-4 sm:px-8 py-3 justify-end">
