@@ -333,17 +333,24 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
         </div>
 
         <Tabs value={tab} onValueChange={setTab} className="px-5 sm:px-6 py-4">
-          <TabsList className={`w-full grid grid-cols-4 ${showOnboarding ? "sm:grid-cols-9" : "sm:grid-cols-8"} gap-1 h-auto`}>
+          <TabsList className={`w-full grid grid-cols-4 ${showOnboarding ? "sm:grid-cols-10" : "sm:grid-cols-9"} gap-1 h-auto`}>
             <TabsTrigger value="match" className="text-xs gap-1"><Gauge className="h-3.5 w-3.5" /> Match</TabsTrigger>
             <TabsTrigger value="signals" className="text-xs gap-1"><Eye className="h-3.5 w-3.5" /> Signals</TabsTrigger>
             <TabsTrigger value="scorecards" className="text-xs gap-1"><ClipboardCheck className="h-3.5 w-3.5" /> Scores</TabsTrigger>
             <TabsTrigger value="interviews" className="text-xs gap-1"><Mic className="h-3.5 w-3.5" /> Media</TabsTrigger>
             {showOnboarding && <TabsTrigger value="onboarding" className="text-xs gap-1"><GraduationCap className="h-3.5 w-3.5" /> Onboard</TabsTrigger>}
             <TabsTrigger value="ledger" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Ledger</TabsTrigger>
+            <TabsTrigger value="history" className="text-xs gap-1"><Clock className="h-3.5 w-3.5" /> History</TabsTrigger>
             <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
             <TabsTrigger value="notes" className="text-xs">Notes</TabsTrigger>
           </TabsList>
+
+          {/* Application & activity history */}
+          <TabsContent value="history" className="mt-4">
+            <CandidateHistory candidate={candidate} />
+          </TabsContent>
+
 
           {/* Onboarding checklist */}
           {showOnboarding && (
