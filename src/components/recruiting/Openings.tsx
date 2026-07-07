@@ -30,7 +30,7 @@ export default function Openings() {
   const updatePosition = useUpdatePosition();
   const [region, setRegion] = useState("All");
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "" });
+  const [form, setForm] = useState({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "", hiring_manager: "" });
 
   // Postings + description editor state
   const [postOpen, setPostOpen] = useState(false);
@@ -48,7 +48,7 @@ export default function Openings() {
     if (!form.title.trim()) return;
     const loc = locations.find((l) => l.id === form.location_id);
     await createPosition.mutateAsync({ ...form, region: loc?.region || "", status: "open", posting_locations: [] });
-    setForm({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "" });
+    setForm({ title: "", location_id: "", department: "", employment_type: "Full-time", openings: 1, priority: "normal", pay_range: "", requirements: "", description: "", posting_url: "", hiring_manager: "" });
     setAddOpen(false);
   };
 
@@ -106,6 +106,7 @@ export default function Openings() {
               </div>
               <div><Label className="text-[10px]"># Openings</Label><Input type="number" value={form.openings} onChange={(e) => setForm({ ...form, openings: Number(e.target.value) })} className="mt-1" /></div>
               <div><Label className="text-[10px]">Pay range</Label><Input value={form.pay_range} onChange={(e) => setForm({ ...form, pay_range: e.target.value })} className="mt-1" placeholder="$18–20/hr" /></div>
+              <div className="sm:col-span-2"><Label className="text-[10px]">Hiring manager / owner</Label><Input value={form.hiring_manager} onChange={(e) => setForm({ ...form, hiring_manager: e.target.value })} className="mt-1" placeholder="Who owns this requisition?" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Primary posting URL</Label><Input value={form.posting_url} onChange={(e) => setForm({ ...form, posting_url: e.target.value })} className="mt-1" placeholder="https://indeed.com/…" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Requirements</Label><Input value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} className="mt-1" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Job description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[120px]" placeholder="Role summary, responsibilities, schedule, what makes a great fit…" /></div>
@@ -139,8 +140,11 @@ export default function Openings() {
                   <div className="flex items-start gap-2.5 min-w-0">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30 shrink-0"><Briefcase className="h-4 w-4 text-emerald" /></div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
-                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(p.location_id)} · {p.region}</p>
+                      <div className="flex items-center gap-1.5">
+                        {p.req_code && <span className="text-[8.5px] font-mono uppercase tracking-wide text-emerald bg-emerald/10 border border-emerald/25 rounded px-1 py-0.5 shrink-0">{p.req_code}</span>}
+                        <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(p.location_id)} · {p.region}{p.hiring_manager ? ` · ${p.hiring_manager}` : ""}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">

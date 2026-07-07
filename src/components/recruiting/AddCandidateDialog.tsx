@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import { useCreateCandidate, useLocations, usePositions } from "@/hooks/useRecruiting";
 import { SOURCES } from "@/lib/recruiting";
-import { supabase } from "@/integrations/supabase/client";
-import { uploadCandidateFile as uploadFile, fileToBase64, UploadedDoc as DocEntry } from "@/lib/storage";
+import { uploadCandidateFile as uploadFile, UploadedDoc as DocEntry } from "@/lib/storage";
+import { uploadAndParseResume } from "@/lib/resume";
 import { toast } from "sonner";
 
 interface Props {
@@ -35,6 +35,7 @@ export default function AddCandidateDialog({ compact }: Props) {
   const [parsed, setParsed] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [parsedExtra, setParsedExtra] = useState<Record<string, any>>({});
   const resumeInput = useRef<HTMLInputElement>(null);
   const attachInput = useRef<HTMLInputElement>(null);
 
@@ -45,48 +46,36 @@ export default function AddCandidateDialog({ compact }: Props) {
     setDocs([]);
     setParsed(false);
     setParsing(false);
+    setParsedExtra({});
   };
 
   const handleResume = async (file: File) => {
     if (!file) return;
     setParsing(true);
     try {
-      // Upload + parse in parallel
-      const [{ url }, base64] = await Promise.all([uploadFile(file), fileToBase64(file)]);
-      setDocs((d) => [...d.filter((x) => x.kind !== "resume"), { name: file.name, url, type: file.type, size: file.size, kind: "resume" }]);
+      const { parsed: p, doc } = await uploadAndParseResume(file);
+      setDocs((d) => [...d.filter((x) => x.kind !== "resume"), doc]);
 
-      const { data, error } = await supabase.functions.invoke("parse-resume", {
-        body: { fileBase64: base64, fileName: file.name, mimeType: file.type },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const d = data?.data || {};
-
-      // Years may arrive as a number, "4", or "4 years" — pull the first integer.
-      const yearsRaw = d.years_experience;
-      const yearsNum = typeof yearsRaw === "number"
-        ? yearsRaw
-        : parseFloat(String(yearsRaw ?? "").replace(/[^0-9.]/g, ""));
-      const years = Number.isFinite(yearsNum) ? Math.round(yearsNum) : 0;
-
-      // Skills may arrive as an array or a comma/newline separated string.
-      const skills = Array.isArray(d.skills)
-        ? d.skills
-        : String(d.skills ?? "").split(/[,\n;]+/).map((s: string) => s.trim()).filter(Boolean);
-
-      // Merge onto whatever is there — only overwrite a field when the parser
-      // actually found something, so a partial parse never wipes good data.
+      // Merge onto whatever is there — only overwrite when the parser found a value.
       set({
-        ...(d.full_name ? { full_name: String(d.full_name) } : {}),
-        ...(d.email ? { email: String(d.email) } : {}),
-        ...(d.phone ? { phone: String(d.phone) } : {}),
-        ...(d.applied_role ? { applied_role: String(d.applied_role) } : {}),
-        ...(d.headline || d.summary
-          ? { headline: String(d.headline || String(d.summary).slice(0, 90)) }
-          : {}),
-        ...(years ? { years_experience: years } : {}),
-        ...(skills.length ? { best_fit_roles: skills.slice(0, 6).join(", ") } : {}),
+        ...(p.full_name ? { full_name: p.full_name } : {}),
+        ...(p.email ? { email: p.email } : {}),
+        ...(p.phone ? { phone: p.phone } : {}),
+        ...(p.applied_role ? { applied_role: p.applied_role } : {}),
+        ...(p.headline ? { headline: p.headline } : {}),
+        ...(p.years_experience ? { years_experience: p.years_experience } : {}),
+        ...(p.best_fit_roles ? { best_fit_roles: p.best_fit_roles } : {}),
+      });
+      setParsedExtra({
+        address: p.address ?? "",
+        current_employer: p.current_employer ?? "",
+        resume_summary: p.resume_summary ?? "",
+        resume_text: p.resume_text ?? "",
+        work_history: p.work_history ?? [],
+        education: p.education ?? [],
+        certifications: p.certifications ?? [],
+        tags: p.tags ?? [],
+        parse_confidence: p.parse_confidence ?? null,
       });
       setParsed(true);
       toast.success("Résumé parsed — review and adjust below");
@@ -96,6 +85,7 @@ export default function AddCandidateDialog({ compact }: Props) {
       setParsing(false);
     }
   };
+
 
   const handleAttach = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -137,6 +127,15 @@ export default function AddCandidateDialog({ compact }: Props) {
       best_fit_roles: form.best_fit_roles,
       resume_url: resume?.url || "",
       documents: [...docs, ...linkDocs] as any,
+      address: parsedExtra.address || "",
+      current_employer: parsedExtra.current_employer || "",
+      resume_summary: parsedExtra.resume_summary || "",
+      resume_text: parsedExtra.resume_text || "",
+      work_history: (parsedExtra.work_history || []) as any,
+      education: (parsedExtra.education || []) as any,
+      certifications: (parsedExtra.certifications || []) as any,
+      tags: (parsedExtra.tags || []) as any,
+      parse_confidence: parsedExtra.parse_confidence ?? null,
       stage: "applied",
       status: "active",
       score: 0,

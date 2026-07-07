@@ -36,6 +36,8 @@ export interface Position {
   pay_range: string;
   posting_url: string;
   posting_locations: PostingLocation[];
+  req_code: string;
+  hiring_manager: string;
   created_at: string;
   updated_at: string;
 }
@@ -82,9 +84,46 @@ export interface Candidate {
   tags: string[];
   headline: string;
   years_experience: number;
+  address: string;
+  current_employer: string;
+  work_history: { employer?: string; title?: string; dates?: string }[];
+  education: { school?: string; credential?: string; dates?: string }[];
+  certifications: string[];
+  resume_summary: string;
+  resume_text: string;
+  parse_confidence: number | null;
+  screening_status: string;
+  interview_status: string;
   documents: CandidateDocument[];
   created_at: string;
   updated_at: string;
+}
+
+export interface CandidateRequisition {
+  id: string;
+  candidate_id: string;
+  position_id: string | null;
+  location_id: string | null;
+  stage: string;
+  status: string;
+  source: string;
+  is_primary: boolean;
+  notes: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateEvent {
+  id: string;
+  candidate_id: string;
+  event_type: string;
+  title: string;
+  detail: Record<string, unknown>;
+  requisition_id: string | null;
+  location_id: string | null;
+  actor: string;
+  created_at: string;
 }
 
 export interface CandidateDocument {
@@ -406,15 +445,37 @@ export function useCreateCandidate() {
     mutationFn: async (c: Partial<Candidate>) => {
       const { data, error } = await db.from("candidates").insert([c]).select().single();
       if (error) throw error;
-      return data as Candidate;
+      const cand = data as Candidate;
+      // Record the initial application + timeline event so history exists from day one.
+      await db.from("candidate_requisitions").insert([{
+        candidate_id: cand.id,
+        position_id: cand.position_id,
+        location_id: cand.location_id,
+        source: cand.source ?? "",
+        stage: cand.stage ?? "applied",
+        status: "active",
+        is_primary: true,
+        created_by: "Administrator",
+      }]);
+      await db.from("candidate_events").insert([{
+        candidate_id: cand.id,
+        event_type: "applied",
+        title: "Candidate created",
+        requisition_id: cand.position_id,
+        location_id: cand.location_id,
+        actor: "Administrator",
+      }]);
+      return cand;
     },
-    onSuccess: () => {
+    onSuccess: (_d, _v, ) => {
       qc.invalidateQueries({ queryKey: ["candidates"] });
+      qc.invalidateQueries({ queryKey: ["candidate_requisitions", "all"] });
       toast.success("Candidate added to pipeline");
     },
     onError: (e: any) => toast.error("Failed to add candidate: " + e.message),
   });
 }
+
 
 export function useUpdateCandidate() {
   const qc = useQueryClient();
@@ -1367,4 +1428,174 @@ export function useCandidateLifecycle() {
 
   return { hire, reject, pool, restore };
 }
+
+/* ============================ Requisitions (applications) & events ============================ */
+export function useCandidateRequisitions(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["candidate_requisitions", candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+      const { data, error } = await db
+        .from("candidate_requisitions")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as CandidateRequisition[];
+    },
+    enabled: !!candidateId,
+  });
+}
+
+export function useAllCandidateRequisitions() {
+  return useQuery({
+    queryKey: ["candidate_requisitions", "all"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("candidate_requisitions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as CandidateRequisition[];
+    },
+  });
+}
+
+export function useCandidateEvents(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["candidate_events", candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+      const { data, error } = await db
+        .from("candidate_events")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as CandidateEvent[];
+    },
+    enabled: !!candidateId,
+  });
+}
+
+export function useLogEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<CandidateEvent> & { candidate_id: string; event_type: string }) => {
+      const { error } = await db.from("candidate_events").insert([payload]);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_events", vars.candidate_id] });
+    },
+    onError: (e: any) => toast.error("Failed to log activity: " + e.message),
+  });
+}
+
+/** Create an application (candidate <-> requisition link) + timeline event. */
+export function useCreateApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      candidate_id: string;
+      position_id: string | null;
+      location_id: string | null;
+      source?: string;
+      stage?: string;
+      is_primary?: boolean;
+      created_by?: string;
+      title?: string;
+    }) => {
+      const { error } = await db.from("candidate_requisitions").insert([{
+        candidate_id: payload.candidate_id,
+        position_id: payload.position_id,
+        location_id: payload.location_id,
+        source: payload.source ?? "",
+        stage: payload.stage ?? "applied",
+        status: "active",
+        is_primary: payload.is_primary ?? true,
+        created_by: payload.created_by ?? "Administrator",
+      }]);
+      if (error) throw error;
+      await db.from("candidate_events").insert([{
+        candidate_id: payload.candidate_id,
+        event_type: "requisition_add",
+        title: payload.title ?? "Assigned to requisition",
+        requisition_id: payload.position_id,
+        location_id: payload.location_id,
+        actor: payload.created_by ?? "Administrator",
+      }]);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_requisitions", vars.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["candidate_requisitions", "all"] });
+      qc.invalidateQueries({ queryKey: ["candidate_events", vars.candidate_id] });
+    },
+    onError: (e: any) => toast.error("Failed to assign requisition: " + e.message),
+  });
+}
+
+/**
+ * Reassign a candidate's current (primary) requisition to a new one without
+ * losing history: the prior application is demoted (kept), a new primary
+ * application is created, and the candidate's pointer fields are updated.
+ */
+export function useReassignRequisition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      candidate: Candidate;
+      position_id: string | null;
+      location_id: string | null;
+      region?: string;
+      actor?: string;
+      positionTitle?: string;
+    }) => {
+      const actor = payload.actor ?? "Administrator";
+      // Demote existing primary applications for this candidate.
+      await db.from("candidate_requisitions")
+        .update({ is_primary: false })
+        .eq("candidate_id", payload.candidate.id)
+        .eq("is_primary", true);
+      // New primary application.
+      const { error } = await db.from("candidate_requisitions").insert([{
+        candidate_id: payload.candidate.id,
+        position_id: payload.position_id,
+        location_id: payload.location_id,
+        source: payload.candidate.source ?? "",
+        stage: payload.candidate.stage ?? "applied",
+        status: "active",
+        is_primary: true,
+        created_by: actor,
+      }]);
+      if (error) throw error;
+      // Update the master candidate pointer.
+      const { error: upErr } = await db.from("candidates")
+        .update({
+          position_id: payload.position_id,
+          location_id: payload.location_id,
+          ...(payload.region ? { region: payload.region } : {}),
+        })
+        .eq("id", payload.candidate.id);
+      if (upErr) throw upErr;
+      await db.from("candidate_events").insert([{
+        candidate_id: payload.candidate.id,
+        event_type: "assignment",
+        title: payload.positionTitle ? `Reassigned to ${payload.positionTitle}` : "Requisition reassigned",
+        requisition_id: payload.position_id,
+        location_id: payload.location_id,
+        actor,
+      }]);
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidates"] });
+      qc.invalidateQueries({ queryKey: ["candidate_requisitions", vars.candidate.id] });
+      qc.invalidateQueries({ queryKey: ["candidate_requisitions", "all"] });
+      qc.invalidateQueries({ queryKey: ["candidate_events", vars.candidate.id] });
+      toast.success("Requisition reassigned — history preserved");
+    },
+    onError: (e: any) => toast.error("Reassign failed: " + e.message),
+  });
+}
+
 

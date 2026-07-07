@@ -39,8 +39,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { fileBase64, fileName, mimeType } = await req.json();
-    if (!fileBase64) {
+    const { fileBase64, fileName, mimeType, resumeText } = await req.json();
+    const hasText = typeof resumeText === "string" && resumeText.trim().length > 0;
+    if (!fileBase64 && !hasText) {
       return new Response(JSON.stringify({ error: "No file data provided" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -50,7 +51,15 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const dataUrl = `data:${mimeType || "application/pdf"};base64,${fileBase64}`;
+    const dataUrl = fileBase64 ? `data:${mimeType || "application/pdf"};base64,${fileBase64}` : "";
+
+    // Prefer pre-extracted text (e.g. DOCX parsed in the browser); otherwise send the file itself.
+    const userContent = hasText
+      ? [{ type: "text", text: `Parse this résumé text and extract the candidate profile. File name: ${fileName || "resume"}\n\n---RESUME TEXT---\n${resumeText.slice(0, 60000)}` }]
+      : [
+          { type: "text", text: `Parse this résumé and extract the candidate profile. File name: ${fileName || "resume"}` },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -65,19 +74,13 @@ serve(async (req) => {
             role: "system",
             content: `You are an expert recruiting assistant for MyEyeDr, an optometry / eye care company. You read candidate résumés and extract clean, structured data for a hiring pipeline. Roles include Patient Service Coordinator (PSC), Optician, Optometric Technician, Front Desk, and similar eye-care / retail-healthcare positions.
 
-Extract the candidate's information accurately. Never invent data — if a field is not present, return an empty string (or 0 for years_experience). Write concise, professional prose for headline, summary, and evidence.
+Extract the candidate's information accurately. Never invent data — if a field is not present, return an empty string (or 0 for years_experience, or an empty array for lists). Write concise, professional prose for headline, summary, and evidence.
 
 You MUST call the extract_candidate function with the data. If for any reason you cannot call the function, respond with ONLY a raw JSON object with the same fields — no markdown, no prose.`,
           },
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Parse this résumé and extract the candidate profile. File name: ${fileName || "resume"}`,
-              },
-              { type: "image_url", image_url: { url: dataUrl } },
-            ],
+            content: userContent,
           },
         ],
         tools: [
@@ -92,13 +95,42 @@ You MUST call the extract_candidate function with the data. If for any reason yo
                   full_name: { type: "string", description: "Candidate full name" },
                   email: { type: "string" },
                   phone: { type: "string" },
+                  address: { type: "string", description: "Full address or City, State from résumé" },
                   applied_role: { type: "string", description: "Most likely role they are applying for (e.g. Patient Service Coordinator, Optician)" },
                   headline: { type: "string", description: "One short line, e.g. 'Front-desk PSC, 4 yrs healthcare admin'" },
                   years_experience: { type: "number", description: "Total relevant years of experience, integer" },
                   location: { type: "string", description: "City, State from résumé" },
+                  current_employer: { type: "string", description: "Current or most recent employer name" },
                   summary: { type: "string", description: "2-3 sentence professional summary" },
-                  relevant_evidence: { type: "string", description: "Concrete PSC/eye-care/healthcare/customer-service evidence found on the résumé" },
+                  relevant_evidence: { type: "string", description: "Concrete PSC/eye-care/healthcare/customer-service/sales evidence found on the résumé" },
                   skills: { type: "array", items: { type: "string" }, description: "Key skills / tags" },
+                  job_titles: { type: "array", items: { type: "string" }, description: "All job titles held" },
+                  work_history: {
+                    type: "array",
+                    description: "Employment history, most recent first",
+                    items: {
+                      type: "object",
+                      properties: {
+                        employer: { type: "string" },
+                        title: { type: "string" },
+                        dates: { type: "string", description: "e.g. 'Jan 2021 - Present'" },
+                      },
+                    },
+                  },
+                  education: {
+                    type: "array",
+                    description: "Education entries",
+                    items: {
+                      type: "object",
+                      properties: {
+                        school: { type: "string" },
+                        credential: { type: "string", description: "Degree / diploma / certificate" },
+                        dates: { type: "string" },
+                      },
+                    },
+                  },
+                  certifications: { type: "array", items: { type: "string" }, description: "Certifications or licenses (e.g. ABO, NCLE, CPR)" },
+                  confidence: { type: "number", description: "Your confidence 0-1 that the extracted fields are accurate" },
                 },
                 required: ["full_name"],
                 additionalProperties: false,
@@ -160,6 +192,9 @@ You MUST call the extract_candidate function with the data. If for any reason yo
         { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    // Carry the raw text through so the app can store it on the candidate record.
+    if (hasText && !extracted.raw_text) extracted.raw_text = resumeText.slice(0, 60000);
 
     return new Response(JSON.stringify({ success: true, data: extracted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

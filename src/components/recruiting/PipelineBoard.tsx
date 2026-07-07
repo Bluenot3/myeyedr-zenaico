@@ -1,20 +1,23 @@
 import { useMemo, useState } from "react";
 import { Search, ArrowUpDown, CheckSquare, Square, Zap, ChevronDown, Sparkles, Users } from "lucide-react";
-import { useCandidates, useLocations, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
+import { useCandidates, useLocations, usePositions, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
+import CandidateTable from "./CandidateTable";
 import AddCandidateDialog from "./AddCandidateDialog";
+import BulkResumeUpload from "./BulkResumeUpload";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-type ViewMode = "board" | "list";
+type ViewMode = "board" | "list" | "table";
 
 export default function PipelineBoard() {
   const { data: candidates = [], isLoading } = useCandidates();
   const { data: locations = [] } = useLocations();
+  const { data: positions = [] } = usePositions();
   const bulkUpdate = useBulkUpdateCandidates();
 
   const [search, setSearch] = useState("");
@@ -80,7 +83,10 @@ export default function PipelineBoard() {
           <h2 className="font-display text-2xl font-bold">Candidate Pipeline</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Move applicants through each stage · click a card for the full profile & ledger.</p>
         </div>
-        <AddCandidateDialog compact />
+        <div className="flex items-center gap-2">
+          <BulkResumeUpload />
+          <AddCandidateDialog compact />
+        </div>
       </div>
 
       {/* Controls */}
@@ -97,6 +103,7 @@ export default function PipelineBoard() {
           <div className="flex rounded-lg border border-input overflow-hidden">
             <button onClick={() => setView("board")} className={`px-3 h-9 text-xs ${view === "board" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Board</button>
             <button onClick={() => setView("list")} className={`px-3 h-9 text-xs ${view === "list" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>List</button>
+            <button onClick={() => setView("table")} className={`px-3 h-9 text-xs ${view === "table" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Table</button>
           </div>
           {hasSel && (
             <div className="flex items-center gap-2 ml-auto">
@@ -148,6 +155,8 @@ export default function PipelineBoard() {
             </div>
           ))}
         </div>
+      ) : view === "table" ? (
+        <CandidateTable candidates={filtered} locations={locations} positions={positions} onOpen={openCandidate} />
       ) : (
         <div className="space-y-2">
           {filtered.length === 0 && (
