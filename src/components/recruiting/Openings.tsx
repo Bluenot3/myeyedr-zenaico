@@ -106,6 +106,7 @@ export default function Openings() {
               </div>
               <div><Label className="text-[10px]"># Openings</Label><Input type="number" value={form.openings} onChange={(e) => setForm({ ...form, openings: Number(e.target.value) })} className="mt-1" /></div>
               <div><Label className="text-[10px]">Pay range</Label><Input value={form.pay_range} onChange={(e) => setForm({ ...form, pay_range: e.target.value })} className="mt-1" placeholder="$18–20/hr" /></div>
+              <div className="sm:col-span-2"><Label className="text-[10px]">Hiring manager / owner</Label><Input value={form.hiring_manager} onChange={(e) => setForm({ ...form, hiring_manager: e.target.value })} className="mt-1" placeholder="Who owns this requisition?" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Primary posting URL</Label><Input value={form.posting_url} onChange={(e) => setForm({ ...form, posting_url: e.target.value })} className="mt-1" placeholder="https://indeed.com/…" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Requirements</Label><Input value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} className="mt-1" /></div>
               <div className="sm:col-span-2"><Label className="text-[10px]">Job description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[120px]" placeholder="Role summary, responsibilities, schedule, what makes a great fit…" /></div>
