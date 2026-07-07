@@ -83,7 +83,10 @@ export default function PipelineBoard() {
           <h2 className="font-display text-2xl font-bold">Candidate Pipeline</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Move applicants through each stage · click a card for the full profile & ledger.</p>
         </div>
-        <AddCandidateDialog compact />
+        <div className="flex items-center gap-2">
+          <BulkResumeUpload />
+          <AddCandidateDialog compact />
+        </div>
       </div>
 
       {/* Controls */}
