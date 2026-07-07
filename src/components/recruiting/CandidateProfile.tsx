@@ -50,6 +50,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const { data: notes = [] } = useCandidateNotes(candidate?.id ?? null);
   const { data: locations = [] } = useLocations();
   const { data: positions = [] } = usePositions();
+  const { data: allCandidates = [] } = useCandidates();
   const updateCandidate = useUpdateCandidate();
   const deleteCandidate = useDeleteCandidate();
   const addBadge = useAddBadge();
@@ -57,6 +58,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const addNote = useAddNote();
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
+  const lifecycle = useCandidateLifecycle();
 
   const [form, setForm] = useState<Partial<Candidate>>({});
   const [noteBody, setNoteBody] = useState("");
