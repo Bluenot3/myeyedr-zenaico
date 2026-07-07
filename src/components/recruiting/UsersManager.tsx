@@ -113,9 +113,7 @@ export default function UsersManager() {
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[9px] micro-label" style={{ color: `hsl(var(--${meta.color}))` }}>{meta.label}</span>
-                      {primary === "manager" && (
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {u.location_ids.length} location{u.location_ids.length === 1 ? "" : "s"}</span>
-                      )}
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {u.location_ids.length} location{u.location_ids.length === 1 ? "" : "s"}{primary !== "manager" && u.location_ids.length === 0 ? " (all access)" : ""}</span>
                       {u.must_reset_password && <span className="text-[9px] micro-label text-gold">Pending reset</span>}
                     </div>
                   </div>
@@ -130,9 +128,7 @@ export default function UsersManager() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {primary === "manager" && (
-                    <Button size="sm" variant="outline" onClick={() => setAssignFor(u)} className="h-9"><MapPin className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Locations</span></Button>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => setAssignFor(u)} className="h-9"><MapPin className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Locations</span></Button>
                   <Button size="sm" variant="outline" onClick={() => resetPw(u)} className="h-9"><KeyRound className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Reset</span></Button>
                   {!isSelf && (
                     <Button size="sm" variant="outline" onClick={() => removeUser(u)} className="h-9 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>

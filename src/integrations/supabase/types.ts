@@ -271,6 +271,82 @@ export type Database = {
           },
         ]
       }
+      candidate_onboarding: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          created_by: string
+          first_day_date: string | null
+          first_day_location_id: string | null
+          first_day_time: string
+          id: string
+          location_id: string | null
+          notes: string
+          offer_details: Json
+          status: string
+          steps: Json
+          trainer_name: string
+          training_schedule: Json
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          created_by?: string
+          first_day_date?: string | null
+          first_day_location_id?: string | null
+          first_day_time?: string
+          id?: string
+          location_id?: string | null
+          notes?: string
+          offer_details?: Json
+          status?: string
+          steps?: Json
+          trainer_name?: string
+          training_schedule?: Json
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          created_by?: string
+          first_day_date?: string | null
+          first_day_location_id?: string | null
+          first_day_time?: string
+          id?: string
+          location_id?: string | null
+          notes?: string
+          offer_details?: Json
+          status?: string
+          steps?: Json
+          trainer_name?: string
+          training_schedule?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_onboarding_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: true
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_onboarding_first_day_location_id_fkey"
+            columns: ["first_day_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_onboarding_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_scorecards: {
         Row: {
           candidate_id: string

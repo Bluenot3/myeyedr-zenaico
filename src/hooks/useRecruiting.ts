@@ -1180,3 +1180,191 @@ export function useDeleteDecision() {
     onError: (e: any) => toast.error("Failed: " + e.message),
   });
 }
+
+/* ============================ Onboarding (new-hire tracker) ============================ */
+import {
+  defaultOnboardingSteps, defaultTrainingSchedule, type OnboardingStep, type TrainingWeek,
+} from "@/lib/onboarding";
+
+export interface OnboardingRecord {
+  id: string;
+  candidate_id: string;
+  location_id: string | null;
+  status: "in_progress" | "complete" | "paused";
+  steps: OnboardingStep[];
+  first_day_date: string | null;
+  first_day_location_id: string | null;
+  first_day_time: string;
+  trainer_name: string;
+  training_schedule: TrainingWeek[];
+  offer_details: Record<string, any>;
+  notes: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** All onboarding records the signed-in user can see (RLS-scoped). Powers the dashboard. */
+export function useAllOnboarding() {
+  return useQuery({
+    queryKey: ["onboarding", "all"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("candidate_onboarding")
+        .select("*")
+        .order("first_day_date", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as OnboardingRecord[];
+    },
+  });
+}
+
+export function useOnboarding(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["onboarding", candidateId],
+    queryFn: async () => {
+      if (!candidateId) return null;
+      const { data, error } = await db
+        .from("candidate_onboarding")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as OnboardingRecord | null;
+    },
+    enabled: !!candidateId,
+  });
+}
+
+/** Create the onboarding record if missing, otherwise patch it. */
+export function useUpsertOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      candidate_id,
+      updates,
+      seedLocationId,
+    }: {
+      candidate_id: string;
+      updates?: Partial<OnboardingRecord>;
+      seedLocationId?: string | null;
+    }) => {
+      const { data: existing } = await db
+        .from("candidate_onboarding")
+        .select("id")
+        .eq("candidate_id", candidate_id)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { data, error } = await db
+          .from("candidate_onboarding")
+          .update(updates ?? {})
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as OnboardingRecord;
+      }
+
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id ?? null;
+      let name = userRes.user?.email ?? "";
+      if (uid) {
+        const { data: prof } = await supabase.from("profiles").select("full_name, email").eq("id", uid).maybeSingle();
+        name = (prof as any)?.full_name || (prof as any)?.email || name;
+      }
+      const payload = {
+        candidate_id,
+        location_id: seedLocationId ?? null,
+        first_day_location_id: seedLocationId ?? null,
+        steps: defaultOnboardingSteps(),
+        training_schedule: defaultTrainingSchedule(),
+        created_by: name,
+        ...(updates ?? {}),
+      };
+      const { data, error } = await db.from("candidate_onboarding").insert([payload]).select().single();
+      if (error) throw error;
+      return data as OnboardingRecord;
+    },
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: ["onboarding", row.candidate_id] });
+      qc.invalidateQueries({ queryKey: ["onboarding", "all"] });
+    },
+    onError: (e: any) => toast.error("Onboarding save failed: " + e.message),
+  });
+}
+
+/* ============================ Candidate lifecycle (hire / reject / pool / restore) ============================ */
+export function useCandidateLifecycle() {
+  const qc = useQueryClient();
+  const upsertOnboarding = useUpsertOnboarding();
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["candidates"] });
+    qc.invalidateQueries({ queryKey: ["onboarding", "all"] });
+  };
+
+  const mintBadge = async (candidate_id: string, badge_type: string, title: string, summary: string, status = "verified") => {
+    const { data: existing } = await db
+      .from("candidate_badges").select("hash, block_index").eq("candidate_id", candidate_id)
+      .order("block_index", { ascending: false }).limit(1);
+    const prev = existing?.[0];
+    await db.from("candidate_badges").insert([{
+      candidate_id, badge_type, title, status, summary, detail: {}, file_url: "",
+      issued_by: "Administrator",
+      block_index: (prev?.block_index ?? 0) + 1,
+      hash: makeHash(),
+      prev_hash: prev?.hash ?? "0000000000000000000000000000000000000000",
+    }]);
+  };
+
+  const hire = useMutation({
+    mutationFn: async (candidate: Candidate) => {
+      const { error } = await db.from("candidates")
+        .update({ stage: "hired", status: "hired", score: 100, in_talent_pool: false })
+        .eq("id", candidate.id);
+      if (error) throw error;
+      await upsertOnboarding.mutateAsync({ candidate_id: candidate.id, seedLocationId: candidate.location_id });
+      await mintBadge(candidate.id, "hired", "Hired", `${candidate.full_name} moved to onboarding.`);
+    },
+    onSuccess: () => { invalidate(); toast.success("Hired — onboarding checklist started"); },
+    onError: (e: any) => toast.error("Hire failed: " + e.message),
+  });
+
+  const reject = useMutation({
+    mutationFn: async ({ candidate, reason }: { candidate: Candidate; reason: string }) => {
+      const { error } = await db.from("candidates")
+        .update({ stage: "rejected", status: "rejected" })
+        .eq("id", candidate.id);
+      if (error) throw error;
+      await mintBadge(candidate.id, "note", "Rejected / Archived", reason || "Archived for future reference.", "flagged");
+    },
+    onSuccess: () => { invalidate(); toast.success("Candidate archived"); },
+    onError: (e: any) => toast.error("Reject failed: " + e.message),
+  });
+
+  const pool = useMutation({
+    mutationFn: async ({ candidate, reason, roles }: { candidate: Candidate; reason: string; roles: string }) => {
+      const { error } = await db.from("candidates")
+        .update({ in_talent_pool: true, talent_pool_reason: reason, best_fit_roles: roles || candidate.best_fit_roles })
+        .eq("id", candidate.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success("Added to talent pool"); },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+
+  const restore = useMutation({
+    mutationFn: async ({ candidate, toStage }: { candidate: Candidate; toStage: string }) => {
+      const { error } = await db.from("candidates")
+        .update({ stage: toStage, status: "active" })
+        .eq("id", candidate.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success("Candidate reactivated"); },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+
+  return { hire, reject, pool, restore };
+}
+

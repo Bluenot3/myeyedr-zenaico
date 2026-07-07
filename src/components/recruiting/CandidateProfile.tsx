@@ -13,16 +13,18 @@ import {
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
   Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
-  FileText, Loader2, Mic, ClipboardCheck, Eye,
+  FileText, Loader2, Mic, ClipboardCheck, Eye, GraduationCap, CheckCircle2, XCircle, AlertTriangle, RotateCcw,
 } from "lucide-react";
 import InterviewMedia from "./InterviewMedia";
 import EvaluationPanel from "./EvaluationPanel";
 import CandidateSignals from "./CandidateSignals";
+import OnboardingTracker from "./OnboardingTracker";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
   useUpdateCandidate, useDeleteCandidate, useAddBadge, useLogContact,
   useAddNote, useUpdateNote, useDeleteNote, useLocations, usePositions,
+  useCandidates, useCandidateLifecycle,
 } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, initials, relativeTime, scoreTone, TONE_HSL, BADGE_TYPES, badgeMeta } from "@/lib/recruiting";
 import { computeMatch } from "@/lib/matchScore";
@@ -32,6 +34,7 @@ import ScoreRing from "./ScoreRing";
 import StageBadge from "./StageBadge";
 import HoloStrip from "./HoloStrip";
 import { EyeMark } from "./Logo";
+
 
 interface Props {
   candidate: Candidate | null;
@@ -47,6 +50,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const { data: notes = [] } = useCandidateNotes(candidate?.id ?? null);
   const { data: locations = [] } = useLocations();
   const { data: positions = [] } = usePositions();
+  const { data: allCandidates = [] } = useCandidates();
   const updateCandidate = useUpdateCandidate();
   const deleteCandidate = useDeleteCandidate();
   const addBadge = useAddBadge();
@@ -54,6 +58,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const addNote = useAddNote();
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
+  const lifecycle = useCandidateLifecycle();
 
   const [form, setForm] = useState<Partial<Candidate>>({});
   const [noteBody, setNoteBody] = useState("");
@@ -62,6 +67,9 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const [seal, setSeal] = useState({ badge_type: "evaluation", title: "", score: "", summary: "", status: "verified" });
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [tab, setTab] = useState(initialTab || "match");
+  const [decisionMode, setDecisionMode] = useState<null | "reject" | "pool">(null);
+  const [decisionReason, setDecisionReason] = useState("");
+  const [poolRoles, setPoolRoles] = useState("");
   const docInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -76,6 +84,22 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const loc = locations.find((l) => l.id === candidate.location_id);
   const sTone = TONE_HSL[scoreTone(candidate.score)];
   const m = computeMatch(candidate);
+
+  const isHired = candidate.status === "hired" || candidate.stage === "hired";
+  const isRejected = candidate.status === "rejected" || candidate.stage === "rejected";
+  const showOnboarding = isHired;
+
+  // Reapplication flag: any *other* archived/rejected candidate record with the same email.
+  const priorArchived = (candidate.email
+    ? allCandidates.filter(
+        (c) =>
+          c.id !== candidate.id &&
+          c.email &&
+          c.email.toLowerCase() === candidate.email.toLowerCase() &&
+          (c.status === "rejected" || c.stage === "rejected")
+      )
+    : []);
+  const isReapplicant = priorArchived.length > 0 && !isRejected;
 
   const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
 
@@ -230,18 +254,104 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Re-applicant flag */}
+        {isReapplicant && (
+          <div className="mx-5 sm:mx-6 mt-4 rounded-xl border p-3 flex items-start gap-2.5" style={{ background: "hsl(var(--gold)/0.10)", borderColor: "hsl(var(--gold)/0.4)" }}>
+            <AlertTriangle className="h-4 w-4 text-gold shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground">Previously archived applicant</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                This email matches {priorArchived.length} archived record{priorArchived.length === 1 ? "" : "s"}
+                {priorArchived[0]?.applied_role ? ` (last: ${priorArchived[0].applied_role})` : ""}. Review prior history before advancing.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Decision / lifecycle bar */}
+        <div className="px-5 sm:px-6 py-4 border-b border-border">
+          {isHired ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ background: "hsl(var(--emerald)/0.10)", borderColor: "hsl(var(--emerald)/0.4)" }}>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald" />
+                <span className="text-xs font-medium text-foreground">Hired — onboarding in progress</span>
+              </div>
+              <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => setTab("onboarding")}>
+                <GraduationCap className="h-3.5 w-3.5" /> Open checklist
+              </Button>
+            </div>
+          ) : isRejected ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ background: "hsl(var(--destructive)/0.08)", borderColor: "hsl(var(--destructive)/0.35)" }}>
+              <div className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-destructive" />
+                <span className="text-xs font-medium text-foreground">Archived — kept on file for future applications</span>
+              </div>
+              <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={() => lifecycle.restore.mutate({ candidate: candidate, toStage: "screening" })} disabled={lifecycle.restore.isPending}>
+                <RotateCcw className="h-3.5 w-3.5" /> Reactivate
+              </Button>
+            </div>
+          ) : decisionMode === "reject" ? (
+            <div className="rounded-xl border border-border p-3 space-y-2 animate-rise">
+              <Label className="text-[10px]">Reason for archiving (kept on file if they reapply)</Label>
+              <Input value={decisionReason} onChange={(e) => setDecisionReason(e.target.value)} placeholder="e.g. Not enough optical experience" className="h-9 text-xs" />
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={() => { setDecisionMode(null); setDecisionReason(""); }}>Cancel</Button>
+                <Button size="sm" className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={lifecycle.reject.isPending} onClick={() => { lifecycle.reject.mutate({ candidate, reason: decisionReason }); setDecisionMode(null); setDecisionReason(""); }}>
+                  {lifecycle.reject.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <XCircle className="h-3.5 w-3.5 mr-1" />} Archive candidate
+                </Button>
+              </div>
+            </div>
+          ) : decisionMode === "pool" ? (
+            <div className="rounded-xl border border-border p-3 space-y-2 animate-rise">
+              <Label className="text-[10px]">Best-fit roles</Label>
+              <Input value={poolRoles} onChange={(e) => setPoolRoles(e.target.value)} placeholder="e.g. Licensed Optician, Retail Lead" className="h-9 text-xs" />
+              <Label className="text-[10px]">Why keep them warm?</Label>
+              <Input value={decisionReason} onChange={(e) => setDecisionReason(e.target.value)} placeholder="e.g. Strong culture fit, revisit for next opening" className="h-9 text-xs" />
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={() => { setDecisionMode(null); setDecisionReason(""); setPoolRoles(""); }}>Cancel</Button>
+                <Button size="sm" className="bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25" disabled={lifecycle.pool.isPending} onClick={() => { lifecycle.pool.mutate({ candidate, reason: decisionReason, roles: poolRoles }); setDecisionMode(null); setDecisionReason(""); setPoolRoles(""); }}>
+                  {lifecycle.pool.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />} Add to pool
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <span className="micro-label text-muted-foreground text-[10px]">Decision</span>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <Button size="sm" className="h-9 gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90" disabled={lifecycle.hire.isPending} onClick={() => lifecycle.hire.mutate(candidate)}>
+                  {lifecycle.hire.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />} Hire
+                </Button>
+                <Button size="sm" variant="outline" className="h-9 gap-1.5 text-gold border-gold/30 hover:bg-gold/10" onClick={() => { setDecisionMode("pool"); setPoolRoles(candidate.best_fit_roles || ""); setDecisionReason(candidate.talent_pool_reason || ""); }}>
+                  <Sparkles className="h-3.5 w-3.5" /> Pool
+                </Button>
+                <Button size="sm" variant="outline" className="h-9 gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDecisionMode("reject")}>
+                  <XCircle className="h-3.5 w-3.5" /> Reject
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <Tabs value={tab} onValueChange={setTab} className="px-5 sm:px-6 py-4">
-          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-8 gap-1 h-auto">
+          <TabsList className={`w-full grid grid-cols-4 ${showOnboarding ? "sm:grid-cols-9" : "sm:grid-cols-8"} gap-1 h-auto`}>
             <TabsTrigger value="match" className="text-xs gap-1"><Gauge className="h-3.5 w-3.5" /> Match</TabsTrigger>
             <TabsTrigger value="signals" className="text-xs gap-1"><Eye className="h-3.5 w-3.5" /> Signals</TabsTrigger>
             <TabsTrigger value="scorecards" className="text-xs gap-1"><ClipboardCheck className="h-3.5 w-3.5" /> Scores</TabsTrigger>
             <TabsTrigger value="interviews" className="text-xs gap-1"><Mic className="h-3.5 w-3.5" /> Media</TabsTrigger>
+            {showOnboarding && <TabsTrigger value="onboarding" className="text-xs gap-1"><GraduationCap className="h-3.5 w-3.5" /> Onboard</TabsTrigger>}
             <TabsTrigger value="ledger" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Ledger</TabsTrigger>
             <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
             <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
             <TabsTrigger value="notes" className="text-xs">Notes</TabsTrigger>
           </TabsList>
+
+          {/* Onboarding checklist */}
+          {showOnboarding && (
+            <TabsContent value="onboarding" className="mt-4">
+              <OnboardingTracker candidate={candidate} />
+            </TabsContent>
+          )}
+
 
           {/* Scorecards / evaluations */}
           <TabsContent value="scorecards" className="mt-4">

@@ -1,24 +1,43 @@
 import { useMemo, useState } from "react";
-import { Sparkles, Search, ArrowRight, Briefcase, MapPin, Star } from "lucide-react";
-import { useCandidates, usePositions, useLocations, useUpdateCandidate, Candidate } from "@/hooks/useRecruiting";
+import { Sparkles, Search, ArrowRight, Briefcase, MapPin, Archive, RotateCcw, AlertTriangle } from "lucide-react";
+import { useCandidates, usePositions, useLocations, useUpdateCandidate, useCandidateLifecycle, Candidate } from "@/hooks/useRecruiting";
 import { initials, stageMeta, relativeTime, scoreTone, TONE_HSL } from "@/lib/recruiting";
 import CandidateProfile from "./CandidateProfile";
 import HoloStrip from "./HoloStrip";
 import { Button } from "@/components/ui/button";
+
+type Mode = "pool" | "archived";
 
 export default function TalentPool() {
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
   const updateCandidate = useUpdateCandidate();
+  const lifecycle = useCandidateLifecycle();
   const [search, setSearch] = useState("");
+  const [mode, setMode] = useState<Mode>("pool");
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
 
+  const matchesSearch = (c: Candidate) =>
+    !search || [c.full_name, c.best_fit_roles, c.applied_role, c.region].some((f) => (f || "").toLowerCase().includes(search.toLowerCase()));
+
   const pool = useMemo(
-    () => candidates.filter((c) => c.in_talent_pool && (!search || [c.full_name, c.best_fit_roles, c.applied_role, c.region].some((f) => f.toLowerCase().includes(search.toLowerCase())))),
+    () => candidates.filter((c) => c.in_talent_pool && c.stage !== "rejected" && c.status !== "rejected" && matchesSearch(c)),
     [candidates, search]
   );
+
+  const archived = useMemo(
+    () => candidates.filter((c) => (c.stage === "rejected" || c.status === "rejected") && matchesSearch(c)),
+    [candidates, search]
+  );
+
+  // Emails that appear more than once (potential re-applicants across archived + active records).
+  const emailCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    candidates.forEach((c) => { if (c.email) m[c.email.toLowerCase()] = (m[c.email.toLowerCase()] || 0) + 1; });
+    return m;
+  }, [candidates]);
 
   const openPositions = positions.filter((p) => p.status === "open");
   const matchFor = (c: Candidate) =>
@@ -31,29 +50,83 @@ export default function TalentPool() {
   const place = (c: Candidate, positionId: string) => {
     const p = positions.find((x) => x.id === positionId);
     if (!p) return;
-    updateCandidate.mutate({ id: c.id, position_id: p.id, location_id: p.location_id, region: p.region, applied_role: p.title, in_talent_pool: false, stage: "screening" });
+    updateCandidate.mutate({ id: c.id, position_id: p.id, location_id: p.location_id, region: p.region, applied_role: p.title, in_talent_pool: false, stage: "screening", status: "active" });
   };
 
   const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
+
 
   return (
     <div className="space-y-4 animate-rise">
       <div className="cert-surface rounded-2xl p-5 relative overflow-hidden">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-5 w-5 text-gold" />
-          <h2 className="font-display text-2xl font-bold text-engrave">Talent Pool</h2>
+          <h2 className="font-display text-2xl font-bold text-engrave">Talent Pool & Archive</h2>
         </div>
-        <p className="text-xs text-muted-foreground max-w-lg">Vetted candidates kept warm for future openings. Match them to live requisitions and place with one click.</p>
+        <p className="text-xs text-muted-foreground max-w-lg">Vetted candidates kept warm for future openings, plus archived applicants preserved for re-application flagging. Match to live requisitions and place with one click.</p>
         <HoloStrip className="mt-3 max-w-[200px]" />
+      </div>
+
+      {/* Mode toggle */}
+      <div className="flex rounded-lg border border-input overflow-hidden w-fit">
+        <button onClick={() => setMode("pool")} className={`px-4 h-9 text-xs inline-flex items-center gap-1.5 ${mode === "pool" ? "bg-gold/15 text-gold" : "text-muted-foreground"}`}>
+          <Sparkles className="h-3.5 w-3.5" /> Talent Pool <span className="text-[10px] opacity-70">{pool.length}</span>
+        </button>
+        <button onClick={() => setMode("archived")} className={`px-4 h-9 text-xs inline-flex items-center gap-1.5 ${mode === "archived" ? "bg-destructive/12 text-destructive" : "text-muted-foreground"}`}>
+          <Archive className="h-3.5 w-3.5" /> Archived <span className="text-[10px] opacity-70">{archived.length}</span>
+        </button>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search pool by name, role, or region…" className="w-full pl-9 pr-4 py-2.5 text-sm rounded-lg border border-input bg-card/60 focus:outline-none focus:ring-2 focus:ring-gold/40" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={mode === "pool" ? "Search pool by name, role, or region…" : "Search archived applicants…"} className="w-full pl-9 pr-4 py-2.5 text-sm rounded-lg border border-input bg-card/60 focus:outline-none focus:ring-2 focus:ring-gold/40" />
       </div>
 
-      {pool.length === 0 ? (
+      {mode === "archived" ? (
+        archived.length === 0 ? (
+          <div className="glass-panel rounded-xl p-10 text-center">
+            <Archive className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm text-foreground font-medium">No archived applicants</p>
+            <p className="text-xs text-muted-foreground mt-1">Rejected candidates are archived here and flagged automatically if they apply again.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {archived.map((c) => {
+              const dupe = c.email && emailCounts[c.email.toLowerCase()] > 1;
+              return (
+                <div key={c.id} className="glass-panel rounded-xl p-4 border-destructive/20">
+                  <div className="flex items-start gap-3">
+                    <button onClick={() => openCandidate(c)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-display font-bold bg-muted text-muted-foreground border border-border">{initials(c.full_name)}</button>
+                    <div className="flex-1 min-w-0">
+                      <button onClick={() => openCandidate(c)} className="text-left w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground truncate">{c.full_name}</span>
+                          {dupe && <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.35)" }}><AlertTriangle className="h-2.5 w-2.5" /> re-applicant</span>}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate">{c.headline || c.applied_role || c.email}</p>
+                      </button>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+                        {c.region && <span className="inline-flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {c.region}</span>}
+                        <span>· archived {relativeTime(c.updated_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-end gap-2">
+                    <Button size="sm" variant="ghost" className="h-8 text-[11px] text-gold gap-1" onClick={() => lifecycle.pool.mutate({ candidate: c, reason: "Reconsidered from archive", roles: c.best_fit_roles })}>
+                      <Sparkles className="h-3.5 w-3.5" /> Add to pool
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-[11px] gap-1" onClick={() => lifecycle.restore.mutate({ candidate: c, toStage: "screening" })} disabled={lifecycle.restore.isPending}>
+                      <RotateCcw className="h-3.5 w-3.5" /> Reactivate
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : pool.length === 0 ? (
+
         <div className="glass-panel rounded-xl p-10 text-center">
           <Sparkles className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-foreground font-medium">Talent pool is empty</p>
