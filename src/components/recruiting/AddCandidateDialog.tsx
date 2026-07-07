@@ -139,14 +139,16 @@ export default function AddCandidateDialog({ compact }: Props) {
           <span className={compact ? "hidden sm:inline" : ""}>Add Candidate</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-xl max-h-[94vh] overflow-y-auto glass-panel liquid-glass rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+      <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-screen h-[100dvh] max-w-none rounded-none border-0 p-0 gap-0 overflow-y-auto glass-panel">
+        <div className="mx-auto w-full max-w-2xl px-4 sm:px-8 pt-6 pb-28 sm:pt-10">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald/15 border border-emerald/30"><ScanEye className="h-4 w-4 text-emerald" /></span>
+          <DialogTitle className="font-display text-2xl sm:text-3xl flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald/15 border border-emerald/30"><ScanEye className="h-4.5 w-4.5 text-emerald" /></span>
             Candidate Intake
           </DialogTitle>
-          <p className="text-xs text-muted-foreground">Drop a résumé to auto-fill, paste an Indeed link, attach anything, or type it in.</p>
+          <p className="text-sm text-muted-foreground">Drop a résumé to auto-fill, paste an Indeed link, attach anything, or type it in. Everything is editable — just fix anything the parser missed.</p>
         </DialogHeader>
+
 
         {/* Résumé dropzone */}
         <div
@@ -271,14 +273,18 @@ export default function AddCandidateDialog({ compact }: Props) {
           </div>
         </div>
 
-        <div className="sticky bottom-0 -mx-4 sm:mx-0 mt-4 flex gap-2 border-t border-border bg-background/70 px-4 sm:px-0 py-3 backdrop-blur-md sm:static sm:bg-transparent sm:backdrop-blur-none">
-          <Button variant="outline" onClick={() => { setOpen(false); reset(); }} className="flex-1 sm:flex-none tap-target h-11 sm:h-10">Cancel</Button>
-          <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="flex-1 sm:flex-none tap-target h-11 sm:h-10 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_24px_-8px_hsl(var(--emerald))]">
-            {createCandidate.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            Add to Pipeline
-          </Button>
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background/85 backdrop-blur-md">
+          <div className="mx-auto w-full max-w-2xl flex gap-2 px-4 sm:px-8 py-3 justify-end">
+            <Button variant="outline" onClick={() => { setOpen(false); reset(); }} className="flex-1 sm:flex-none tap-target h-11 sm:h-10">Cancel</Button>
+            <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="flex-1 sm:flex-none tap-target h-11 sm:h-10 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_24px_-8px_hsl(var(--emerald))]">
+              {createCandidate.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Add to Pipeline
+            </Button>
+          </div>
+        </div>
         </div>
       </DialogContent>
+
     </Dialog>
   );
 }
