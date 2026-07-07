@@ -139,8 +139,9 @@ export default function AddCandidateDialog({ compact }: Props) {
           <span className={compact ? "hidden sm:inline" : ""}>Add Candidate</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-screen h-[100dvh] max-w-none rounded-none border-0 p-0 gap-0 overflow-y-auto glass-panel">
-        <div className="mx-auto w-full max-w-2xl px-4 sm:px-8 pt-6 pb-28 sm:pt-10">
+      <DialogContent className="left-0 top-0 translate-x-0 translate-y-0 w-screen h-[100dvh] max-w-none rounded-none border-0 p-0 gap-0 overflow-hidden flex flex-col glass-panel">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="mx-auto w-full max-w-2xl px-4 sm:px-8 pt-6 pb-8 sm:pt-10">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl sm:text-3xl flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald/15 border border-emerald/30"><ScanEye className="h-4.5 w-4.5 text-emerald" /></span>
