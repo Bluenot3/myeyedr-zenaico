@@ -103,6 +103,7 @@ export default function PipelineBoard() {
           <div className="flex rounded-lg border border-input overflow-hidden">
             <button onClick={() => setView("board")} className={`px-3 h-9 text-xs ${view === "board" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Board</button>
             <button onClick={() => setView("list")} className={`px-3 h-9 text-xs ${view === "list" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>List</button>
+            <button onClick={() => setView("table")} className={`px-3 h-9 text-xs ${view === "table" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Table</button>
           </div>
           {hasSel && (
             <div className="flex items-center gap-2 ml-auto">
