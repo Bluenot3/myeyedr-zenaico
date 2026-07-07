@@ -36,6 +36,8 @@ export interface Position {
   pay_range: string;
   posting_url: string;
   posting_locations: PostingLocation[];
+  req_code: string;
+  hiring_manager: string;
   created_at: string;
   updated_at: string;
 }
