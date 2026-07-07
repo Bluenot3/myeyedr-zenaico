@@ -17,6 +17,7 @@ type ViewMode = "board" | "list" | "table";
 export default function PipelineBoard() {
   const { data: candidates = [], isLoading } = useCandidates();
   const { data: locations = [] } = useLocations();
+  const { data: positions = [] } = usePositions();
   const bulkUpdate = useBulkUpdateCandidates();
 
   const [search, setSearch] = useState("");
