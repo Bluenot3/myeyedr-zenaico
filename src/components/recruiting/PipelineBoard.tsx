@@ -155,6 +155,8 @@ export default function PipelineBoard() {
             </div>
           ))}
         </div>
+      ) : view === "table" ? (
+        <CandidateTable candidates={filtered} locations={locations} positions={positions} onOpen={openCandidate} />
       ) : (
         <div className="space-y-2">
           {filtered.length === 0 && (
