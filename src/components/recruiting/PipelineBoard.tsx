@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
 import { Search, ArrowUpDown, CheckSquare, Square, Zap, ChevronDown, Sparkles, Users } from "lucide-react";
-import { useCandidates, useLocations, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
+import { useCandidates, useLocations, usePositions, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
+import CandidateTable from "./CandidateTable";
 import AddCandidateDialog from "./AddCandidateDialog";
+import BulkResumeUpload from "./BulkResumeUpload";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
-type ViewMode = "board" | "list";
+type ViewMode = "board" | "list" | "table";
 
 export default function PipelineBoard() {
   const { data: candidates = [], isLoading } = useCandidates();
