@@ -273,8 +273,9 @@ export default function AddCandidateDialog({ compact }: Props) {
             <Input value={form.best_fit_roles} onChange={(e) => set({ best_fit_roles: e.target.value })} placeholder="e.g. HIPAA, multi-line phones, insurance verification" className="mt-1" />
           </div>
         </div>
+        </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background/85 backdrop-blur-md">
+        <div className="shrink-0 border-t border-border bg-background/85 backdrop-blur-md">
           <div className="mx-auto w-full max-w-2xl flex gap-2 px-4 sm:px-8 py-3 justify-end">
             <Button variant="outline" onClick={() => { setOpen(false); reset(); }} className="flex-1 sm:flex-none tap-target h-11 sm:h-10">Cancel</Button>
             <Button onClick={submit} disabled={createCandidate.isPending || parsing || !form.full_name.trim()} className="flex-1 sm:flex-none tap-target h-11 sm:h-10 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_24px_-8px_hsl(var(--emerald))]">
@@ -282,7 +283,6 @@ export default function AddCandidateDialog({ compact }: Props) {
               Add to Pipeline
             </Button>
           </div>
-        </div>
         </div>
       </DialogContent>
 
