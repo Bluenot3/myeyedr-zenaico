@@ -13,16 +13,18 @@ import {
 import {
   Star, Phone, Mail, Sparkles, Trash2, Save, Plus, ShieldCheck, MapPin,
   Briefcase, Clock, ArrowRight, MessageSquarePlus, Pin, PinOff, X, ChevronRight, Gauge,
-  FileText, Loader2, Mic, ClipboardCheck, Eye,
+  FileText, Loader2, Mic, ClipboardCheck, Eye, GraduationCap, CheckCircle2, XCircle, AlertTriangle, RotateCcw,
 } from "lucide-react";
 import InterviewMedia from "./InterviewMedia";
 import EvaluationPanel from "./EvaluationPanel";
 import CandidateSignals from "./CandidateSignals";
+import OnboardingTracker from "./OnboardingTracker";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
   useUpdateCandidate, useDeleteCandidate, useAddBadge, useLogContact,
   useAddNote, useUpdateNote, useDeleteNote, useLocations, usePositions,
+  useCandidates, useCandidateLifecycle,
 } from "@/hooks/useRecruiting";
 import { STAGES, stageMeta, stageProgress, initials, relativeTime, scoreTone, TONE_HSL, BADGE_TYPES, badgeMeta } from "@/lib/recruiting";
 import { computeMatch } from "@/lib/matchScore";
@@ -32,6 +34,7 @@ import ScoreRing from "./ScoreRing";
 import StageBadge from "./StageBadge";
 import HoloStrip from "./HoloStrip";
 import { EyeMark } from "./Logo";
+
 
 interface Props {
   candidate: Candidate | null;
