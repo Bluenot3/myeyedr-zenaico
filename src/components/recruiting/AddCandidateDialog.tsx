@@ -68,7 +68,7 @@ export default function AddCandidateDialog({ compact }: Props) {
         phone: d.phone || "",
         applied_role: d.applied_role || "",
         headline: d.headline || (d.summary ? String(d.summary).slice(0, 90) : ""),
-        years_experience: Number(d.years_experience) || 0,
+        years_experience: Math.round(Number(d.years_experience)) || 0,
         best_fit_roles: Array.isArray(d.skills) ? d.skills.slice(0, 6).join(", ") : "",
       });
       setParsed(true);
@@ -116,7 +116,7 @@ export default function AddCandidateDialog({ compact }: Props) {
       region: loc?.region || form.region,
       source: form.source,
       headline: form.headline,
-      years_experience: form.years_experience,
+      years_experience: Math.round(Number(form.years_experience) || 0),
       best_fit_roles: form.best_fit_roles,
       resume_url: resume?.url || "",
       documents: [...docs, ...linkDocs] as any,
