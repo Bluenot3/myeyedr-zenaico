@@ -1,24 +1,43 @@
 import { useMemo, useState } from "react";
-import { Sparkles, Search, ArrowRight, Briefcase, MapPin, Star } from "lucide-react";
-import { useCandidates, usePositions, useLocations, useUpdateCandidate, Candidate } from "@/hooks/useRecruiting";
+import { Sparkles, Search, ArrowRight, Briefcase, MapPin, Archive, RotateCcw, AlertTriangle } from "lucide-react";
+import { useCandidates, usePositions, useLocations, useUpdateCandidate, useCandidateLifecycle, Candidate } from "@/hooks/useRecruiting";
 import { initials, stageMeta, relativeTime, scoreTone, TONE_HSL } from "@/lib/recruiting";
 import CandidateProfile from "./CandidateProfile";
 import HoloStrip from "./HoloStrip";
 import { Button } from "@/components/ui/button";
+
+type Mode = "pool" | "archived";
 
 export default function TalentPool() {
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
   const updateCandidate = useUpdateCandidate();
+  const lifecycle = useCandidateLifecycle();
   const [search, setSearch] = useState("");
+  const [mode, setMode] = useState<Mode>("pool");
   const [selected, setSelected] = useState<Candidate | null>(null);
   const [open, setOpen] = useState(false);
 
+  const matchesSearch = (c: Candidate) =>
+    !search || [c.full_name, c.best_fit_roles, c.applied_role, c.region].some((f) => (f || "").toLowerCase().includes(search.toLowerCase()));
+
   const pool = useMemo(
-    () => candidates.filter((c) => c.in_talent_pool && (!search || [c.full_name, c.best_fit_roles, c.applied_role, c.region].some((f) => f.toLowerCase().includes(search.toLowerCase())))),
+    () => candidates.filter((c) => c.in_talent_pool && c.stage !== "rejected" && c.status !== "rejected" && matchesSearch(c)),
     [candidates, search]
   );
+
+  const archived = useMemo(
+    () => candidates.filter((c) => (c.stage === "rejected" || c.status === "rejected") && matchesSearch(c)),
+    [candidates, search]
+  );
+
+  // Emails that appear more than once (potential re-applicants across archived + active records).
+  const emailCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    candidates.forEach((c) => { if (c.email) m[c.email.toLowerCase()] = (m[c.email.toLowerCase()] || 0) + 1; });
+    return m;
+  }, [candidates]);
 
   const openPositions = positions.filter((p) => p.status === "open");
   const matchFor = (c: Candidate) =>
@@ -31,11 +50,12 @@ export default function TalentPool() {
   const place = (c: Candidate, positionId: string) => {
     const p = positions.find((x) => x.id === positionId);
     if (!p) return;
-    updateCandidate.mutate({ id: c.id, position_id: p.id, location_id: p.location_id, region: p.region, applied_role: p.title, in_talent_pool: false, stage: "screening" });
+    updateCandidate.mutate({ id: c.id, position_id: p.id, location_id: p.location_id, region: p.region, applied_role: p.title, in_talent_pool: false, stage: "screening", status: "active" });
   };
 
   const openCandidate = (c: Candidate) => { setSelected(c); setOpen(true); };
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
+
 
   return (
     <div className="space-y-4 animate-rise">
