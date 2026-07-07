@@ -113,9 +113,7 @@ export default function UsersManager() {
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[9px] micro-label" style={{ color: `hsl(var(--${meta.color}))` }}>{meta.label}</span>
-                      {primary === "manager" && (
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {u.location_ids.length} location{u.location_ids.length === 1 ? "" : "s"}</span>
-                      )}
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {u.location_ids.length} location{u.location_ids.length === 1 ? "" : "s"}{primary !== "manager" && u.location_ids.length === 0 ? " (all access)" : ""}</span>
                       {u.must_reset_password && <span className="text-[9px] micro-label text-gold">Pending reset</span>}
                     </div>
                   </div>
