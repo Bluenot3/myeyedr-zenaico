@@ -115,6 +115,13 @@ export const SOURCES = ["Indeed", "LinkedIn", "Referral", "Company Website", "Wa
 export const POSITION_STATUS = ["open", "on_hold", "filled", "closed"];
 export const PRIORITIES = ["low", "normal", "high", "urgent"];
 
+export const SCREENING_STATUS = ["not_started", "scheduled", "in_progress", "passed", "failed"];
+export const INTERVIEW_STATUS = ["not_started", "scheduled", "completed", "passed", "failed"];
+
+export function prettyStatus(s: string): string {
+  return (s || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function makeHash(): string {
   const bytes = new Uint8Array(20);
   crypto.getRandomValues(bytes);
