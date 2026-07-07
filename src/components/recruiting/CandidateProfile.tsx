@@ -82,6 +82,26 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
   const sTone = TONE_HSL[scoreTone(candidate.score)];
   const m = computeMatch(candidate);
 
+  const isHired = candidate.status === "hired" || candidate.stage === "hired";
+  const isRejected = candidate.status === "rejected" || candidate.stage === "rejected";
+  const showOnboarding = isHired;
+
+  // Reapplication flag: any *other* archived/rejected candidate record with the same email.
+  const priorArchived = (candidate.email
+    ? allCandidates.filter(
+        (c) =>
+          c.id !== candidate.id &&
+          c.email &&
+          c.email.toLowerCase() === candidate.email.toLowerCase() &&
+          (c.status === "rejected" || c.stage === "rejected")
+      )
+    : []);
+  const isReapplicant = priorArchived.length > 0 && !isRejected;
+
+  const [decisionMode, setDecisionMode] = useState<null | "reject" | "pool">(null);
+  const [decisionReason, setDecisionReason] = useState("");
+  const [poolRoles, setPoolRoles] = useState("");
+
   const patch = (u: Partial<Candidate>) => setForm((p) => ({ ...p, ...u }));
 
   const handleDocUpload = async (files: FileList | null) => {
