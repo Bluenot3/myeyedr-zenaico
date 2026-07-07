@@ -140,8 +140,11 @@ export default function Openings() {
                   <div className="flex items-start gap-2.5 min-w-0">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30 shrink-0"><Briefcase className="h-4 w-4 text-emerald" /></div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
-                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(p.location_id)} · {p.region}</p>
+                      <div className="flex items-center gap-1.5">
+                        {p.req_code && <span className="text-[8.5px] font-mono uppercase tracking-wide text-emerald bg-emerald/10 border border-emerald/25 rounded px-1 py-0.5 shrink-0">{p.req_code}</span>}
+                        <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(p.location_id)} · {p.region}{p.hiring_manager ? ` · ${p.hiring_manager}` : ""}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
