@@ -19,6 +19,7 @@ import InterviewMedia from "./InterviewMedia";
 import EvaluationPanel from "./EvaluationPanel";
 import CandidateSignals from "./CandidateSignals";
 import OnboardingTracker from "./OnboardingTracker";
+import CandidateHistory from "./CandidateHistory";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
   Candidate, useCandidateBadges, useContactLog, useCandidateNotes,
