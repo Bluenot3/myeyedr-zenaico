@@ -86,6 +86,7 @@ export type Database = {
           position_id: string | null
           ratings: Json
           recommendation: string
+          requisition_id: string | null
           submitted: boolean
           template_id: string | null
           template_name: string
@@ -103,6 +104,7 @@ export type Database = {
           position_id?: string | null
           ratings?: Json
           recommendation?: string
+          requisition_id?: string | null
           submitted?: boolean
           template_id?: string | null
           template_name?: string
@@ -120,6 +122,7 @@ export type Database = {
           position_id?: string | null
           ratings?: Json
           recommendation?: string
+          requisition_id?: string | null
           submitted?: boolean
           template_id?: string | null
           template_name?: string
@@ -148,10 +151,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "candidate_evaluations_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "candidate_evaluations_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "scorecard_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_events: {
+        Row: {
+          actor: string
+          candidate_id: string
+          created_at: string
+          detail: Json
+          event_type: string
+          id: string
+          location_id: string | null
+          requisition_id: string | null
+          title: string
+        }
+        Insert: {
+          actor?: string
+          candidate_id: string
+          created_at?: string
+          detail?: Json
+          event_type: string
+          id?: string
+          location_id?: string | null
+          requisition_id?: string | null
+          title?: string
+        }
+        Update: {
+          actor?: string
+          candidate_id?: string
+          created_at?: string
+          detail?: Json
+          event_type?: string
+          id?: string
+          location_id?: string | null
+          requisition_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_events_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_events_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_events_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
             referencedColumns: ["id"]
           },
         ]
@@ -347,6 +415,73 @@ export type Database = {
           },
         ]
       }
+      candidate_requisitions: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_primary: boolean
+          location_id: string | null
+          notes: string
+          position_id: string | null
+          source: string
+          stage: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_primary?: boolean
+          location_id?: string | null
+          notes?: string
+          position_id?: string | null
+          source?: string
+          stage?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_primary?: boolean
+          location_id?: string | null
+          notes?: string
+          position_id?: string | null
+          source?: string
+          stage?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_requisitions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_requisitions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_requisitions_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_scorecards: {
         Row: {
           candidate_id: string
@@ -438,87 +573,117 @@ export type Database = {
       }
       candidates: {
         Row: {
+          address: string
           applied_role: string
           best_fit_roles: string
+          certifications: Json
           contact_count: number
           created_at: string
+          current_employer: string
           documents: Json
+          education: Json
           email: string
           full_name: string
           headline: string
           id: string
           in_talent_pool: boolean
+          interview_status: string
           last_contacted_at: string | null
           last_contacted_by: string
           location_id: string | null
+          parse_confidence: number | null
           phone: string
           position_id: string | null
           rating: number
           region: string
+          resume_summary: string
+          resume_text: string
           resume_url: string
           score: number
+          screening_status: string
           source: string
           stage: string
           status: string
           tags: string[]
           talent_pool_reason: string
           updated_at: string
+          work_history: Json
           years_experience: number
         }
         Insert: {
+          address?: string
           applied_role?: string
           best_fit_roles?: string
+          certifications?: Json
           contact_count?: number
           created_at?: string
+          current_employer?: string
           documents?: Json
+          education?: Json
           email?: string
           full_name: string
           headline?: string
           id?: string
           in_talent_pool?: boolean
+          interview_status?: string
           last_contacted_at?: string | null
           last_contacted_by?: string
           location_id?: string | null
+          parse_confidence?: number | null
           phone?: string
           position_id?: string | null
           rating?: number
           region?: string
+          resume_summary?: string
+          resume_text?: string
           resume_url?: string
           score?: number
+          screening_status?: string
           source?: string
           stage?: string
           status?: string
           tags?: string[]
           talent_pool_reason?: string
           updated_at?: string
+          work_history?: Json
           years_experience?: number
         }
         Update: {
+          address?: string
           applied_role?: string
           best_fit_roles?: string
+          certifications?: Json
           contact_count?: number
           created_at?: string
+          current_employer?: string
           documents?: Json
+          education?: Json
           email?: string
           full_name?: string
           headline?: string
           id?: string
           in_talent_pool?: boolean
+          interview_status?: string
           last_contacted_at?: string | null
           last_contacted_by?: string
           location_id?: string | null
+          parse_confidence?: number | null
           phone?: string
           position_id?: string | null
           rating?: number
           region?: string
+          resume_summary?: string
+          resume_text?: string
           resume_url?: string
           score?: number
+          screening_status?: string
           source?: string
           stage?: string
           status?: string
           tags?: string[]
           talent_pool_reason?: string
           updated_at?: string
+          work_history?: Json
           years_experience?: number
         }
         Relationships: [
@@ -753,6 +918,7 @@ export type Database = {
           mode: string
           notes: string
           position_id: string | null
+          requisition_id: string | null
           starts_at: string
           status: string
           title: string
@@ -770,6 +936,7 @@ export type Database = {
           mode?: string
           notes?: string
           position_id?: string | null
+          requisition_id?: string | null
           starts_at: string
           status?: string
           title?: string
@@ -787,6 +954,7 @@ export type Database = {
           mode?: string
           notes?: string
           position_id?: string | null
+          requisition_id?: string | null
           starts_at?: string
           status?: string
           title?: string
@@ -810,6 +978,13 @@ export type Database = {
           {
             foreignKeyName: "interview_events_position_id_fkey"
             columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_events_requisition_id_fkey"
+            columns: ["requisition_id"]
             isOneToOne: false
             referencedRelation: "positions"
             referencedColumns: ["id"]
@@ -888,6 +1063,7 @@ export type Database = {
           department: string
           description: string
           employment_type: string
+          hiring_manager: string
           id: string
           location_id: string | null
           openings: number
@@ -896,6 +1072,7 @@ export type Database = {
           posting_url: string
           priority: string
           region: string
+          req_code: string | null
           requirements: string
           status: string
           title: string
@@ -906,6 +1083,7 @@ export type Database = {
           department?: string
           description?: string
           employment_type?: string
+          hiring_manager?: string
           id?: string
           location_id?: string | null
           openings?: number
@@ -914,6 +1092,7 @@ export type Database = {
           posting_url?: string
           priority?: string
           region?: string
+          req_code?: string | null
           requirements?: string
           status?: string
           title: string
@@ -924,6 +1103,7 @@ export type Database = {
           department?: string
           description?: string
           employment_type?: string
+          hiring_manager?: string
           id?: string
           location_id?: string | null
           openings?: number
@@ -932,6 +1112,7 @@ export type Database = {
           posting_url?: string
           priority?: string
           region?: string
+          req_code?: string | null
           requirements?: string
           status?: string
           title?: string
