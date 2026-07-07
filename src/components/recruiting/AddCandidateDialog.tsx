@@ -35,6 +35,7 @@ export default function AddCandidateDialog({ compact }: Props) {
   const [parsed, setParsed] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [parsedExtra, setParsedExtra] = useState<Record<string, any>>({});
   const resumeInput = useRef<HTMLInputElement>(null);
   const attachInput = useRef<HTMLInputElement>(null);
 
@@ -45,6 +46,7 @@ export default function AddCandidateDialog({ compact }: Props) {
     setDocs([]);
     setParsed(false);
     setParsing(false);
+    setParsedExtra({});
   };
 
   const handleResume = async (file: File) => {
