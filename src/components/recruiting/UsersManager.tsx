@@ -172,7 +172,7 @@ export default function UsersManager() {
 
 type Loc = { id: string; site_name: string; region: string | null; city: string | null; state: string | null };
 
-function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onClose: () => void; onInvited: (c: { email: string; password: string }) => void }) {
+function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onClose: () => void; onInvited: (c: { email: string; password: string; emailed?: boolean }) => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
