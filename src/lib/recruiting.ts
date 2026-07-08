@@ -108,7 +108,7 @@ export const TONE_HSL: Record<BadgeTone, string> = {
 };
 
 /* ---------------- Misc ---------------- */
-export const REGIONS = ["DC Metro", "Northern Virginia", "Maryland", "Central NC"];
+export const REGIONS = ["Delaware County", "Chester County", "Bucks County", "Montgomery County", "Lehigh Valley"];
 
 export const SOURCES = ["Indeed", "LinkedIn", "Referral", "Company Website", "Walk-in", "Career Fair", "Talent Pool"];
 
