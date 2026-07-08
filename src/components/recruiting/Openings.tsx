@@ -198,6 +198,11 @@ export default function Openings() {
                   )}
                 </div>
 
+                {/* Best-fit benchmark */}
+                <BestFitControl position={p} candidates={candidates} />
+
+
+
                 <div className="mt-3 pt-3 border-t border-border/60">
                   <div className="flex items-center justify-between mb-2">
                     <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1"><Users className="h-3 w-3" /> {cands.length} candidate{cands.length !== 1 ? "s" : ""}</span>
