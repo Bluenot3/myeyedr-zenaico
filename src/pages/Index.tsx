@@ -27,7 +27,7 @@ const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean 
   { key: "openings", label: "Openings", icon: Glasses },
   { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
-  { key: "askai", label: "Ask AI", icon: Bot },
+  { key: "askai", label: "Ask AI", icon: Bot, adminOnly: true },
   { key: "agents", label: "AI Agents", icon: Bot, adminOnly: true },
   { key: "decision", label: "Decision", icon: Swords, adminOnly: true },
   { key: "library", label: "Library", icon: ClipboardList },
@@ -127,7 +127,7 @@ const Index = () => {
           {activeTab === "openings" && <Openings />}
           {activeTab === "calendar" && <CalendarView />}
           {activeTab === "pool" && <TalentPool />}
-          {activeTab === "askai" && <CandidateAssistant />}
+          {activeTab === "askai" && isAdmin && <CandidateAssistant />}
           {activeTab === "agents" && isAdmin && <AgentStudio />}
           {activeTab === "decision" && isAdmin && <DecisionTool />}
           {activeTab === "library" && <ScreeningLibrary />}
@@ -158,8 +158,9 @@ const Index = () => {
         </div>
       </nav>
 
-      {/* Global AI assistant (hidden on the dedicated Ask AI tab) */}
-      {activeTab !== "askai" && <FloatingAssistant />}
+      {/* Global AI assistant — admins only, hidden on the dedicated Ask AI tab */}
+      {isAdmin && activeTab !== "askai" && <FloatingAssistant />}
+
     </div>
   );
 };

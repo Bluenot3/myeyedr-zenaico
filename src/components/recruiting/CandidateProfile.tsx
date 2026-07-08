@@ -130,10 +130,16 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
 
   const handleStage = (stage: string) => {
+    if (stage === "hired") {
+      lifecycle.hire.mutate(candidate);
+      patch({ stage: "hired", status: "hired", score: 100 });
+      return;
+    }
     const score = Math.max(candidate.score, stageProgress(stage));
     updateCandidate.mutate({ id: candidate.id, stage, score });
     patch({ stage, score });
   };
+
 
   const handleSave = () => {
     const { id, created_at, updated_at, ...u } = form as any;
@@ -177,7 +183,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-0 glass-panel border-l border-border">
+      <SheetContent className="w-full sm:max-w-3xl lg:max-w-4xl overflow-y-auto p-0 glass-panel border-l border-border">
         {/* Header */}
         <div className="cert-surface p-5 sm:p-6 relative overflow-hidden">
           <EyeMark size={120} className="absolute -right-6 -top-6 opacity-20" spin />
@@ -242,7 +248,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
                 <button
                   key={s.key}
                   onClick={() => handleStage(s.key)}
-                  className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wide transition-all tap-target"
+                  className="shrink-0 rounded-lg px-3.5 py-2.5 text-[11px] font-mono uppercase tracking-wide transition-all tap-target hover:scale-[1.03]"
                   style={{
                     color: active || passed ? `hsl(${s.hsl})` : "hsl(var(--muted-foreground))",
                     background: active ? `hsl(${s.hsl} / 0.16)` : passed ? `hsl(${s.hsl} / 0.08)` : "transparent",
@@ -251,6 +257,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
                 >
                   {s.short}
                 </button>
+
               );
             })}
           </div>
@@ -320,16 +327,17 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
             <div>
               <span className="micro-label text-muted-foreground text-[10px]">Decision</span>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <Button size="sm" className="h-9 gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90" disabled={lifecycle.hire.isPending} onClick={() => lifecycle.hire.mutate(candidate)}>
-                  {lifecycle.hire.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />} Hire
+                <Button className="h-11 gap-1.5 text-sm bg-emerald text-primary-foreground hover:bg-emerald/90" disabled={lifecycle.hire.isPending} onClick={() => lifecycle.hire.mutate(candidate)}>
+                  {lifecycle.hire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Hire
                 </Button>
-                <Button size="sm" variant="outline" className="h-9 gap-1.5 text-gold border-gold/30 hover:bg-gold/10" onClick={() => { setDecisionMode("pool"); setPoolRoles(candidate.best_fit_roles || ""); setDecisionReason(candidate.talent_pool_reason || ""); }}>
-                  <Sparkles className="h-3.5 w-3.5" /> Pool
+                <Button variant="outline" className="h-11 gap-1.5 text-sm text-gold border-gold/30 hover:bg-gold/10" onClick={() => { setDecisionMode("pool"); setPoolRoles(candidate.best_fit_roles || ""); setDecisionReason(candidate.talent_pool_reason || ""); }}>
+                  <Sparkles className="h-4 w-4" /> Pool
                 </Button>
-                <Button size="sm" variant="outline" className="h-9 gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDecisionMode("reject")}>
-                  <XCircle className="h-3.5 w-3.5" /> Reject
+                <Button variant="outline" className="h-11 gap-1.5 text-sm text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDecisionMode("reject")}>
+                  <XCircle className="h-4 w-4" /> Reject
                 </Button>
               </div>
+
             </div>
           )}
         </div>
