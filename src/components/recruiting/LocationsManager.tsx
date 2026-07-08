@@ -23,7 +23,7 @@ export default function LocationsManager() {
   const updateLocation = useUpdateLocation();
 
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ region: "DC Metro", site_name: "", manager: "", city: "", state: "", phone: "" });
+  const [form, setForm] = useState({ region: "Delaware County", site_name: "", manager: "", manager_email: "", address: "", city: "", state: "PA", phone: "" });
   const [editId, setEditId] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<Location>>({});
 
