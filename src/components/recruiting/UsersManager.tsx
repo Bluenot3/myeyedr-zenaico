@@ -186,8 +186,8 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
     if (!email.trim() || !name.trim()) { toast.error("Name and email required"); return; }
     setBusy(true);
     try {
-      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [] });
-      onInvited({ email: res.email, password: res.temp_password });
+      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [], redirect_to: `${window.location.origin}/reset-password` });
+      onInvited({ email: res.email, password: res.temp_password, emailed: res.emailed });
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
