@@ -274,7 +274,7 @@ function AssignLocationsDialog({ user, locations, onClose, onSaved }: { user: Ma
   );
 }
 
-function CredentialDialog({ email, password, onClose }: { email: string; password: string; onClose: () => void }) {
+function CredentialDialog({ email, password, emailed, onClose }: { email: string; password: string; emailed?: boolean; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(`Email: ${email}\nTemporary password: ${password}`);
@@ -284,8 +284,12 @@ function CredentialDialog({ email, password, onClose }: { email: string; passwor
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md glass-panel">
-        <DialogHeader><DialogTitle className="font-display text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-gold" /> Temporary password</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">Share these credentials securely. The user will be required to set their own password at first sign-in.</p>
+        <DialogHeader><DialogTitle className="font-display text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-gold" /> Invite sent</DialogTitle></DialogHeader>
+        {emailed ? (
+          <p className="text-sm text-muted-foreground flex items-start gap-2"><Mail className="h-4 w-4 text-emerald mt-0.5 shrink-0" /> An invite email with a set-password link was sent to <strong>{email}</strong>. The temporary password below is a fallback you can share securely if the email doesn't arrive.</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">The email couldn't be sent automatically — share these credentials securely. The user must set their own password at first sign-in.</p>
+        )}
         <div className="rounded-xl border border-border bg-background/40 p-4 space-y-2 font-mono text-sm">
           <div className="flex justify-between gap-3"><span className="text-muted-foreground">Email</span><span className="truncate">{email}</span></div>
           <div className="flex justify-between gap-3"><span className="text-muted-foreground">Password</span><span className="text-gold">{password}</span></div>
