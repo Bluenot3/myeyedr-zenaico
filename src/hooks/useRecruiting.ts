@@ -44,6 +44,20 @@ export interface Position {
   updated_at: string;
 }
 
+export interface JobTemplate {
+  id: string;
+  title: string;
+  department: string;
+  employment_type: string;
+  description: string;
+  requirements: string;
+  pay_range: string;
+  tags: string[];
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InterviewEvent {
   id: string;
   candidate_id: string | null;
