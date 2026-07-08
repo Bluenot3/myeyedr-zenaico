@@ -1,79 +1,76 @@
-# Plan: Bigger/cleaner candidate evaluation, requisition auto-close rule, and action-taking admin AI
+# Candidate Command — Stability, Invites, Insights & Job Library
 
-Three focused changes to the existing recruiting workflow. Pipeline candidate cards (`CandidateCard.tsx`) are left **completely untouched**.
+## 1. Stop the random "reset to dashboard" reloads
 
----
+Root cause: on every background token refresh, `useAuth` flips global `loading` true, which makes `Protected` swap `<Index/>` for the full-screen loader and remount it — wiping the in-memory active tab back to Overview.
 
-## 1. Larger, minimalist candidate evaluation & profile
+- **`src/hooks/useAuth.tsx`** — Only show the blocking loader on the very first load. Track an `initialized` ref; on later `onAuthStateChange` events (TOKEN_REFRESHED / focus re-auth) update the session and refresh context silently in the background without toggling `loading`. Never let a token refresh unmount the app.
+- **`src/pages/Index.tsx`** — Persist the active tab in `localStorage` (and reflect it in the URL hash) so a genuine refresh restores the last section instead of jumping to Overview.
+- **`src/App.tsx`** — Give React Query stable defaults (`staleTime`, `refetchOnWindowFocus: false`, one retry) to stop refetch flicker when switching windows/tabs.
 
-Goal: make it easier to read scores and move candidates through the process, without changing what data is captured.
+## 2. Emailed user invites (link + temp-password fallback) — owner only
 
-**`CandidateProfile.tsx`**
-- Widen the slide-over from `sm:max-w-2xl` to `sm:max-w-3xl lg:max-w-4xl` so evaluations have room to breathe.
-- Streamline the top of the panel into a calmer, minimalist layout:
-  - Keep the header (name, match ring, stars) but reduce visual noise.
-  - Merge the **stage stepper** and **decision bar** into one clear "Move through pipeline" block: a single-row stage progression plus prominent Hire / Pool / Reject actions, larger tap targets, consistent spacing.
-- No tab or data changes — same Match/Signals/Scores/Media/etc. tabs.
+- Configure the shared email domain on the existing custom domain, set up email infrastructure, and scaffold a branded transactional invite email.
+- **`admin-users` edge function** — In `invite`, after creating the account also generate a secure set-password link and send the branded invite email to the new user. Still return the temp password so the existing credential dialog remains a fallback if the email bounces.
+- Add a "Resend invite" action per user in `UsersManager`.
 
-**`EvaluationPanel.tsx`**
-- Roomier, minimalist layout: larger template-picker rows, bigger star controls, cleaner competency cards, more whitespace, clearer "Start an evaluation" and "Evaluator scorecards" sections.
-- Same templates, ratings, weighted scoring, and save behavior.
+## 3. Owner-only access to Team & Access + sensitive data
 
-Purely presentational; no scoring-logic changes.
+Only `royaltokens@gmail.com` and `alexander.leschik@myeyedr.com` may see/manage users.
 
----
+- **Migration** — add `public.is_owner(uuid)` (checks those two emails via profiles), and tighten cross-user read policies on `profiles`, `user_roles`, `user_locations` from `is_admin` → `is_owner` (each user still sees their own row).
+- **`admin-users` edge function** — require `is_owner` (not just admin) for list/invite/reset/set_role/assign_locations/delete.
+- **`useAuth`** expose `isOwner`; **`Index.tsx`** gate the Team & Access tab to `isOwner`. Other admins keep AI/decision tools but can't browse users.
 
-## 2. Requisition headcount rule (fill enough seats → close & pool the rest)
+## 4. Onboarding → hiring-manager coverage & training checklist
 
-Each opening already has an `openings` count (seats) and a `status`. New rule, driven by hires:
+Offer letters, background check, drug screen, I-9, W-4, direct deposit, and benefits are handled in other systems — remove them.
 
-When a candidate becomes **hired** (via the Hire button **or** by setting stage to Hired in the stepper):
-1. Count candidates on the same `position_id` whose status is `hired`.
-2. If `hiredCount >= position.openings`:
-   - Set that position's `status = "filled"` (closes the requisition).
-   - Move every remaining candidate on that requisition who is **still active** (not `hired`, not `rejected`) into the talent pool: `in_talent_pool = true` with a reason like "Requisition {req_code} filled — kept warm for future roles". Their history is preserved.
-3. If seats remain open, nothing else changes and a toast shows progress (e.g. "Hired — 2 of 3 seats filled").
+- **`src/lib/onboarding.ts`** — replace `defaultOnboardingSteps`/`ONBOARDING_GROUPS` with a focused checklist so the manager can concentrate on training, grouped as:
+  - **Coverage** — trainer assigned, floor coverage arranged so the trainer is freed up, backup trainer named.
+  - **Schedule & Space** — first day/time set, first-week schedule shared, workspace ready.
+  - **Access & Tools** — logins/credentials requested, systems access confirmed, badge/keys, uniform.
+  - **Day One** — welcome & team intros, training plan reviewed with new hire.
+- Keep the 4-week training plan. `OnboardingTracker` already renders from these constants, so it updates automatically. Add a small "Switch to new checklist" action for any onboarding record still holding the legacy steps.
 
-**Implementation (`useRecruiting.ts` → `useCandidateLifecycle`)**
-- Extend the `hire` mutation: after marking the candidate hired, load the linked position + its candidates, apply the count/close/pool logic above, and invalidate `candidates` + `positions`.
-- Add a shared `hireCandidate` path so the stage stepper's "Hired" selection routes through the same logic (satisfies the "both triggers" choice).
+## 5. Metrics & Insights dashboard (Admins & Regionals)
 
-**`CandidateProfile.tsx`**
-- `handleStage("hired")` calls the lifecycle hire flow instead of a plain stage update, so the rule fires from the stepper too.
+New **Insights** tab (recharts, already installed) built entirely from existing data — no heavy new tables:
 
-Scoping is inherently per-requisition via `position_id`, so it stays within the correct location. Writes use existing RLS-scoped mutations.
+- **Time to hire** — average days applied→hired, trend over recent months.
+- **Pipeline conversion funnel** — stage-to-stage drop-off and overall applied→hired rate.
+- **Source effectiveness** — candidates vs. hires by source, with a "best ROI source" callout.
+- **Candidate volume trend** — applications per week/month.
+- **What standout candidates say** — aggregate soundbite labels and most-common phrases from the transcripts/soundbites of hired & top-rated candidates ("top candidates tend to mention…"), surfaced as chips + a bar chart.
+- Gated to `hasAllAccess`; read-only, so it can't break existing flows.
 
----
+## 6. Reusable Job Library + full requisition control
 
-## 3. Admin-only AI assistant that proposes actions (confirm before running)
+- **Migration** — new `public.job_templates` (title, department, employment_type, description, requirements, pay_range, tags, created_by) with GRANTs; managed by `has_all_access`, readable by authenticated. Add owner/admin delete policy on `positions` so requisitions can be fully removed.
+- **`parse-job` edge function** — accepts pasted text or extracted PDF text and uses Lovable AI to return structured job fields (modeled on `parse-resume`).
+- **New "Jobs" tab (Admin/Regional)** — Job Library: add a job by **uploading a PDF** or **pasting text** (auto-filled via `parse-job`) or manually; edit/delete; and **"Create requisition"** from a job → prefilled New Opening where you pick office(s), openings, and status (including historical `closed`/`filled` records).
+- **`Openings.tsx`** — full edit dialog (title, office, openings, priority, pay, status, description, requirements) so admins can open/close/edit **any** requisition regardless of location or stage, plus delete for record cleanup and a status filter that includes archived/closed for record-keeping.
 
-**Access gating (`Index.tsx`)**
-- Mark the `askai` nav item `adminOnly: true` and render `<CandidateAssistant />` only when `isAdmin`.
-- Render `<FloatingAssistant />` only when `isAdmin`.
+## 7. Verify the transcriber
 
-**Action-taking (propose → confirm)**
-
-Backend (`supabase/functions/candidate-assistant/index.ts`)
-- Include each candidate's `id` in the compact dataset (already RLS-scoped, safe) so actions can target the right person.
-- Add tool/function definitions to the gateway call (Gemini supports tools): `move_stage`, `hire_candidate`, `pool_candidate`, `reject_candidate`, `add_note`, `share_to_location`, `update_candidate_info`.
-- The function does **not** execute tools. When the model requests tools, it returns a structured `proposed_actions[]` (each with candidate id, name, action type, params, and a plain-English description) alongside the assistant's text reply. Comparisons / questions / info lookups still return as normal markdown text.
-
-Frontend (`AssistantChat.tsx`)
-- Render any `proposed_actions` as clean action cards under the assistant message, each with **Confirm** and **Dismiss**.
-- On Confirm, execute through existing client hooks/RLS-scoped mutations:
-  - stage/info → `useUpdateCandidate`
-  - hire/pool/reject → `useCandidateLifecycle` (so the requisition rule from part 2 also applies to AI-driven hires)
-  - notes → `useAddNote`
-  - share → existing share-to-location mutation
-- After execution, show a success state on the card and a toast; on error, surface it. This keeps every write on validated, permissioned paths while the AI only ever *proposes*.
-
----
+- Confirm the ElevenLabs connector key path in `analyze-interview` works end-to-end (Scribe v2 with v1 fallback), check edge logs, and improve the surfaced error text so failures are actionable. No behavior change unless a real bug is found.
 
 ## Technical notes
-- Model stays `google/gemini-2.5-flash` (supports tool calling) via the Lovable AI Gateway; 402/429 handling preserved.
-- Reuse existing mutations for all writes — no new tables or migrations required (headcount `openings` + position `status` already exist).
-- Validation: typecheck/build, then verify in preview — evaluation panel sizing, hiring enough candidates closes a requisition and pools the rest, and the AI proposes an action that runs only after Confirm. AI surfaces are hidden for non-admins.
+- New tables (`job_templates`) follow the CREATE→GRANT→RLS→POLICY order; `is_owner` is `SECURITY DEFINER` with fixed `search_path`.
+- Email sending depends on DNS verification for the domain; invites still produce a shareable temp password immediately even while DNS finishes.
+- Pipeline `CandidateCard` layout stays untouched, per earlier direction.
 
-## Out of scope / unchanged
-- `CandidateCard.tsx` and the pipeline board card layout — untouched per your request.
-- Existing scoring, golden-profile, onboarding, and sharing logic remain intact.
+```text
+Sidebar (owner)     Sidebar (admin/regional)
+overview            overview
+pipeline            pipeline
+openings            openings
+jobs (library)      jobs (library, regional+)
+calendar            calendar
+insights            insights (regional+)
+pool                pool
+ask ai / agents     ask ai / agents (admin)
+decision            decision (admin)
+library / locations library / locations
+team & access       — (hidden)
+```

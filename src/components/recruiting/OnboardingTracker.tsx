@@ -8,7 +8,7 @@ import {
 } from "@/hooks/useRecruiting";
 import {
   ONBOARDING_GROUPS, onboardingProgress, defaultOnboardingSteps, defaultTrainingSchedule,
-  type OnboardingStep, type StepStatus, type TrainingWeek,
+  isLegacyChecklist, type OnboardingStep, type StepStatus, type TrainingWeek,
 } from "@/lib/onboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,13 @@ export default function OnboardingTracker({ candidate }: { candidate: Candidate 
   }, [record, candidate.location_id]);
 
   const progress = useMemo(() => onboardingProgress(steps), [steps]);
+  const legacy = useMemo(() => isLegacyChecklist(steps), [steps]);
+
+  const switchToNewChecklist = () => {
+    setSteps(defaultOnboardingSteps());
+    setDirty(true);
+  };
+
 
   const cycleStep = (key: string) => {
     setSteps((prev) =>
@@ -135,6 +142,21 @@ export default function OnboardingTracker({ candidate }: { candidate: Candidate 
         </div>
         <p className="text-[10px] text-muted-foreground mt-2">Updated {relativeTime(record.updated_at)} · tap any item to change its status.</p>
       </div>
+
+      {/* Legacy checklist migration prompt */}
+      {legacy && (
+        <div className="rounded-xl border border-gold/30 bg-gold/8 p-3 flex items-start gap-2.5">
+          <Sparkles className="h-4 w-4 text-gold shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-xs font-medium text-foreground">This uses the old checklist</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Offer letters, background checks, and payroll are handled elsewhere. Switch to the streamlined coverage &amp; training checklist.</p>
+            <button onClick={switchToNewChecklist} className="mt-2 text-[11px] font-medium text-gold hover:underline inline-flex items-center gap-1">
+              Switch to new checklist <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {/* Day-one plan */}
       <div className="glass-panel rounded-xl p-4 space-y-3">

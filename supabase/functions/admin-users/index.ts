@@ -13,6 +13,9 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const ROLES = ["admin", "regional", "manager"] as const;
 type Role = (typeof ROLES)[number];
 
+const OWNER_EMAILS = ["royaltokens@gmail.com", "alexander.leschik@myeyedr.com"];
+const APP_URL = "https://myeyedr.zenai.world";
+
 function admin() {
   return createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 }
@@ -76,9 +79,9 @@ serve(async (req) => {
     const caller = userData?.user;
     if (!caller) return json({ error: "Not authenticated" }, 401);
 
-    const { data: adminRole } = await db
-      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
-    if (!adminRole) return json({ error: "Admins only" }, 403);
+    // Only the two owner accounts may view or manage users.
+    const callerEmail = (caller.email ?? "").toLowerCase();
+    if (!OWNER_EMAILS.includes(callerEmail)) return json({ error: "Owners only" }, 403);
 
     switch (action) {
       case "list_users": {
@@ -99,18 +102,35 @@ serve(async (req) => {
         const title = String(body.title ?? "").trim();
         const role: Role = ROLES.includes(body.role) ? body.role : "manager";
         const location_ids: string[] = Array.isArray(body.location_ids) ? body.location_ids : [];
+        const redirectTo = String(body.redirect_to ?? `${APP_URL}/reset-password`);
         if (!email || !email.includes("@")) return json({ error: "Valid email required" }, 400);
         if (!full_name) return json({ error: "Name required" }, 400);
 
-        const pw = tempPassword();
-        const { data: newUser, error } = await db.auth.admin.createUser({
-          email,
-          password: pw,
-          email_confirm: true,
-          user_metadata: { full_name, title, must_reset_password: true },
+        // Send the branded invite email with a one-click set-password link.
+        let emailed = false;
+        let uid: string | undefined;
+        const { data: invited, error: inviteErr } = await db.auth.admin.inviteUserByEmail(email, {
+          data: { full_name, title, must_reset_password: true },
+          redirectTo,
         });
-        if (error || !newUser?.user) return json({ error: error?.message ?? "Could not create user" }, 400);
-        const uid = newUser.user.id;
+        if (invited?.user) {
+          uid = invited.user.id;
+          emailed = true;
+        } else {
+          // Fallback: create the account directly if the invite email couldn't be sent.
+          const { data: created, error: createErr } = await db.auth.admin.createUser({
+            email,
+            password: tempPassword(),
+            email_confirm: true,
+            user_metadata: { full_name, title, must_reset_password: true },
+          });
+          if (createErr || !created?.user) return json({ error: (inviteErr?.message || createErr?.message) ?? "Could not create user" }, 400);
+          uid = created.user.id;
+        }
+
+        // Always set a temp password so admins have a shareable fallback if the email bounces.
+        const pw = tempPassword();
+        await db.auth.admin.updateUserById(uid!, { password: pw, user_metadata: { full_name, title, must_reset_password: true } });
 
         if (title) await db.from("profiles").update({ title }).eq("id", uid);
         await db.from("user_roles").delete().eq("user_id", uid);
@@ -118,8 +138,31 @@ serve(async (req) => {
         if (role === "manager" && location_ids.length) {
           await db.from("user_locations").insert(location_ids.map((location_id) => ({ user_id: uid, location_id })));
         }
-        return json({ ok: true, email, temp_password: pw });
+        return json({ ok: true, email, temp_password: pw, emailed });
       }
+
+      case "resend_invite": {
+        const user_id = String(body.user_id ?? "");
+        const email = String(body.email ?? "").trim().toLowerCase();
+        const redirectTo = String(body.redirect_to ?? `${APP_URL}/reset-password`);
+        if (!user_id || !email) return json({ error: "user_id and email required" }, 400);
+        // Send a fresh recovery email (works for already-registered users).
+        const { error: recErr } = await db.auth.admin.generateLink({
+          type: "recovery",
+          email,
+          options: { redirectTo },
+        });
+        // generateLink builds the link but does not send; trigger the built-in recovery email.
+        const { error: sendErr } = await db.auth.resetPasswordForEmail(email, { redirectTo });
+        const emailed = !sendErr;
+        // Refresh the fallback temp password too.
+        const pw = tempPassword();
+        await db.auth.admin.updateUserById(user_id, { password: pw, user_metadata: { must_reset_password: true } });
+        await db.from("profiles").update({ must_reset_password: true }).eq("id", user_id);
+        return json({ ok: true, temp_password: pw, emailed, error_detail: recErr?.message || sendErr?.message || null });
+      }
+
+
 
       case "reset_password": {
         const user_id = String(body.user_id ?? "");

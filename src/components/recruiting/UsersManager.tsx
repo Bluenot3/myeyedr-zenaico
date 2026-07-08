@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Users, UserPlus, Loader2, KeyRound, Trash2, ShieldCheck, MapPin, Copy, Check, X, Crown, Globe, Building2,
+  Users, UserPlus, Loader2, KeyRound, Trash2, ShieldCheck, MapPin, Copy, Check, X, Crown, Globe, Building2, Mail,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export default function UsersManager() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [credential, setCredential] = useState<{ email: string; password: string } | null>(null);
+  const [credential, setCredential] = useState<{ email: string; password: string; emailed?: boolean } | null>(null);
   const [assignFor, setAssignFor] = useState<ManagedUser | null>(null);
 
   const { data: users = [], isLoading } = useQuery({
@@ -64,6 +64,15 @@ export default function UsersManager() {
       const res = await callAdmin("reset_password", { user_id: u.id });
       setCredential({ email: u.email, password: res.temp_password });
       reload();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const resendInvite = async (u: ManagedUser) => {
+    try {
+      const res = await callAdmin("resend_invite", { user_id: u.id, email: u.email, redirect_to: `${window.location.origin}/reset-password` });
+      setCredential({ email: u.email, password: res.temp_password, emailed: res.emailed });
+      reload();
+      if (res.emailed) toast.success("Invite email resent");
     } catch (e: any) { toast.error(e.message); }
   };
 
@@ -129,6 +138,7 @@ export default function UsersManager() {
                     </SelectContent>
                   </Select>
                   <Button size="sm" variant="outline" onClick={() => setAssignFor(u)} className="h-9"><MapPin className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Locations</span></Button>
+                  <Button size="sm" variant="outline" onClick={() => resendInvite(u)} className="h-9"><Mail className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Resend</span></Button>
                   <Button size="sm" variant="outline" onClick={() => resetPw(u)} className="h-9"><KeyRound className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Reset</span></Button>
                   {!isSelf && (
                     <Button size="sm" variant="outline" onClick={() => removeUser(u)} className="h-9 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -155,14 +165,14 @@ export default function UsersManager() {
           onSaved={() => { setAssignFor(null); reload(); }}
         />
       )}
-      {credential && <CredentialDialog email={credential.email} password={credential.password} onClose={() => setCredential(null)} />}
+      {credential && <CredentialDialog email={credential.email} password={credential.password} emailed={credential.emailed} onClose={() => setCredential(null)} />}
     </div>
   );
 }
 
 type Loc = { id: string; site_name: string; region: string | null; city: string | null; state: string | null };
 
-function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onClose: () => void; onInvited: (c: { email: string; password: string }) => void }) {
+function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onClose: () => void; onInvited: (c: { email: string; password: string; emailed?: boolean }) => void }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
@@ -176,8 +186,8 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
     if (!email.trim() || !name.trim()) { toast.error("Name and email required"); return; }
     setBusy(true);
     try {
-      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [] });
-      onInvited({ email: res.email, password: res.temp_password });
+      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [], redirect_to: `${window.location.origin}/reset-password` });
+      onInvited({ email: res.email, password: res.temp_password, emailed: res.emailed });
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
@@ -264,7 +274,7 @@ function AssignLocationsDialog({ user, locations, onClose, onSaved }: { user: Ma
   );
 }
 
-function CredentialDialog({ email, password, onClose }: { email: string; password: string; onClose: () => void }) {
+function CredentialDialog({ email, password, emailed, onClose }: { email: string; password: string; emailed?: boolean; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(`Email: ${email}\nTemporary password: ${password}`);
@@ -274,8 +284,12 @@ function CredentialDialog({ email, password, onClose }: { email: string; passwor
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md glass-panel">
-        <DialogHeader><DialogTitle className="font-display text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-gold" /> Temporary password</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">Share these credentials securely. The user will be required to set their own password at first sign-in.</p>
+        <DialogHeader><DialogTitle className="font-display text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-gold" /> Invite sent</DialogTitle></DialogHeader>
+        {emailed ? (
+          <p className="text-sm text-muted-foreground flex items-start gap-2"><Mail className="h-4 w-4 text-emerald mt-0.5 shrink-0" /> An invite email with a set-password link was sent to <strong>{email}</strong>. The temporary password below is a fallback you can share securely if the email doesn't arrive.</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">The email couldn't be sent automatically — share these credentials securely. The user must set their own password at first sign-in.</p>
+        )}
         <div className="rounded-xl border border-border bg-background/40 p-4 space-y-2 font-mono text-sm">
           <div className="flex justify-between gap-3"><span className="text-muted-foreground">Email</span><span className="truncate">{email}</span></div>
           <div className="flex justify-between gap-3"><span className="text-muted-foreground">Password</span><span className="text-gold">{password}</span></div>

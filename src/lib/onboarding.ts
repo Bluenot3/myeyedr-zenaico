@@ -22,14 +22,23 @@ export interface TrainingWeek {
 }
 
 export const ONBOARDING_GROUPS = [
-  "Offer",
-  "Compliance",
-  "Paperwork",
-  "Systems & Access",
+  "Coverage",
+  "Schedule & Space",
+  "Access & Tools",
   "Day One",
 ] as const;
 
-/** The canonical MyEyeDr onboarding timeline. */
+/** Legacy step keys (offer/payroll/compliance) — used to detect old records. */
+export const LEGACY_STEP_KEYS = [
+  "offer_extended", "offer_countered", "offer_accepted", "background_check",
+  "drug_screen", "i9", "w4", "direct_deposit", "benefits",
+];
+
+/**
+ * The hiring-manager readiness checklist. Offer letters, background checks,
+ * I-9, and payroll live in other systems — this list keeps the manager focused
+ * on being ready to actually train the new hire.
+ */
 export function defaultOnboardingSteps(): OnboardingStep[] {
   const s = (key: string, label: string, group: string): OnboardingStep => ({
     key,
@@ -38,33 +47,28 @@ export function defaultOnboardingSteps(): OnboardingStep[] {
     status: "pending",
   });
   return [
-    // Offer
-    s("offer_extended", "Offer letter extended", "Offer"),
-    s("offer_countered", "Counter / negotiation", "Offer"),
-    s("offer_accepted", "Offer letter accepted", "Offer"),
-    // Compliance
-    s("background_check", "Background check completed", "Compliance"),
-    s("drug_screen", "Drug screen cleared", "Compliance"),
-    s("i9", "I-9 employment verification", "Compliance"),
-    s("references", "References verified", "Compliance"),
-    s("licensure", "Licensure / certifications verified", "Compliance"),
-    // Paperwork
-    s("w4", "W-4 & state tax forms", "Paperwork"),
-    s("direct_deposit", "Direct deposit set up", "Paperwork"),
-    s("handbook", "Employee handbook acknowledged", "Paperwork"),
-    s("benefits", "Benefits enrollment", "Paperwork"),
-    s("emergency", "Emergency contact on file", "Paperwork"),
-    // Systems & Access
-    s("email", "Company email & credentials issued", "Systems & Access"),
-    s("systems", "POS / EHR system access provisioned", "Systems & Access"),
-    s("badge", "Badge / keys issued", "Systems & Access"),
-    s("uniform", "Uniform / dress code provided", "Systems & Access"),
+    // Coverage — so the trainer can focus on training, not the floor
+    s("trainer_assigned", "Primary trainer assigned", "Coverage"),
+    s("coverage_arranged", "Floor coverage arranged during training", "Coverage"),
+    s("backup_trainer", "Backup trainer identified", "Coverage"),
+    s("team_informed", "Team informed a new hire is starting", "Coverage"),
+    // Schedule & Space
+    s("first_day_scheduled", "First day & report time set", "Schedule & Space"),
+    s("first_week_schedule", "First-week schedule shared with new hire", "Schedule & Space"),
+    s("workspace", "Workspace / station ready", "Schedule & Space"),
+    s("intro_message", "Welcome message sent to new hire", "Schedule & Space"),
+    // Access & Tools
+    s("credentials_requested", "Logins & credentials requested", "Access & Tools"),
+    s("systems", "POS / EHR system access confirmed", "Access & Tools"),
+    s("badge", "Badge / keys ready", "Access & Tools"),
+    s("uniform", "Uniform / dress code provided", "Access & Tools"),
     // Day One
-    s("first_day_scheduled", "First day scheduled", "Day One"),
-    s("workspace", "Workspace ready", "Day One"),
     s("welcome", "Welcome & team introductions", "Day One"),
+    s("training_plan_reviewed", "4-week training plan reviewed with new hire", "Day One"),
+    s("goals_set", "Week-one goals set", "Day One"),
   ];
 }
+
 
 /** A sensible 4-week ramp for a new optical hire. */
 export function defaultTrainingSchedule(trainer = "", location = ""): TrainingWeek[] {
@@ -110,3 +114,10 @@ export function onboardingProgress(steps: OnboardingStep[]): number {
   const done = active.filter((s) => s.status === "done").length;
   return Math.round((done / active.length) * 100);
 }
+
+/** True when a saved record still uses the old offer/payroll/compliance steps. */
+export function isLegacyChecklist(steps: OnboardingStep[] | null | undefined): boolean {
+  if (!steps?.length) return false;
+  return steps.some((s) => LEGACY_STEP_KEYS.includes(s.key));
+}
+
