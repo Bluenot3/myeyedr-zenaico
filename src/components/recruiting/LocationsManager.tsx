@@ -104,7 +104,9 @@ export default function LocationsManager() {
                   return editId === l.id ? (
                     <div key={l.id} className="rounded-lg bg-background/50 border border-border p-2.5 space-y-1.5">
                       <Input value={edit.site_name || ""} onChange={(e) => setEdit((s) => ({ ...s, site_name: e.target.value }))} className="h-8 text-xs" placeholder="Office name" />
-                      <Input value={edit.manager || ""} onChange={(e) => setEdit((s) => ({ ...s, manager: e.target.value }))} className="h-8 text-xs" placeholder="Manager" />
+                      <Input value={edit.address || ""} onChange={(e) => setEdit((s) => ({ ...s, address: e.target.value }))} className="h-8 text-xs" placeholder="Street address" />
+                      <Input value={edit.manager || ""} onChange={(e) => setEdit((s) => ({ ...s, manager: e.target.value }))} className="h-8 text-xs" placeholder="Manager name" />
+                      <Input value={edit.manager_email || ""} onChange={(e) => setEdit((s) => ({ ...s, manager_email: e.target.value }))} className="h-8 text-xs" placeholder="Manager email" />
                       <Input value={edit.phone || ""} onChange={(e) => setEdit((s) => ({ ...s, phone: e.target.value }))} className="h-8 text-xs" placeholder="Phone" />
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => saveEdit(l)}><Save className="h-3 w-3" /> Save</Button>
