@@ -1452,10 +1452,57 @@ export function useCandidateLifecycle() {
       if (error) throw error;
       await upsertOnboarding.mutateAsync({ candidate_id: candidate.id, seedLocationId: candidate.location_id });
       await mintBadge(candidate.id, "hired", "Hired", `${candidate.full_name} moved to onboarding.`);
+
+      // Requisition headcount rule: once enough seats are filled, close the
+      // opening and move remaining active candidates into the talent pool.
+      let filled = false, pooled = 0, seats = 1, hiredCount = 1;
+      if (candidate.position_id) {
+        const [{ data: pos }, { data: peers }] = await Promise.all([
+          db.from("positions").select("id, openings, req_code, title").eq("id", candidate.position_id).maybeSingle(),
+          db.from("candidates").select("id, status, stage").eq("position_id", candidate.position_id),
+        ]);
+        if (pos) {
+          seats = pos.openings || 1;
+          const list = (peers || []) as any[];
+          hiredCount = list.filter((c) => c.status === "hired" || c.stage === "hired").length;
+          if (hiredCount >= seats) {
+            await db.from("positions").update({ status: "filled" }).eq("id", pos.id);
+            filled = true;
+            const remaining = list.filter(
+              (c) =>
+                c.id !== candidate.id &&
+                c.status !== "hired" && c.stage !== "hired" &&
+                c.status !== "rejected" && c.stage !== "rejected",
+            );
+            if (remaining.length > 0) {
+              const reason = `Requisition ${pos.req_code || pos.title} filled — kept warm for future roles`;
+              const { error: poolErr } = await db.from("candidates")
+                .update({ in_talent_pool: true, talent_pool_reason: reason })
+                .in("id", remaining.map((c) => c.id));
+              if (poolErr) throw poolErr;
+              pooled = remaining.length;
+            }
+          }
+        }
+      }
+      return { filled, pooled, seats, hiredCount };
     },
-    onSuccess: () => { invalidate(); toast.success("Hired — onboarding checklist started"); },
+    onSuccess: (res) => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["positions"] });
+      if (res?.filled) {
+        toast.success(res.pooled > 0
+          ? `Requisition filled — ${res.pooled} other candidate${res.pooled === 1 ? "" : "s"} moved to talent pool`
+          : "Requisition filled and closed");
+      } else if ((res?.seats ?? 1) > 1) {
+        toast.success(`Hired — ${res.hiredCount} of ${res.seats} seats filled`);
+      } else {
+        toast.success("Hired — onboarding checklist started");
+      }
+    },
     onError: (e: any) => toast.error("Hire failed: " + e.message),
   });
+
 
   const reject = useMutation({
     mutationFn: async ({ candidate, reason }: { candidate: Candidate; reason: string }) => {
