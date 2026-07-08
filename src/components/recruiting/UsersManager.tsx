@@ -165,7 +165,7 @@ export default function UsersManager() {
           onSaved={() => { setAssignFor(null); reload(); }}
         />
       )}
-      {credential && <CredentialDialog email={credential.email} password={credential.password} onClose={() => setCredential(null)} />}
+      {credential && <CredentialDialog email={credential.email} password={credential.password} emailed={credential.emailed} onClose={() => setCredential(null)} />}
     </div>
   );
 }
