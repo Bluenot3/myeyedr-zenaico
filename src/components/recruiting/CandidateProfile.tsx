@@ -130,10 +130,16 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
 
   const handleStage = (stage: string) => {
+    if (stage === "hired") {
+      lifecycle.hire.mutate(candidate);
+      patch({ stage: "hired", status: "hired", score: 100 });
+      return;
+    }
     const score = Math.max(candidate.score, stageProgress(stage));
     updateCandidate.mutate({ id: candidate.id, stage, score });
     patch({ stage, score });
   };
+
 
   const handleSave = () => {
     const { id, created_at, updated_at, ...u } = form as any;
