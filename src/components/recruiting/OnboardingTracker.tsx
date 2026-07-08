@@ -8,7 +8,7 @@ import {
 } from "@/hooks/useRecruiting";
 import {
   ONBOARDING_GROUPS, onboardingProgress, defaultOnboardingSteps, defaultTrainingSchedule,
-  type OnboardingStep, type StepStatus, type TrainingWeek,
+  isLegacyChecklist, type OnboardingStep, type StepStatus, type TrainingWeek,
 } from "@/lib/onboarding";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
