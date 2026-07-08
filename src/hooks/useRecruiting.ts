@@ -723,7 +723,99 @@ export function useUpdatePosition() {
   });
 }
 
+export function useDeletePosition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("positions").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["positions"] });
+      toast.success("Requisition removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/* ============================ Job Library ============================ */
+export function useJobTemplates() {
+  return useQuery({
+    queryKey: ["job_templates"],
+    queryFn: async () => {
+      const { data, error } = await db.from("job_templates").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as JobTemplate[];
+    },
+  });
+}
+
+export function useCreateJobTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (j: Partial<JobTemplate>) => {
+      const { data, error } = await db.from("job_templates").insert([j]).select().single();
+      if (error) throw error;
+      return data as JobTemplate;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["job_templates"] });
+      toast.success("Job saved to library");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useUpdateJobTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<JobTemplate> & { id: string }) => {
+      const { error } = await db.from("job_templates").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["job_templates"] });
+      toast.success("Job updated");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+export function useDeleteJobTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("job_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["job_templates"] });
+      toast.success("Job removed");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/* ============================ Insights: all accessible interview media ============================ */
+export function useAllCandidateMedia(enabled = true) {
+  return useQuery({
+    queryKey: ["all_candidate_media"],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("candidate_media")
+        .select("id, candidate_id, media_type, soundbites, transcript, sentiment, recommendation, fit_score, created_at")
+        .eq("media_type", "audio")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data as CandidateMedia[];
+    },
+  });
+}
+
 export function useCreateLocation() {
+
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (loc: Partial<Location>) => {
