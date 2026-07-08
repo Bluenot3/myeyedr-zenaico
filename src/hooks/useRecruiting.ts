@@ -9,6 +9,8 @@ export interface Location {
   region: string;
   site_name: string;
   manager: string;
+  manager_email: string;
+  address: string;
   active: boolean;
   city: string;
   state: string;
