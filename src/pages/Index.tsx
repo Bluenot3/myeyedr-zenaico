@@ -12,6 +12,7 @@ import DecisionTool from "@/components/recruiting/DecisionTool";
 import UsersManager from "@/components/recruiting/UsersManager";
 import CandidateAssistant from "@/components/recruiting/CandidateAssistant";
 import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
+import MobileNav from "@/components/recruiting/MobileNav";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
 import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
@@ -139,24 +140,8 @@ const Index = () => {
         </footer>
       </div>
 
-      {/* Bottom nav (mobile) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-border safe-bottom">
-        <div className="flex items-center justify-around h-16 overflow-x-auto">
-          {nav.map((n) => {
-            const active = activeTab === n.key;
-            return (
-              <button
-                key={n.key}
-                onClick={() => setTab(n.key)}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 tap-target transition-colors ${active ? "text-emerald nav-pill-active" : "text-muted-foreground"}`}
-              >
-                <n.icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition-transform`} />
-                <span className="text-[9px] font-medium">{n.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Bottom nav (mobile) — iOS-style tab bar with a "More" sheet */}
+      <MobileNav items={nav} activeKey={activeTab} onSelect={(k) => setTab(k as Tab)} />
 
       {/* Global AI assistant — admins only, hidden on the dedicated Ask AI tab */}
       {isAdmin && activeTab !== "askai" && <FloatingAssistant />}
