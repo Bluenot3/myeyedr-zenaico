@@ -1,7 +1,8 @@
-import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight, ClipboardCheck } from "lucide-react";
-import { Candidate } from "@/hooks/useRecruiting";
+import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight, ClipboardCheck, Target } from "lucide-react";
+import { Candidate, usePositions, useGoldenProfiles } from "@/hooks/useRecruiting";
 import { stageMeta, initials, relativeTime } from "@/lib/recruiting";
 import { computeMatch, nextAction } from "@/lib/matchScore";
+import { generalScore } from "@/lib/golden";
 import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
 import { MatchBadgeChip, MeterBar, MatchBar } from "./MatchVisuals";
