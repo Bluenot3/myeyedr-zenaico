@@ -136,14 +136,17 @@ const Index = () => {
           {activeTab === "overview" && <Overview />}
           {activeTab === "pipeline" && <PipelineBoard />}
           {activeTab === "openings" && <Openings />}
+          {activeTab === "jobs" && hasAllAccess && <JobLibrary />}
           {activeTab === "calendar" && <CalendarView />}
+          {activeTab === "insights" && hasAllAccess && <Insights />}
           {activeTab === "pool" && <TalentPool />}
           {activeTab === "askai" && isAdmin && <CandidateAssistant />}
           {activeTab === "agents" && isAdmin && <AgentStudio />}
           {activeTab === "decision" && isAdmin && <DecisionTool />}
           {activeTab === "library" && <ScreeningLibrary />}
           {activeTab === "locations" && <LocationsManager />}
-          {activeTab === "users" && isAdmin && <UsersManager />}
+          {activeTab === "users" && isOwner && <UsersManager />}
+
         </main>
         <footer className="lg:hidden px-4 pb-24 pt-2">
           <ZenSignature />
