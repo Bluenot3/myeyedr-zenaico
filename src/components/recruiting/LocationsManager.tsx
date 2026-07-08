@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const regionDot: Record<string, string> = {
-  "DC Metro": "hsl(var(--destructive))",
-  "Northern Virginia": "hsl(var(--emerald))",
-  Maryland: "hsl(var(--cyan))",
-  "Central NC": "hsl(var(--gold))",
+  "Delaware County": "hsl(var(--emerald))",
+  "Chester County": "hsl(var(--cyan))",
+  "Bucks County": "hsl(var(--gold))",
+  "Montgomery County": "hsl(var(--destructive))",
+  "Lehigh Valley": "hsl(196 100% 66%)",
 };
 
 export default function LocationsManager() {
