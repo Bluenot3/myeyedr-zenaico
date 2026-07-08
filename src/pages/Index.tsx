@@ -157,6 +157,9 @@ const Index = () => {
           })}
         </div>
       </nav>
+
+      {/* Global AI assistant (hidden on the dedicated Ask AI tab) */}
+      {activeTab !== "askai" && <FloatingAssistant />}
     </div>
   );
 };
