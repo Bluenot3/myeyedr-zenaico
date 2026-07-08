@@ -62,6 +62,9 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, onEv
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <StageBadge stage={c.stage} size="sm" />
             <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded-full" style={{ color: `hsl(${m.categoryHsl})`, background: `hsl(${m.categoryHsl} / 0.12)` }}>{m.gameStatus}</span>
+            {gs.hasGolden && (
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded-full text-gold" style={{ background: "hsl(var(--gold) / 0.12)" }}><Target className="h-2.5 w-2.5" /> Best-fit</span>
+            )}
           </div>
         </button>
       </div>
