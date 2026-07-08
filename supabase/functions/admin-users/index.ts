@@ -13,6 +13,9 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const ROLES = ["admin", "regional", "manager"] as const;
 type Role = (typeof ROLES)[number];
 
+const OWNER_EMAILS = ["royaltokens@gmail.com", "alexander.leschik@myeyedr.com"];
+const APP_URL = "https://myeyedr.zenai.world";
+
 function admin() {
   return createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 }
