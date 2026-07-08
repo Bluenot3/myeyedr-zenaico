@@ -327,16 +327,17 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
             <div>
               <span className="micro-label text-muted-foreground text-[10px]">Decision</span>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <Button size="sm" className="h-9 gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90" disabled={lifecycle.hire.isPending} onClick={() => lifecycle.hire.mutate(candidate)}>
-                  {lifecycle.hire.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />} Hire
+                <Button className="h-11 gap-1.5 text-sm bg-emerald text-primary-foreground hover:bg-emerald/90" disabled={lifecycle.hire.isPending} onClick={() => lifecycle.hire.mutate(candidate)}>
+                  {lifecycle.hire.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Hire
                 </Button>
-                <Button size="sm" variant="outline" className="h-9 gap-1.5 text-gold border-gold/30 hover:bg-gold/10" onClick={() => { setDecisionMode("pool"); setPoolRoles(candidate.best_fit_roles || ""); setDecisionReason(candidate.talent_pool_reason || ""); }}>
-                  <Sparkles className="h-3.5 w-3.5" /> Pool
+                <Button variant="outline" className="h-11 gap-1.5 text-sm text-gold border-gold/30 hover:bg-gold/10" onClick={() => { setDecisionMode("pool"); setPoolRoles(candidate.best_fit_roles || ""); setDecisionReason(candidate.talent_pool_reason || ""); }}>
+                  <Sparkles className="h-4 w-4" /> Pool
                 </Button>
-                <Button size="sm" variant="outline" className="h-9 gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDecisionMode("reject")}>
-                  <XCircle className="h-3.5 w-3.5" /> Reject
+                <Button variant="outline" className="h-11 gap-1.5 text-sm text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setDecisionMode("reject")}>
+                  <XCircle className="h-4 w-4" /> Reject
                 </Button>
               </div>
+
             </div>
           )}
         </div>
