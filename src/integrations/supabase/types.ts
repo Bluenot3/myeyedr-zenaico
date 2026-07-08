@@ -1063,6 +1063,48 @@ export type Database = {
         }
         Relationships: []
       }
+      job_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string
+          description: string
+          employment_type: string
+          id: string
+          pay_range: string
+          requirements: string
+          tags: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          description?: string
+          employment_type?: string
+          id?: string
+          pay_range?: string
+          requirements?: string
+          tags?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          description?: string
+          employment_type?: string
+          id?: string
+          pay_range?: string
+          requirements?: string
+          tags?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           active: boolean
@@ -1472,6 +1514,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "regional" | "manager"
