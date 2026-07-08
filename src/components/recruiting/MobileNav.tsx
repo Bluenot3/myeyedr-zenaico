@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { LucideIcon } from "lucide-react";
 
