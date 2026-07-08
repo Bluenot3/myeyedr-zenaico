@@ -224,6 +224,48 @@ export type Database = {
           },
         ]
       }
+      candidate_location_shares: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          location_id: string
+          note: string | null
+          shared_by: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          location_id: string
+          note?: string | null
+          shared_by?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          location_id?: string
+          note?: string | null
+          shared_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_location_shares_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_location_shares_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_media: {
         Row: {
           candidate_id: string
@@ -1024,10 +1066,12 @@ export type Database = {
       locations: {
         Row: {
           active: boolean
+          address: string | null
           city: string
           created_at: string
           id: string
           manager: string
+          manager_email: string | null
           phone: string
           region: string
           site_name: string
@@ -1035,10 +1079,12 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          address?: string | null
           city?: string
           created_at?: string
           id?: string
           manager?: string
+          manager_email?: string | null
           phone?: string
           region: string
           site_name: string
@@ -1046,10 +1092,12 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          address?: string | null
           city?: string
           created_at?: string
           id?: string
           manager?: string
+          manager_email?: string | null
           phone?: string
           region?: string
           site_name?: string
