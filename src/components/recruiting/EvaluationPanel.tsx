@@ -113,15 +113,15 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
           {comps.map((c) => {
             const r = ratings.find((x) => x.id === c.id);
             return (
-              <div key={c.id} className="glass-panel rounded-xl p-3.5">
+              <div key={c.id} className="glass-panel rounded-xl p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">{c.label}</p>
-                    {c.guidance && <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{c.guidance}</p>}
+                    <p className="text-base font-semibold text-foreground">{c.label}</p>
+                    {c.guidance && <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{c.guidance}</p>}
                   </div>
-                  <span className="shrink-0 text-[9px] font-mono uppercase text-muted-foreground rounded-full px-1.5 py-0.5 bg-muted">{c.weight}%</span>
+                  <span className="shrink-0 text-[10px] font-mono uppercase text-muted-foreground rounded-full px-2 py-0.5 bg-muted">{c.weight}%</span>
                 </div>
-                <div className="flex items-center gap-1.5 mt-2.5">
+                <div className="flex items-center gap-2 mt-3.5">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button
                       key={n}
@@ -129,20 +129,21 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
                       className="tap-target transition-transform hover:scale-110"
                       aria-label={`${n} star`}
                     >
-                      <Star className={`h-6 w-6 ${(r?.score || 0) >= n ? "fill-gold text-gold" : "text-muted-foreground/30"}`} />
+                      <Star className={`h-8 w-8 ${(r?.score || 0) >= n ? "fill-gold text-gold" : "text-muted-foreground/30"}`} />
                     </button>
                   ))}
                   {(r?.score || 0) > 0 && (
-                    <button onClick={() => setScore(c.id, 0)} className="ml-1 text-[10px] text-muted-foreground hover:text-foreground">clear</button>
+                    <button onClick={() => setScore(c.id, 0)} className="ml-1.5 text-[11px] text-muted-foreground hover:text-foreground">clear</button>
                   )}
                 </div>
                 <Input
                   value={r?.comment || ""}
                   onChange={(e) => setComment(c.id, e.target.value)}
                   placeholder="Evidence / notes for this competency…"
-                  className="mt-2.5 h-9 text-xs"
+                  className="mt-3 h-10 text-sm"
                 />
               </div>
+
             );
           })}
         </div>
