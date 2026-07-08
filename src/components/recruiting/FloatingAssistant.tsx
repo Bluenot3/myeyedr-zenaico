@@ -11,7 +11,7 @@ export default function FloatingAssistant() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Open Talent Assistant"
-        className="fixed z-50 bottom-20 right-4 lg:bottom-6 lg:right-6 flex h-13 w-13 items-center justify-center rounded-full bg-emerald text-primary-foreground shadow-[0_8px_30px_-6px_hsl(var(--emerald)/0.6)] hover:scale-105 transition-transform h-14 w-14"
+        className="fixed z-50 bottom-20 right-4 lg:bottom-6 lg:right-6 flex h-14 w-14 items-center justify-center rounded-full bg-emerald text-primary-foreground shadow-[0_8px_30px_-6px_hsl(var(--emerald)/0.6)] hover:scale-105 transition-transform"
       >
         {open ? <X className="h-6 w-6" /> : <Bot className="h-6 w-6" />}
       </button>
