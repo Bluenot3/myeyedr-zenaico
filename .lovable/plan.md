@@ -1,70 +1,79 @@
-# Locations, Location-Scoped Access, AI Assistant & Best-Fit Scoring
+# Plan: Bigger/cleaner candidate evaluation, requisition auto-close rule, and action-taking admin AI
 
-Focused extension of the existing recruiting app. No redesign of unrelated areas.
+Three focused changes to the existing recruiting workflow. Pipeline candidate cards (`CandidateCard.tsx`) are left **completely untouched**.
 
-## 1. Load & manage all locations
+---
 
-**Add 21 Greater-Philadelphia offices** (the existing "Ardmore" record is updated to Ardmore/Wynnewood — 250 E Lancaster Ave, and the remaining 20 are inserted). Grouped into sensible sub-regions so the Locations screen stays organized (adjustable later):
+## 1. Larger, minimalist candidate evaluation & profile
 
-```text
-Delaware County   : Ardmore/Wynnewood, Havertown, Media, Newtown Square, Upper Chichester
-Chester County    : Chester Springs, Downingtown/Caln, Exton, Longwood Village (Kennett Sq), Oxford, West Chester/West Goshen
-Bucks County      : Doylestown, Fairless Hills, Newtown–Pheasant Run, Newtown–S Eagle Rd, Southampton
-Montgomery County : Horsham, Lansdale, Rockledge
-Lehigh Valley     : Bethlehem, Whitehall
-```
+Goal: make it easier to read scores and move candidates through the process, without changing what data is captured.
 
-- **Migration:** add `address` and `manager_email` columns to `locations`.
-- **LocationsManager.tsx:** add **Street address** and **Manager email** fields to the Add/Edit office forms and show them on each office card. Adding new offices already works and stays.
-- **recruiting.ts:** update `REGIONS` + region color dots to the five PA groupings above.
+**`CandidateProfile.tsx`**
+- Widen the slide-over from `sm:max-w-2xl` to `sm:max-w-3xl lg:max-w-4xl` so evaluations have room to breathe.
+- Streamline the top of the panel into a calmer, minimalist layout:
+  - Keep the header (name, match ring, stars) but reduce visual noise.
+  - Merge the **stage stepper** and **decision bar** into one clear "Move through pipeline" block: a single-row stage progression plus prominent Hire / Pool / Reject actions, larger tap targets, consistent spacing.
+- No tab or data changes — same Match/Signals/Scores/Media/etc. tabs.
 
-## 2. Manager email + location-scoped invites
+**`EvaluationPanel.tsx`**
+- Roomier, minimalist layout: larger template-picker rows, bigger star controls, cleaner competency cards, more whitespace, clearer "Start an evaluation" and "Evaluator scorecards" sections.
+- Same templates, ratings, weighted scoring, and save behavior.
 
-The invite flow already assigns a manager to specific locations (`user_locations`). We reinforce it:
-- Locations now carry a **manager name + email** so an admin can pre-designate who runs each office.
-- When that person is invited (Team & Access → Invite, role **Manager**, pick their location(s)), they sign in scoped to those locations only — RLS already blocks other locations' candidates/openings.
+Purely presentational; no scoring-logic changes.
 
-## 3. Three permanent admins
+---
 
-Update the account-creation trigger (`handle_new_user`) so these emails always receive the **admin** role on sign-up (case-insensitive), and grant it now to any already-created accounts:
-- alexander.leschik@myeyedr.com
-- Rebecca.Cochran@myeyedr.com
-- kimberly.avanzato@myeyedr.com
+## 2. Requisition headcount rule (fill enough seats → close & pool the rest)
 
-Admins/Regionals keep full visibility of every location and feature.
+Each opening already has an `openings` count (seats) and a `status`. New rule, driven by hires:
 
-## 4. Cross-location candidate sharing ("share to another location")
+When a candidate becomes **hired** (via the Hire button **or** by setting stage to Hired in the stepper):
+1. Count candidates on the same `position_id` whose status is `hired`.
+2. If `hiredCount >= position.openings`:
+   - Set that position's `status = "filled"` (closes the requisition).
+   - Move every remaining candidate on that requisition who is **still active** (not `hired`, not `rejected`) into the talent pool: `in_talent_pool = true` with a reason like "Requisition {req_code} filled — kept warm for future roles". Their history is preserved.
+3. If seats remain open, nothing else changes and a toast shows progress (e.g. "Hired — 2 of 3 seats filled").
 
-New table **`candidate_location_shares`** (`candidate_id`, `location_id` = target office, `shared_by`, `note`, `created_at`) with GRANTs, RLS, and policies (a user may share candidates they can access; admins/regionals unrestricted).
+**Implementation (`useRecruiting.ts` → `useCandidateLifecycle`)**
+- Extend the `hire` mutation: after marking the candidate hired, load the linked position + its candidates, apply the count/close/pool logic above, and invalidate `candidates` + `positions`.
+- Add a shared `hireCandidate` path so the stage stepper's "Hired" selection routes through the same logic (satisfies the "both triggers" choice).
 
-- Update the `can_access_candidate()` security-definer function so a manager can view a candidate if the candidate belongs to one of their locations **or** the candidate has been shared to one of their locations.
-- **UI:** a **"Share to location"** action on the candidate profile (and row action in the table) lets a manager grant another office view access, with an optional note; shared offices are listed and can be revoked. Sharing is view-only.
+**`CandidateProfile.tsx`**
+- `handleStage("hired")` calls the lifecycle hire flow instead of a plain stage update, so the rule fires from the stepper too.
 
-## 5. Best-fit / Golden Profile drives the pre-screening score
+Scoping is inherently per-requisition via `position_id`, so it stays within the correct location. Writes use existing RLS-scoped mutations.
 
-Uses the **existing Golden Profile engine** (`golden_profiles` already has `position_id` + `is_active`; `computeGoldenFit` already exists).
+---
 
-- **Per-position best fit:** in **Openings**, each requisition gets a "Best Fit" control to select an existing candidate as the ideal, generate one via the existing `generate-golden-profile` function, or reuse a saved Golden Profile — saved as the **active golden for that position**.
-- **General score:** new helper `generalScore(candidate, positions, goldens)` in `src/lib/matchScore.ts` (or a small new module). When the candidate's position has an active golden, the pre-score = blend of **Golden fit** + **job-title match** (candidate applied role/best-fit roles vs. the requisition title) + base signals. When no golden is set it falls back to today's `computeMatch`. This is the score shown **before** screening/interview scorecards are filled; once real scorecard ratings exist they feed in as they do now.
-- Cards, table, and Overview read this general score so managers see a meaningful pre-score immediately after upload.
+## 3. Admin-only AI assistant that proposes actions (confirm before running)
 
-## 6. AI candidate assistant (tab + floating chat)
+**Access gating (`Index.tsx`)**
+- Mark the `askai` nav item `adminOnly: true` and render `<CandidateAssistant />` only when `isAdmin`.
+- Render `<FloatingAssistant />` only when `isAdmin`.
 
-A conversational assistant that answers questions about candidates, compares them, and surfaces best-fit recommendations — **scoped to what the current user is allowed to see** (managers only get their location + shared candidates; admins/regionals get everything).
+**Action-taking (propose → confirm)**
 
-- **Edge function `candidate-assistant`** using Lovable AI Gateway. It authenticates the caller, loads only that user's visible candidates (via their token / access helpers), builds a compact context (name, role, location, stage, scores, golden fit, availability, tags, summary), and streams answers. Handles rate-limit (429) and credit (402) errors in the UI.
-- **Dedicated "Ask AI" tab** (`CandidateAssistant.tsx`) — full-page workspace to query and compare candidates, with example prompts (e.g. "Compare the top 3 for the Exton optician req", "Who's the best fit for Media?").
-- **Floating chat** — a launcher available across the app opening the same assistant.
-- Single conversation, no persistence (session-only) to keep it focused; markdown rendering for responses.
+Backend (`supabase/functions/candidate-assistant/index.ts`)
+- Include each candidate's `id` in the compact dataset (already RLS-scoped, safe) so actions can target the right person.
+- Add tool/function definitions to the gateway call (Gemini supports tools): `move_stage`, `hire_candidate`, `pool_candidate`, `reject_candidate`, `add_note`, `share_to_location`, `update_candidate_info`.
+- The function does **not** execute tools. When the model requests tools, it returns a structured `proposed_actions[]` (each with candidate id, name, action type, params, and a plain-English description) alongside the assistant's text reply. Comparisons / questions / info lookups still return as normal markdown text.
+
+Frontend (`AssistantChat.tsx`)
+- Render any `proposed_actions` as clean action cards under the assistant message, each with **Confirm** and **Dismiss**.
+- On Confirm, execute through existing client hooks/RLS-scoped mutations:
+  - stage/info → `useUpdateCandidate`
+  - hire/pool/reject → `useCandidateLifecycle` (so the requisition rule from part 2 also applies to AI-driven hires)
+  - notes → `useAddNote`
+  - share → existing share-to-location mutation
+- After execution, show a success state on the card and a toast; on error, surface it. This keeps every write on validated, permissioned paths while the AI only ever *proposes*.
+
+---
 
 ## Technical notes
-- **Migrations:** `locations` columns; `candidate_location_shares` table (+GRANTs/RLS/policies); updated `can_access_candidate()`; updated `handle_new_user()`.
-- **Data (insert tool):** update Ardmore→Wynnewood, insert 20 offices, grant admin role to the three emails' existing accounts.
-- **New files:** `src/components/recruiting/CandidateAssistant.tsx`, floating chat component, `supabase/functions/candidate-assistant/index.ts`.
-- **Edited:** `LocationsManager.tsx`, `recruiting.ts`, `useRecruiting.ts` (Location type + share hooks + best-fit hooks), `Openings.tsx` (best-fit setter), `CandidateProfile.tsx`/`CandidateTable.tsx` (share action + general score), `Overview.tsx`/`CandidateCard.tsx` (general score), `Index.tsx` (Ask AI tab + floating chat mount).
-- Existing pipeline, onboarding, evaluation, decision, and voice-agent flows remain intact. Validation via the repo's typecheck/build/lint/tests.
+- Model stays `google/gemini-2.5-flash` (supports tool calling) via the Lovable AI Gateway; 402/429 handling preserved.
+- Reuse existing mutations for all writes — no new tables or migrations required (headcount `openings` + position `status` already exist).
+- Validation: typecheck/build, then verify in preview — evaluation panel sizing, hiring enough candidates closes a requisition and pools the rest, and the AI proposes an action that runs only after Confirm. AI surfaces are hidden for non-admins.
 
-## Assumptions
-- All 21 offices are in Pennsylvania under the five sub-regions above (regroupable later).
-- No manager names/emails were provided per office yet — the fields are ready so you can fill them in and invite managers when ready.
-- royaltokens@gmail.com keeps its current admin access; the three named emails are the permanent full-access admins.
+## Out of scope / unchanged
+- `CandidateCard.tsx` and the pipeline board card layout — untouched per your request.
+- Existing scoring, golden-profile, onboarding, and sharing logic remain intact.
