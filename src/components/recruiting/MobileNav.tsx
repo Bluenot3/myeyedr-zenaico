@@ -104,16 +104,7 @@ export default function MobileNav({ items, activeKey, onSelect }: Props) {
           className="lg:hidden rounded-t-3xl border-t border-border glass-panel px-5 pb-8 pt-3"
         >
           <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-muted-foreground/25" />
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-base font-semibold text-foreground">More</p>
-            <button
-              onClick={() => setMoreOpen(false)}
-              aria-label="Close"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground tap-target"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          <p className="text-base font-semibold text-foreground mb-4">More</p>
           <div className="grid grid-cols-3 gap-3">
             {overflow.map((n) => {
               const active = activeKey === n.key;
