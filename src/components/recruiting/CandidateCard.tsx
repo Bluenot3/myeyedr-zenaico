@@ -47,7 +47,7 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, onEv
 
         {/* Score ring */}
         <button onClick={onOpen} className="shrink-0">
-          <ScoreRing score={m.overall} size={52} stroke={5} />
+          <ScoreRing score={displayScore} size={52} stroke={5} />
         </button>
 
         {/* Main */}
