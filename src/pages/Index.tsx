@@ -19,7 +19,7 @@ import ThemeToggle from "@/components/recruiting/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-type Tab = "overview" | "pipeline" | "openings" | "calendar" | "pool" | "agents" | "decision" | "library" | "locations" | "users";
+type Tab = "overview" | "pipeline" | "openings" | "calendar" | "pool" | "askai" | "agents" | "decision" | "library" | "locations" | "users";
 
 const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean }[] = [
   { key: "overview", label: "Overview", icon: ScanEye },
@@ -27,6 +27,7 @@ const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean 
   { key: "openings", label: "Openings", icon: Glasses },
   { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
+  { key: "askai", label: "Ask AI", icon: Bot },
   { key: "agents", label: "AI Agents", icon: Bot, adminOnly: true },
   { key: "decision", label: "Decision", icon: Swords, adminOnly: true },
   { key: "library", label: "Library", icon: ClipboardList },
