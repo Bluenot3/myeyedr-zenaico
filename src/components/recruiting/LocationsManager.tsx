@@ -70,11 +70,13 @@ export default function LocationsManager() {
                 </select>
               </div>
               <div><Label className="text-[10px]">Office Name *</Label><Input value={form.site_name} onChange={(e) => setForm({ ...form, site_name: e.target.value })} className="mt-1" /></div>
+              <div><Label className="text-[10px]">Street Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1" placeholder="123 Main St, Suite 4" /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="text-[10px]">City</Label><Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="mt-1" /></div>
                 <div><Label className="text-[10px]">State</Label><Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="mt-1" /></div>
               </div>
-              <div><Label className="text-[10px]">Manager</Label><Input value={form.manager} onChange={(e) => setForm({ ...form, manager: e.target.value })} className="mt-1" /></div>
+              <div><Label className="text-[10px]">Manager Name</Label><Input value={form.manager} onChange={(e) => setForm({ ...form, manager: e.target.value })} className="mt-1" /></div>
+              <div><Label className="text-[10px]">Manager Email</Label><Input type="email" value={form.manager_email} onChange={(e) => setForm({ ...form, manager_email: e.target.value })} className="mt-1" placeholder="manager@myeyedr.com" /></div>
               <div><Label className="text-[10px]">Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1" /></div>
             </div>
             <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
