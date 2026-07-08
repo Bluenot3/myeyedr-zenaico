@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, Star, StickyNote, Share2, Pencil } from "lucide-react";
+import { Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote, Share2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
