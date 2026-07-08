@@ -10,6 +10,8 @@ import LocationsManager from "@/components/recruiting/LocationsManager";
 import AgentStudio from "@/components/recruiting/AgentStudio";
 import DecisionTool from "@/components/recruiting/DecisionTool";
 import UsersManager from "@/components/recruiting/UsersManager";
+import CandidateAssistant from "@/components/recruiting/CandidateAssistant";
+import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
 import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
