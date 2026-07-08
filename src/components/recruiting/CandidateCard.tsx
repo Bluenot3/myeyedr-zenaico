@@ -1,7 +1,8 @@
-import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight, ClipboardCheck } from "lucide-react";
-import { Candidate } from "@/hooks/useRecruiting";
+import { Star, MapPin, Sparkles, MessageSquare, CheckSquare, Square, ChevronRight, ClipboardCheck, Target } from "lucide-react";
+import { Candidate, usePositions, useGoldenProfiles } from "@/hooks/useRecruiting";
 import { stageMeta, initials, relativeTime } from "@/lib/recruiting";
 import { computeMatch, nextAction } from "@/lib/matchScore";
+import { generalScore } from "@/lib/golden";
 import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
 import { MatchBadgeChip, MeterBar, MatchBar } from "./MatchVisuals";
@@ -19,6 +20,10 @@ interface Props {
 export default function CandidateCard({ candidate: c, locationName, onOpen, onEvaluate, selectable, selected, onToggleSelect }: Props) {
   const meta = stageMeta(c.stage);
   const m = computeMatch(c);
+  const { data: positions = [] } = usePositions();
+  const { data: goldens = [] } = useGoldenProfiles();
+  const gs = generalScore(c, positions, goldens);
+  const displayScore = gs.hasGolden ? gs.score : m.overall;
   const action = nextAction(c, m);
   const topBadges = m.badges.slice(0, 3);
 
@@ -42,7 +47,7 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, onEv
 
         {/* Score ring */}
         <button onClick={onOpen} className="shrink-0">
-          <ScoreRing score={m.overall} size={52} stroke={5} />
+          <ScoreRing score={displayScore} size={52} stroke={5} />
         </button>
 
         {/* Main */}
@@ -57,6 +62,9 @@ export default function CandidateCard({ candidate: c, locationName, onOpen, onEv
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <StageBadge stage={c.stage} size="sm" />
             <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded-full" style={{ color: `hsl(${m.categoryHsl})`, background: `hsl(${m.categoryHsl} / 0.12)` }}>{m.gameStatus}</span>
+            {gs.hasGolden && (
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded-full text-gold" style={{ background: "hsl(var(--gold) / 0.12)" }}><Target className="h-2.5 w-2.5" /> Best-fit</span>
+            )}
           </div>
         </button>
       </div>

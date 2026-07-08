@@ -1,4 +1,4 @@
-import type { Candidate } from "@/hooks/useRecruiting";
+import type { Candidate, Position } from "@/hooks/useRecruiting";
 import { computeMatch } from "./matchScore";
 
 /* ============================================================
@@ -222,4 +222,80 @@ export function goldenFromCandidate(c: Candidate): Partial<GoldenProfile> {
     resume_text: "",
     is_active: true,
   };
+}
+
+/* ============================================================
+ * General (pre-screening) score
+ * The score a manager sees BEFORE screening/interview scorecards
+ * are filled. When the candidate's position has an active Golden
+ * (best-fit) profile, the score is driven by golden fit blended
+ * with job-title match. Otherwise it falls back to the standard
+ * deterministic match score. Real scorecard ratings already feed
+ * into computeMatch, so they flow through automatically.
+ * ============================================================ */
+
+const STOP_WORDS = new Set([
+  "the", "and", "for", "with", "myeyedr", "of", "a", "an", "at", "in", "to",
+  "part", "time", "full", "i", "ii", "iii", "sr", "jr", "assistant", "associate",
+]);
+
+function titleTokens(s: string): string[] {
+  return (s || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+}
+
+/** 0..100 overlap between a candidate's roles and the requisition title. */
+export function titleMatch(c: Candidate, position?: Position | null): number {
+  const target = titleTokens(position?.title || "");
+  if (!target.length) return 0;
+  const hay = titleTokens([c.applied_role, c.best_fit_roles, c.headline].filter(Boolean).join(" "));
+  if (!hay.length) return 0;
+  const haySet = new Set(hay);
+  const matched = target.filter((t) => haySet.has(t)).length;
+  return Math.round((matched / target.length) * 100);
+}
+
+/** Find the active best-fit Golden profile for a candidate's position, if any. */
+export function activeGoldenFor(
+  c: Candidate,
+  goldens: GoldenProfile[],
+): GoldenProfile | undefined {
+  if (!c.position_id) return undefined;
+  return goldens.find((g) => g.is_active && g.position_id === c.position_id);
+}
+
+export interface GeneralScore {
+  score: number; // 0..100
+  hasGolden: boolean;
+  goldenFit: number | null;
+  titleFit: number;
+  source: "golden" | "match";
+}
+
+/**
+ * Pre-screening general score. Position lookup by candidate.position_id.
+ */
+export function generalScore(
+  c: Candidate,
+  positions: Position[],
+  goldens: GoldenProfile[],
+): GeneralScore {
+  const position = positions.find((p) => p.id === c.position_id) || null;
+  const titleFit = titleMatch(c, position);
+  const golden = activeGoldenFor(c, goldens);
+
+  if (golden) {
+    const fit = computeGoldenFit(c, golden).fit;
+    // Golden fit dominates; title alignment sharpens it.
+    const score = Math.round(fit * 0.75 + titleFit * 0.25);
+    return { score: Math.max(0, Math.min(100, score)), hasGolden: true, goldenFit: fit, titleFit, source: "golden" };
+  }
+
+  const match = computeMatch(c).overall;
+  // No golden set: keep the standard match score, nudged by title alignment.
+  const score = position && titleFit > 0 ? Math.round(match * 0.85 + titleFit * 0.15) : match;
+  return { score: Math.max(0, Math.min(100, score)), hasGolden: false, goldenFit: null, titleFit, source: "match" };
 }

@@ -9,6 +9,8 @@ export interface Location {
   region: string;
   site_name: string;
   manager: string;
+  manager_email: string;
+  address: string;
   active: boolean;
   city: string;
   state: string;
@@ -732,6 +734,69 @@ export function useUpdateLocation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["locations"] });
       toast.success("Location updated");
+    },
+    onError: (e: any) => toast.error("Failed: " + e.message),
+  });
+}
+
+/* ============================ Candidate location sharing ============================ */
+export interface CandidateShare {
+  id: string;
+  candidate_id: string;
+  location_id: string;
+  shared_by: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export function useCandidateShares(candidateId: string | null) {
+  return useQuery({
+    queryKey: ["candidate_location_shares", candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+      const { data, error } = await db
+        .from("candidate_location_shares")
+        .select("*")
+        .eq("candidate_id", candidateId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as CandidateShare[];
+    },
+    enabled: !!candidateId,
+  });
+}
+
+export function useShareCandidate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ candidate_id, location_id, note }: { candidate_id: string; location_id: string; note?: string }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await db
+        .from("candidate_location_shares")
+        .upsert(
+          [{ candidate_id, location_id, note: note ?? null, shared_by: userData?.user?.id ?? null }],
+          { onConflict: "candidate_id,location_id" },
+        );
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_location_shares", vars.candidate_id] });
+      toast.success("Candidate shared with location");
+    },
+    onError: (e: any) => toast.error("Failed to share: " + e.message),
+  });
+}
+
+export function useUnshareCandidate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; candidate_id: string }) => {
+      const { error } = await db.from("candidate_location_shares").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["candidate_location_shares", vars.candidate_id] });
+      toast.success("Share removed");
     },
     onError: (e: any) => toast.error("Failed: " + e.message),
   });

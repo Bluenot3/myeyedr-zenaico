@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import BestFitControl from "./BestFitControl";
 
 const priorityColor: Record<string, string> = {
   urgent: "hsl(var(--destructive))",
@@ -196,6 +197,11 @@ export default function Openings() {
                     <p className="text-[10px] text-muted-foreground">Not posted yet — click Manage to add links.</p>
                   )}
                 </div>
+
+                {/* Best-fit benchmark */}
+                <BestFitControl position={p} candidates={candidates} />
+
+
 
                 <div className="mt-3 pt-3 border-t border-border/60">
                   <div className="flex items-center justify-between mb-2">
