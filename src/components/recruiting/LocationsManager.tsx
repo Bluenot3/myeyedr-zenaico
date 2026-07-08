@@ -42,11 +42,11 @@ export default function LocationsManager() {
   const submit = async () => {
     if (!form.site_name.trim()) return;
     await createLocation.mutateAsync({ ...form, active: true });
-    setForm({ region: "DC Metro", site_name: "", manager: "", city: "", state: "", phone: "" });
+    setForm({ region: "Delaware County", site_name: "", manager: "", manager_email: "", address: "", city: "", state: "PA", phone: "" });
     setAddOpen(false);
   };
 
-  const startEdit = (l: Location) => { setEditId(l.id); setEdit({ manager: l.manager, phone: l.phone, site_name: l.site_name }); };
+  const startEdit = (l: Location) => { setEditId(l.id); setEdit({ manager: l.manager, manager_email: l.manager_email, address: l.address, phone: l.phone, site_name: l.site_name }); };
   const saveEdit = async (l: Location) => { await updateLocation.mutateAsync({ id: l.id, ...edit }); setEditId(null); };
 
   return (
