@@ -114,3 +114,10 @@ export function onboardingProgress(steps: OnboardingStep[]): number {
   const done = active.filter((s) => s.status === "done").length;
   return Math.round((done / active.length) * 100);
 }
+
+/** True when a saved record still uses the old offer/payroll/compliance steps. */
+export function isLegacyChecklist(steps: OnboardingStep[] | null | undefined): boolean {
+  if (!steps?.length) return false;
+  return steps.some((s) => LEGACY_STEP_KEYS.includes(s.key));
+}
+
