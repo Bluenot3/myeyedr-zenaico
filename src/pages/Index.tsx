@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, ShieldCheck, Bot, Swords, Glasses, Users, LogOut, Crown, Globe, Building2, CalendarDays } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, Bot, Swords, Glasses, Users, LogOut, Crown, Globe, Building2, CalendarDays, FileText, LineChart as LineChartIcon } from "lucide-react";
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
+import JobLibrary from "@/components/recruiting/JobLibrary";
+import Insights from "@/components/recruiting/Insights";
 import CalendarView from "@/components/recruiting/CalendarView";
 import TalentPool from "@/components/recruiting/TalentPool";
 import ScreeningLibrary from "@/components/recruiting/ScreeningLibrary";
@@ -20,20 +22,24 @@ import ThemeToggle from "@/components/recruiting/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-type Tab = "overview" | "pipeline" | "openings" | "calendar" | "pool" | "askai" | "agents" | "decision" | "library" | "locations" | "users";
+type Tab = "overview" | "pipeline" | "openings" | "jobs" | "calendar" | "insights" | "pool" | "askai" | "agents" | "decision" | "library" | "locations" | "users";
 
-const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean }[] = [
+const TAB_KEY = "cc.activeTab";
+
+const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean; ownerOnly?: boolean; allAccess?: boolean }[] = [
   { key: "overview", label: "Overview", icon: ScanEye },
   { key: "pipeline", label: "Pipeline", icon: GitBranch },
   { key: "openings", label: "Openings", icon: Glasses },
+  { key: "jobs", label: "Job Library", icon: FileText, allAccess: true },
   { key: "calendar", label: "Calendar", icon: CalendarDays },
+  { key: "insights", label: "Insights", icon: LineChartIcon, allAccess: true },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
   { key: "askai", label: "Ask AI", icon: Bot, adminOnly: true },
   { key: "agents", label: "AI Agents", icon: Bot, adminOnly: true },
   { key: "decision", label: "Decision", icon: Swords, adminOnly: true },
   { key: "library", label: "Library", icon: ClipboardList },
   { key: "locations", label: "Locations", icon: MapPin },
-  { key: "users", label: "Team & Access", icon: Users, adminOnly: true },
+  { key: "users", label: "Team & Access", icon: Users, ownerOnly: true },
 ];
 
 const ROLE_INFO: Record<string, { label: string; icon: typeof Crown }> = {
@@ -43,11 +49,15 @@ const ROLE_INFO: Record<string, { label: string; icon: typeof Crown }> = {
 };
 
 const Index = () => {
-  const [tab, setTab] = useState<Tab>("overview");
-  const { isAdmin, roles, profile, signOut } = useAuth();
+  const [tab, setTab] = useState<Tab>(() => (localStorage.getItem(TAB_KEY) as Tab) || "overview");
+  const { isAdmin, isOwner, hasAllAccess, roles, profile, signOut } = useAuth();
 
-  const nav = NAV.filter((n) => !n.adminOnly || isAdmin);
+  const nav = NAV.filter((n) =>
+    (!n.adminOnly || isAdmin) && (!n.ownerOnly || isOwner) && (!n.allAccess || hasAllAccess));
   const activeTab = nav.some((n) => n.key === tab) ? tab : "overview";
+
+  useEffect(() => { localStorage.setItem(TAB_KEY, activeTab); }, [activeTab]);
+
 
   const primaryRole = roles.includes("admin") ? "admin" : roles.includes("regional") ? "regional" : "manager";
   const roleInfo = ROLE_INFO[primaryRole];
