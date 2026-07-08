@@ -27,7 +27,7 @@ const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean 
   { key: "openings", label: "Openings", icon: Glasses },
   { key: "calendar", label: "Calendar", icon: CalendarDays },
   { key: "pool", label: "Talent Pool", icon: Sparkles },
-  { key: "askai", label: "Ask AI", icon: Bot },
+  { key: "askai", label: "Ask AI", icon: Bot, adminOnly: true },
   { key: "agents", label: "AI Agents", icon: Bot, adminOnly: true },
   { key: "decision", label: "Decision", icon: Swords, adminOnly: true },
   { key: "library", label: "Library", icon: ClipboardList },
