@@ -52,6 +52,13 @@ export default function OnboardingTracker({ candidate }: { candidate: Candidate 
   }, [record, candidate.location_id]);
 
   const progress = useMemo(() => onboardingProgress(steps), [steps]);
+  const legacy = useMemo(() => isLegacyChecklist(steps), [steps]);
+
+  const switchToNewChecklist = () => {
+    setSteps(defaultOnboardingSteps());
+    setDirty(true);
+  };
+
 
   const cycleStep = (key: string) => {
     setSteps((prev) =>
