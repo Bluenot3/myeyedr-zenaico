@@ -225,7 +225,10 @@ Active best-fit benchmarks by requisition:
 ${activeBenchmarks.length ? JSON.stringify(activeBenchmarks) : "None set yet."}
 
 Candidate dataset (${compact.length} visible to this user):
-${JSON.stringify(compact)}`;
+${JSON.stringify(compact)}
+
+REMEMBER: If the user's latest message asks you to move, advance, hire, pool, reject, add a note, share, or update ANYABLE candidate, you MUST respond by calling the matching tool(s) — do not answer with text that claims the change was made. Use the exact candidate id from the dataset above.`;
+
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
