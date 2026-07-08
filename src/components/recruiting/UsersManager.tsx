@@ -41,7 +41,7 @@ export default function UsersManager() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [credential, setCredential] = useState<{ email: string; password: string } | null>(null);
+  const [credential, setCredential] = useState<{ email: string; password: string; emailed?: boolean } | null>(null);
   const [assignFor, setAssignFor] = useState<ManagedUser | null>(null);
 
   const { data: users = [], isLoading } = useQuery({
