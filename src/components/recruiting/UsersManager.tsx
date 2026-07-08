@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Users, UserPlus, Loader2, KeyRound, Trash2, ShieldCheck, MapPin, Copy, Check, X, Crown, Globe, Building2,
+  Users, UserPlus, Loader2, KeyRound, Trash2, ShieldCheck, MapPin, Copy, Check, X, Crown, Globe, Building2, Mail,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
