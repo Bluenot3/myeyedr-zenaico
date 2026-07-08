@@ -1,4 +1,4 @@
-import type { Candidate } from "@/hooks/useRecruiting";
+import type { Candidate, Position } from "@/hooks/useRecruiting";
 import { computeMatch } from "./matchScore";
 
 /* ============================================================
