@@ -248,7 +248,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
                 <button
                   key={s.key}
                   onClick={() => handleStage(s.key)}
-                  className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wide transition-all tap-target"
+                  className="shrink-0 rounded-lg px-3.5 py-2.5 text-[11px] font-mono uppercase tracking-wide transition-all tap-target hover:scale-[1.03]"
                   style={{
                     color: active || passed ? `hsl(${s.hsl})` : "hsl(var(--muted-foreground))",
                     background: active ? `hsl(${s.hsl} / 0.16)` : passed ? `hsl(${s.hsl} / 0.08)` : "transparent",
@@ -257,6 +257,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
                 >
                   {s.short}
                 </button>
+
               );
             })}
           </div>
