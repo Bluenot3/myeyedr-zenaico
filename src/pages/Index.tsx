@@ -158,8 +158,9 @@ const Index = () => {
         </div>
       </nav>
 
-      {/* Global AI assistant (hidden on the dedicated Ask AI tab) */}
-      {activeTab !== "askai" && <FloatingAssistant />}
+      {/* Global AI assistant — admins only, hidden on the dedicated Ask AI tab */}
+      {isAdmin && activeTab !== "askai" && <FloatingAssistant />}
+
     </div>
   );
 };
