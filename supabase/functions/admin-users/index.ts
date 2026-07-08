@@ -162,7 +162,7 @@ serve(async (req) => {
         return json({ ok: true, temp_password: pw, emailed, error_detail: recErr?.message || sendErr?.message || null });
       }
 
-      }
+
 
       case "reset_password": {
         const user_id = String(body.user_id ?? "");
