@@ -20,6 +20,10 @@ interface Props {
 export default function CandidateCard({ candidate: c, locationName, onOpen, onEvaluate, selectable, selected, onToggleSelect }: Props) {
   const meta = stageMeta(c.stage);
   const m = computeMatch(c);
+  const { data: positions = [] } = usePositions();
+  const { data: goldens = [] } = useGoldenProfiles();
+  const gs = generalScore(c, positions, goldens);
+  const displayScore = gs.hasGolden ? gs.score : m.overall;
   const action = nextAction(c, m);
   const topBadges = m.badges.slice(0, 3);
 
