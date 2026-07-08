@@ -120,13 +120,14 @@ export default function LocationsManager() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{l.site_name}</p>
                           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                            {l.city && <span className="inline-flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {l.city}, {l.state}</span>}
+                            {(l.address || l.city) && <span className="inline-flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" /> {[l.address, l.city && `${l.city}, ${l.state}`].filter(Boolean).join(" · ")}</span>}
                           </div>
                         </div>
                         <button onClick={() => startEdit(l)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1"><Edit3 className="h-3.5 w-3.5 text-muted-foreground" /></button>
                       </div>
-                      <div className="flex items-center gap-3 mt-2 pl-10 text-[10px] text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 pl-10 text-[10px] text-muted-foreground">
                         {l.manager && <span className="inline-flex items-center gap-0.5"><User className="h-2.5 w-2.5" /> {l.manager}</span>}
+                        {l.manager_email && <span className="inline-flex items-center gap-0.5 text-emerald/90">{l.manager_email}</span>}
                         {l.phone && <span className="inline-flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" /> {l.phone}</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-2 pl-10">
