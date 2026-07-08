@@ -183,7 +183,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto p-0 glass-panel border-l border-border">
+      <SheetContent className="w-full sm:max-w-3xl lg:max-w-4xl overflow-y-auto p-0 glass-panel border-l border-border">
         {/* Header */}
         <div className="cert-surface p-5 sm:p-6 relative overflow-hidden">
           <EyeMark size={120} className="absolute -right-6 -top-6 opacity-20" spin />
