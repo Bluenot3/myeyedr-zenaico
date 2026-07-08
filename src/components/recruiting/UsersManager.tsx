@@ -67,6 +67,15 @@ export default function UsersManager() {
     } catch (e: any) { toast.error(e.message); }
   };
 
+  const resendInvite = async (u: ManagedUser) => {
+    try {
+      const res = await callAdmin("resend_invite", { user_id: u.id, email: u.email, redirect_to: `${window.location.origin}/reset-password` });
+      setCredential({ email: u.email, password: res.temp_password, emailed: res.emailed });
+      reload();
+      if (res.emailed) toast.success("Invite email resent");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
   const changeRole = async (u: ManagedUser, role: Role) => {
     try { await callAdmin("set_role", { user_id: u.id, role }); reload(); toast.success("Role updated"); }
     catch (e: any) { toast.error(e.message); }
