@@ -79,9 +79,9 @@ serve(async (req) => {
     const caller = userData?.user;
     if (!caller) return json({ error: "Not authenticated" }, 401);
 
-    const { data: adminRole } = await db
-      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
-    if (!adminRole) return json({ error: "Admins only" }, 403);
+    // Only the two owner accounts may view or manage users.
+    const callerEmail = (caller.email ?? "").toLowerCase();
+    if (!OWNER_EMAILS.includes(callerEmail)) return json({ error: "Owners only" }, 403);
 
     switch (action) {
       case "list_users": {
