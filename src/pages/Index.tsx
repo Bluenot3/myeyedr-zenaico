@@ -12,6 +12,7 @@ import DecisionTool from "@/components/recruiting/DecisionTool";
 import UsersManager from "@/components/recruiting/UsersManager";
 import CandidateAssistant from "@/components/recruiting/CandidateAssistant";
 import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
+import MobileNav from "@/components/recruiting/MobileNav";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
 import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
