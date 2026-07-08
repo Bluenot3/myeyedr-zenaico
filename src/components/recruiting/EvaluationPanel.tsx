@@ -199,21 +199,21 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
         {orderedTemplates.length === 0 ? (
           <p className="text-[11px] text-muted-foreground">No scorecard templates yet. Create one in the Library → Scorecards.</p>
         ) : (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {orderedTemplates.map((t) => {
               const match = t.position_id === candidate.position_id || t.role.toLowerCase() === (candidate.applied_role || "").toLowerCase();
               return (
                 <button
                   key={t.id}
                   onClick={() => startTemplate(t)}
-                  className="w-full flex items-center gap-2.5 rounded-lg bg-background/40 border border-border/60 p-2.5 text-left hover:border-emerald/40 transition-colors tap-target"
+                  className="w-full flex items-center gap-3 rounded-xl bg-background/40 border border-border/60 p-3.5 text-left hover:border-emerald/40 hover:bg-emerald/5 transition-colors tap-target"
                 >
-                  <div className="h-8 w-8 grid place-items-center rounded-lg bg-emerald/12 text-emerald border border-emerald/25 shrink-0">
-                    {t.kind === "phone_screen" ? <Phone className="h-4 w-4" /> : <ClipboardCheck className="h-4 w-4" />}
+                  <div className="h-11 w-11 grid place-items-center rounded-xl bg-emerald/12 text-emerald border border-emerald/25 shrink-0">
+                    {t.kind === "phone_screen" ? <Phone className="h-5 w-5" /> : <ClipboardCheck className="h-5 w-5" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-foreground truncate">{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">
+                    <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
                       {t.kind === "phone_screen" ? "Phone screen" : t.kind === "interview" ? "Interview" : "Scorecard"} · {(t.competencies || []).length} competencies{t.role ? ` · ${t.role}` : ""}
                     </p>
                   </div>
@@ -222,11 +222,12 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
                       <Sparkles className="h-2.5 w-2.5" /> best fit
                     </span>
                   )}
-                  <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Plus className="h-5 w-5 text-muted-foreground shrink-0" />
                 </button>
               );
             })}
           </div>
+
         )}
       </div>
 
