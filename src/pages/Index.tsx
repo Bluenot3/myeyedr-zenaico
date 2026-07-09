@@ -19,6 +19,7 @@ import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
 
 import ThemeToggle from "@/components/recruiting/ThemeToggle";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
