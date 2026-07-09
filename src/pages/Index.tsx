@@ -129,15 +129,15 @@ const Index = () => {
         <header className="lg:hidden sticky top-0 z-40 glass-panel border-b border-border">
           <div className="flex items-center justify-between px-4 h-14">
             <Logo markSize={28} wordSize={17} />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
                 <RoleIcon className="h-2.5 w-2.5" /> {roleInfo.label}
               </span>
               <ThemeToggle />
-              <ChangePasswordDialog compact />
-              <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
+              <button onClick={signOut} title="Sign out" aria-label="Sign out" className="neu-btn neu-btn--danger h-9 w-9">
                 <LogOut className="h-4 w-4" />
               </button>
+
             </div>
           </div>
         </header>
