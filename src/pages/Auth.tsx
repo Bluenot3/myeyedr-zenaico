@@ -52,6 +52,8 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden aurora-grain">
       {/* Institutional backdrop */}
       <div className="aurora-bg" aria-hidden />
+      {/* Living Snellen letter field — drifts, follows the cursor, bursts on click */}
+      <EyeChartField />
       <div
         className="pointer-events-none absolute inset-0 opacity-70"
         aria-hidden
