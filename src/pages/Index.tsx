@@ -17,7 +17,7 @@ import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
 import MobileNav from "@/components/recruiting/MobileNav";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
-import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
+
 import ThemeToggle from "@/components/recruiting/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
