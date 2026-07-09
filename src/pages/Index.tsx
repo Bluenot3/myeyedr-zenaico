@@ -143,20 +143,21 @@ const Index = () => {
         </header>
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
-          {activeTab === "overview" && <Overview />}
-          {activeTab === "pipeline" && <PipelineBoard />}
-          {activeTab === "openings" && <Openings />}
-          {activeTab === "jobs" && hasAllAccess && <JobLibrary />}
-          {activeTab === "calendar" && <CalendarView />}
-          {activeTab === "insights" && hasAllAccess && <Insights />}
-          {activeTab === "pool" && <TalentPool />}
-          {activeTab === "askai" && isAdmin && <CandidateAssistant />}
-          {activeTab === "agents" && isAdmin && <AgentStudio />}
-          {activeTab === "decision" && isAdmin && <DecisionTool />}
-          {activeTab === "library" && <ScreeningLibrary />}
-          {activeTab === "locations" && <LocationsManager />}
-          {activeTab === "users" && isOwner && <UsersManager />}
-
+          <ErrorBoundary resetKey={activeTab} section={nav.find((n) => n.key === activeTab)?.label || "this"}>
+            {activeTab === "overview" && <Overview />}
+            {activeTab === "pipeline" && <PipelineBoard />}
+            {activeTab === "openings" && <Openings />}
+            {activeTab === "jobs" && hasAllAccess && <JobLibrary />}
+            {activeTab === "calendar" && <CalendarView />}
+            {activeTab === "insights" && hasAllAccess && <Insights />}
+            {activeTab === "pool" && <TalentPool />}
+            {activeTab === "askai" && isAdmin && <CandidateAssistant />}
+            {activeTab === "agents" && isAdmin && <AgentStudio />}
+            {activeTab === "decision" && isAdmin && <DecisionTool />}
+            {activeTab === "library" && <ScreeningLibrary />}
+            {activeTab === "locations" && <LocationsManager />}
+            {activeTab === "users" && isOwner && <UsersManager />}
+          </ErrorBoundary>
         </main>
         <footer className="lg:hidden px-4 pb-24 pt-2">
           <ZenSignature />
