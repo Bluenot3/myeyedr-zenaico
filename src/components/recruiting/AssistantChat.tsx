@@ -78,11 +78,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setMessages((m) => [...m, {
-        role: "assistant",
-        content: data.reply || "I couldn't produce a response.",
-        actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
-      }]);
+      setMessages((m) => {
+        setAnimateIndex(m.length);
+        return [...m, {
+          role: "assistant",
+          content: data.reply || "I couldn't produce a response.",
+          actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
+        }];
+      });
     } catch (e: any) {
       const msg = e?.message?.includes("402")
         ? "AI credits exhausted — add credits to continue."
