@@ -169,7 +169,9 @@ const Index = () => {
       <MobileNav items={nav} activeKey={activeTab} onSelect={(k) => setTab(k as Tab)} />
 
       {/* Global AI assistant — admins only, hidden on the dedicated Ask AI tab */}
-      {isAdmin && activeTab !== "askai" && <FloatingAssistant />}
+      {isAdmin && activeTab !== "askai" && (
+        <ErrorBoundary section="assistant"><FloatingAssistant /></ErrorBoundary>
+      )}
 
     </div>
   );
