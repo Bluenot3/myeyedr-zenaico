@@ -47,6 +47,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
+  const [animateIndex, setAnimateIndex] = useState<number>(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
