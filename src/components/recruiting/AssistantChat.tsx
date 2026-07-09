@@ -187,18 +187,16 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             >
               {m.role === "user" ? <User className="h-3.5 w-3.5 text-cyan" /> : <Bot className="h-3.5 w-3.5 text-emerald" />}
             </div>
-            <div className={`max-w-[85%] space-y-2 ${m.role === "user" ? "items-end" : ""}`}>
-              <div
-                className={`rounded-2xl px-3.5 py-2.5 text-sm ${
-                  m.role === "user"
-                    ? "bg-cyan/10 border border-cyan/20 text-foreground"
-                    : "bg-background/50 border border-border/70 text-foreground"
-                }`}
-              >
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-li:my-0.5 prose-table:text-xs prose-th:px-2 prose-td:px-2">
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
+            <div className={`max-w-[88%] space-y-2 ${m.role === "user" ? "items-end" : ""}`}>
+              {m.role === "user" ? (
+                <div className="rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm bg-cyan/10 border border-cyan/20 text-foreground">
+                  <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
                 </div>
-              </div>
+              ) : (
+                <div className="px-0.5 pt-0.5 text-[14px] text-foreground">
+                  <RichMessage content={m.content} animate={i === animateIndex} />
+                </div>
+              )}
 
               {/* Proposed actions — confirm before running */}
               {m.role === "assistant" && (m.actions?.length ?? 0) > 0 && (
