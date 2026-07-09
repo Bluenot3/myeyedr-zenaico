@@ -245,8 +245,9 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30">
               <Bot className="h-3.5 w-3.5 text-emerald" />
             </div>
-            <div className="rounded-2xl px-3.5 py-2.5 bg-background/50 border border-border/70 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald" /> Analyzing candidates…
+            <div className="pt-1.5 inline-flex items-center gap-1.5 text-[13px]">
+              <span className="claude-thinking">Thinking</span>
+              <span className="claude-dots"><i /><i /><i /></span>
             </div>
           </div>
         )}
