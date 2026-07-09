@@ -17,7 +17,7 @@ import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
 import MobileNav from "@/components/recruiting/MobileNav";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
-import ChangePasswordDialog from "@/components/recruiting/ChangePasswordDialog";
+
 import ThemeToggle from "@/components/recruiting/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -93,21 +93,31 @@ const Index = () => {
           })}
         </nav>
         <div className="p-3 border-t border-border">
-          <div className="flex items-center gap-2.5 rounded-lg bg-background/40 border border-border/60 px-3 py-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15 border border-gold/30">
-              <RoleIcon className="h-4 w-4 text-gold" />
+          <div className="control-panel p-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/15 border border-gold/30">
+                <RoleIcon className="h-4 w-4 text-gold" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-foreground truncate">{displayName}</p>
+                <p className="text-[9px] micro-label text-emerald truncate">{roleInfo.label}</p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-foreground truncate">{displayName}</p>
-              <p className="text-[9px] micro-label text-emerald">{roleInfo.label}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <ThemeToggle className="shrink-0" />
+              <button
+                onClick={signOut}
+                title="Sign out"
+                aria-label="Sign out"
+                className="neu-btn neu-btn--danger h-9 flex-1 gap-1.5 text-[11px] font-medium"
+              >
+                <LogOut className="h-3.5 w-3.5" /> Sign out
+              </button>
             </div>
-            <ThemeToggle />
-            <ChangePasswordDialog />
-            <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
-              <LogOut className="h-4 w-4" />
-            </button>
+
           </div>
         </div>
+
         <div className="px-3 pb-4 pt-1">
           <ZenSignature />
         </div>
@@ -119,15 +129,15 @@ const Index = () => {
         <header className="lg:hidden sticky top-0 z-40 glass-panel border-b border-border">
           <div className="flex items-center justify-between px-4 h-14">
             <Logo markSize={28} wordSize={17} />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
                 <RoleIcon className="h-2.5 w-2.5" /> {roleInfo.label}
               </span>
               <ThemeToggle />
-              <ChangePasswordDialog compact />
-              <button onClick={signOut} title="Sign out" className="text-muted-foreground hover:text-destructive tap-target">
+              <button onClick={signOut} title="Sign out" aria-label="Sign out" className="neu-btn neu-btn--danger h-9 w-9">
                 <LogOut className="h-4 w-4" />
               </button>
+
             </div>
           </div>
         </header>
