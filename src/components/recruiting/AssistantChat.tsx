@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import RichMessage from "./RichMessage";
 import { Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote, Share2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
+  const [animateIndex, setAnimateIndex] = useState<number>(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -77,11 +78,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setMessages((m) => [...m, {
-        role: "assistant",
-        content: data.reply || "I couldn't produce a response.",
-        actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
-      }]);
+      setMessages((m) => {
+        setAnimateIndex(m.length);
+        return [...m, {
+          role: "assistant",
+          content: data.reply || "I couldn't produce a response.",
+          actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
+        }];
+      });
     } catch (e: any) {
       const msg = e?.message?.includes("402")
         ? "AI credits exhausted — add credits to continue."
@@ -187,18 +191,16 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             >
               {m.role === "user" ? <User className="h-3.5 w-3.5 text-cyan" /> : <Bot className="h-3.5 w-3.5 text-emerald" />}
             </div>
-            <div className={`max-w-[85%] space-y-2 ${m.role === "user" ? "items-end" : ""}`}>
-              <div
-                className={`rounded-2xl px-3.5 py-2.5 text-sm ${
-                  m.role === "user"
-                    ? "bg-cyan/10 border border-cyan/20 text-foreground"
-                    : "bg-background/50 border border-border/70 text-foreground"
-                }`}
-              >
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-li:my-0.5 prose-table:text-xs prose-th:px-2 prose-td:px-2">
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
+            <div className={`max-w-[88%] space-y-2 ${m.role === "user" ? "items-end" : ""}`}>
+              {m.role === "user" ? (
+                <div className="rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm bg-cyan/10 border border-cyan/20 text-foreground">
+                  <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
                 </div>
-              </div>
+              ) : (
+                <div className="px-0.5 pt-0.5 text-[14px] text-foreground">
+                  <RichMessage content={m.content} animate={i === animateIndex} />
+                </div>
+              )}
 
               {/* Proposed actions — confirm before running */}
               {m.role === "assistant" && (m.actions?.length ?? 0) > 0 && (
@@ -243,8 +245,9 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30">
               <Bot className="h-3.5 w-3.5 text-emerald" />
             </div>
-            <div className="rounded-2xl px-3.5 py-2.5 bg-background/50 border border-border/70 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald" /> Analyzing candidates…
+            <div className="pt-1.5 inline-flex items-center gap-1.5 text-[13px]">
+              <span className="claude-thinking">Thinking</span>
+              <span className="claude-dots"><i /><i /><i /></span>
             </div>
           </div>
         )}
