@@ -43,20 +43,24 @@ export default function MobileNav({ items, activeKey, onSelect }: Props) {
       onClick={onClick}
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
-      className="relative flex flex-1 flex-col items-center justify-center gap-1 min-h-[52px] tap-target"
+      className="relative flex flex-1 flex-col items-center justify-center gap-1 min-h-[54px] tap-target press-spring"
     >
       <span
-        className={`flex h-9 w-9 items-center justify-center rounded-2xl transition-all duration-300 ${
-          active
-            ? "bg-emerald/15 text-emerald scale-100 shadow-[0_4px_16px_-6px_hsl(var(--emerald)/0.6)]"
-            : "text-muted-foreground scale-95"
+        className={`relative flex h-9 w-9 items-center justify-center rounded-2xl transition-all duration-300 ${
+          active ? "text-emerald" : "text-muted-foreground scale-95"
         }`}
       >
-        <item.icon className={`h-[22px] w-[22px] transition-transform ${active ? "scale-105" : ""}`} />
+        {active && (
+          <span
+            className="mnav-pill absolute inset-0 rounded-2xl bg-emerald/15 border border-emerald/25 shadow-[0_6px_20px_-8px_hsl(var(--emerald)/0.7)]"
+            aria-hidden
+          />
+        )}
+        <item.icon className={`relative h-[22px] w-[22px] transition-transform duration-300 ${active ? "scale-110" : ""}`} />
       </span>
       <span
-        className={`text-[10px] font-medium leading-none tracking-tight transition-colors ${
-          active ? "text-emerald" : "text-muted-foreground"
+        className={`text-[10px] leading-none tracking-tight transition-all duration-300 ${
+          active ? "text-emerald font-semibold" : "text-muted-foreground font-medium"
         }`}
       >
         {item.label}
