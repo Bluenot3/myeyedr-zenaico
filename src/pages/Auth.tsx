@@ -64,17 +64,15 @@ export default function Auth() {
           <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
           <div className="p-8 sm:p-10">
-            {/* Header */}
+            {/* Header — the wordmark itself is the hero mark */}
             <div className="flex flex-col items-center text-center mb-8">
-              <div className="relative mb-5">
-                <div className="absolute inset-0 rounded-2xl bg-primary/25 blur-xl animate-breathe" aria-hidden />
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald/12 border border-emerald/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
-                  <ScanEye className="h-7 w-7 text-emerald" />
+              <div className="relative mb-4 mt-1">
+                <div className="absolute -inset-6 rounded-3xl bg-primary/20 blur-2xl animate-breathe" aria-hidden />
+                <div className="relative animate-float">
+                  <Logo markSize={66} className="items-center [&_img]:drop-shadow-[0_4px_28px_rgba(58,155,255,0.5)]" />
                 </div>
               </div>
-
-              <Logo markSize={30} />
-              <p className="micro-label text-[9px] text-muted-foreground/80 mt-3">
+              <p className="micro-label text-[9px] text-muted-foreground/80 mt-2">
                 Talent Command
               </p>
               <p className="text-sm text-muted-foreground mt-3 max-w-[15rem]">
