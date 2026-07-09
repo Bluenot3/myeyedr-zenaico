@@ -103,17 +103,18 @@ const Index = () => {
                 <p className="text-[9px] micro-label text-emerald truncate">{roleInfo.label}</p>
               </div>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <ThemeToggle className="w-full h-9" />
+            <div className="mt-3 flex items-center gap-2">
+              <ThemeToggle className="shrink-0" />
               <button
                 onClick={signOut}
                 title="Sign out"
                 aria-label="Sign out"
-                className="neu-btn neu-btn--danger h-9 w-full gap-1.5 text-[11px] font-medium"
+                className="neu-btn neu-btn--danger h-9 flex-1 gap-1.5 text-[11px] font-medium"
               >
                 <LogOut className="h-3.5 w-3.5" /> Sign out
               </button>
             </div>
+
           </div>
         </div>
 
