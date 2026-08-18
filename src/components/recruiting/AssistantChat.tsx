@@ -194,6 +194,120 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           await updateCandidate.mutateAsync({ id: a.args.candidate_id, ...updates });
           break;
         }
+        case "set_candidate_status": {
+          const updates: Record<string, any> = { status: a.args.status };
+          if (a.args.stage) updates.stage = a.args.stage;
+          if (a.args.status === "active") updates.in_talent_pool = false;
+          await updateCandidate.mutateAsync({ id: a.args.candidate_id, ...updates });
+          break;
+        }
+        case "assign_candidate_to_position": {
+          if (!cand) throw new Error("Candidate not found");
+          const pos = positions.find((p) => p.id === a.args.position_id);
+          if (!pos) throw new Error("Requisition not found");
+          const locId = a.args.location_id || pos.location_id || null;
+          const loc = locations.find((l) => l.id === locId);
+          await reassign.mutateAsync({
+            candidate: cand,
+            position_id: pos.id,
+            location_id: locId,
+            region: loc?.region,
+            positionTitle: pos.title,
+          });
+          break;
+        }
+        case "bulk_move_stage": {
+          const ids: string[] = Array.isArray(a.args.candidate_ids) ? a.args.candidate_ids : [];
+          if (ids.length === 0) throw new Error("No candidates selected");
+          await bulkUpdate.mutateAsync({
+            ids,
+            updates: { stage: a.args.stage, score: stageProgress(a.args.stage) } as any,
+          });
+          break;
+        }
+        case "create_position": {
+          const loc = locations.find((l) => l.id === a.args.location_id);
+          await createPosition.mutateAsync({
+            title: a.args.title,
+            location_id: a.args.location_id || null,
+            region: a.args.region || loc?.region || "",
+            department: a.args.department || "",
+            employment_type: a.args.employment_type || "Full-time",
+            openings: Number(a.args.openings) > 0 ? Number(a.args.openings) : 1,
+            status: a.args.status || "open",
+            priority: a.args.priority || "medium",
+            description: a.args.description || "",
+            requirements: a.args.requirements || "",
+            pay_range: a.args.pay_range || "",
+            hiring_manager: a.args.hiring_manager || loc?.manager || "",
+          } as any);
+          break;
+        }
+        case "update_position": {
+          const updates: Record<string, any> = {};
+          for (const k of ["title", "department", "employment_type", "openings", "priority", "status", "description", "requirements", "pay_range", "hiring_manager", "location_id", "region"]) {
+            if (a.args[k] !== undefined && a.args[k] !== null && a.args[k] !== "") updates[k] = a.args[k];
+          }
+          if (Object.keys(updates).length === 0) throw new Error("No fields to update");
+          await updatePosition.mutateAsync({ id: a.args.position_id, ...updates });
+          break;
+        }
+        case "set_position_status":
+          await updatePosition.mutateAsync({ id: a.args.position_id, status: a.args.status });
+          break;
+        case "clone_position": {
+          const src = positions.find((p) => p.id === a.args.source_position_id);
+          if (!src) throw new Error("Source requisition not found");
+          const locId = a.args.location_id || src.location_id || null;
+          const loc = locations.find((l) => l.id === locId);
+          await createPosition.mutateAsync({
+            title: a.args.title || src.title,
+            location_id: locId,
+            region: loc?.region || src.region,
+            department: src.department,
+            employment_type: src.employment_type,
+            openings: Number(a.args.openings) > 0 ? Number(a.args.openings) : src.openings || 1,
+            status: a.args.status || "open",
+            priority: src.priority,
+            description: src.description,
+            requirements: src.requirements,
+            pay_range: src.pay_range,
+            hiring_manager: loc?.manager || src.hiring_manager || "",
+          } as any);
+          break;
+        }
+        case "delete_position":
+          await deletePosition.mutateAsync(a.args.position_id);
+          break;
+        case "create_job_template":
+          await createTemplate.mutateAsync({
+            title: a.args.title,
+            department: a.args.department || "",
+            employment_type: a.args.employment_type || "Full-time",
+            description: a.args.description || "",
+            requirements: a.args.requirements || "",
+            pay_range: a.args.pay_range || "",
+          } as any);
+          break;
+        case "schedule_interview": {
+          const starts = new Date(a.args.starts_at);
+          if (isNaN(starts.getTime())) throw new Error("Invalid date/time");
+          await createEvent.mutateAsync({
+            candidate_id: a.args.candidate_id,
+            position_id: cand?.position_id ?? null,
+            location_id: a.args.location_id || cand?.location_id || null,
+            title: a.args.title || `${a.args.event_type || "Interview"} · ${a.args.candidate_name}`,
+            event_type: a.args.event_type || "interview",
+            starts_at: starts.toISOString(),
+            status: "scheduled",
+            mode: a.args.mode || "in_person",
+            location_detail: a.args.location_detail || "",
+            notes: a.args.notes || "",
+            created_by: "Talent Assistant",
+          } as any);
+          break;
+        }
+
         default:
           throw new Error("Unknown action");
       }
