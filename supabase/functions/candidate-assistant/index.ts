@@ -371,14 +371,18 @@ serve(async (req) => {
     }
 
     // Load only what the caller can access (RLS-scoped).
-    const [{ data: candidates }, { data: positions }, { data: locations }, { data: goldens }] = await Promise.all([
+    const [{ data: candidates }, { data: positions }, { data: locations }, { data: goldens }, { data: templates }] = await Promise.all([
       userClient.from("candidates").select(
         "id, full_name, applied_role, best_fit_roles, location_id, position_id, stage, status, score, rating, years_experience, current_employer, tags, headline, resume_summary, screening_status, interview_status, in_talent_pool, source, contact_count",
       ).order("score", { ascending: false }).limit(250),
-      userClient.from("positions").select("id, title, location_id, region, status, req_code, openings"),
+      userClient.from("positions").select(
+        "id, title, location_id, region, status, req_code, openings, department, employment_type, priority, pay_range, hiring_manager, description, requirements",
+      ),
       userClient.from("locations").select("id, site_name, region"),
       userClient.from("golden_profiles").select("position_id, name, is_active, must_have_skills, ideal_years_experience"),
+      userClient.from("job_templates").select("id, title, department, employment_type, pay_range"),
     ]);
+
 
     const locName = (id: string | null) => (locations ?? []).find((l: any) => l.id === id)?.site_name ?? "Unassigned";
     const posTitle = (id: string | null) => (positions ?? []).find((p: any) => p.id === id)?.title ?? "";
