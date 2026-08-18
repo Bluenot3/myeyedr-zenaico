@@ -1,14 +1,37 @@
 import { useMemo, useState } from "react";
 import {
-  History, ArrowRightLeft, Briefcase, MapPin, Clock, Loader2, Plus, CheckCircle2,
+  History, ArrowRightLeft, Briefcase, MapPin, Clock, Loader2, CheckCircle2, Link2, ShieldCheck,
+  Mic, ClipboardCheck, StickyNote, Flag,
 } from "lucide-react";
 import {
   Candidate, useCandidateRequisitions, useCandidateEvents, useReassignRequisition,
-  useLocations, usePositions,
+  useLocations, usePositions, useCandidateEvaluations, useCandidateNotes,
 } from "@/hooks/useRecruiting";
+import { useTranscripts } from "@/hooks/useAgents";
 import { relativeTime, stageMeta, prettyStatus } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+
+/** Deterministic short hash (FNV-1a) — gives each ledger block a stable fingerprint. */
+function shortHash(input: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+interface LedgerBlock {
+  key: string;
+  kind: string;
+  icon: typeof History;
+  title: string;
+  detail: string;
+  at: string;
+  actor: string;
+  tone: string;
+}
 
 const eventTone: Record<string, string> = {
   applied: "196 100% 70%",
@@ -26,9 +49,13 @@ const eventTone: Record<string, string> = {
 export default function CandidateHistory({ candidate }: { candidate: Candidate }) {
   const { data: applications = [], isLoading: loadingApps } = useCandidateRequisitions(candidate.id);
   const { data: events = [], isLoading: loadingEvents } = useCandidateEvents(candidate.id);
+  const { data: evaluations = [] } = useCandidateEvaluations(candidate.id);
+  const { data: notes = [] } = useCandidateNotes(candidate.id);
+  const { data: transcripts = [] } = useTranscripts(candidate.id);
   const { data: locations = [] } = useLocations();
   const { data: positions = [] } = usePositions();
   const reassign = useReassignRequisition();
+
 
   const [showAssign, setShowAssign] = useState(false);
   const [newLoc, setNewLoc] = useState(candidate.location_id || "");
