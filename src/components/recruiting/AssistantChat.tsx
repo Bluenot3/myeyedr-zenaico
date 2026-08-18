@@ -434,25 +434,55 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       </div>
 
       <div className={`border-t border-border pt-3 ${compact ? "px-3 pb-3" : "px-1"}`}>
+        {attachment && (
+          <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-cyan/25 bg-cyan/[0.06] px-2.5 py-1.5 text-[11px] text-foreground">
+            <FileText className="h-3.5 w-3.5 text-cyan shrink-0" />
+            <span className="truncate max-w-[220px]">{attachment.name}</span>
+            <button onClick={() => setAttachment(null)} className="text-muted-foreground hover:text-foreground" aria-label="Remove attachment">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.txt,.md,.csv,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) setAttachment(f);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="h-11 w-11 shrink-0 p-0"
+            aria-label="Attach a job description"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
           <Textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Ask about candidates or tell me to act…"
+            placeholder="Ask, or tell me to act — attach a job description to open a req…"
             className="min-h-[44px] max-h-32 resize-none text-sm"
             disabled={busy}
           />
           <Button
             onClick={() => send(input)}
-            disabled={busy || !input.trim()}
+            disabled={busy || (!input.trim() && !attachment)}
             className="h-11 w-11 shrink-0 bg-emerald text-primary-foreground hover:bg-emerald/90 p-0"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>
+
     </div>
   );
 }
