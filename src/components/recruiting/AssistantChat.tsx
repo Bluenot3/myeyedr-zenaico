@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
 import {
   Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
-  Share2, Pencil, Paperclip, Briefcase, Copy, Lock, Unlock, CalendarPlus, Users, BookMarked, FileText,
+  Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
