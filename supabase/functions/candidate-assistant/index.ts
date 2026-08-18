@@ -118,6 +118,200 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "set_candidate_status",
+      description: "Propose setting a candidate's overall status (e.g. active, withdrawn, on_hold) or restoring an archived candidate to the active pipeline.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          status: { type: "string", enum: ["active", "withdrawn", "on_hold", "rejected", "hired"] },
+          stage: { type: "string", enum: STAGE_KEYS },
+        },
+        required: ["candidate_id", "candidate_name", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "assign_candidate_to_position",
+      description: "Propose applying/transferring a candidate to a requisition (position) at an office. Prior applications are preserved as history.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          position_id: { type: "string", description: "Exact requisition id from the requisition dataset" },
+          position_title: { type: "string" },
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "position_id", "position_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_move_stage",
+      description: "Propose moving several candidates to the same pipeline stage at once.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_ids: { type: "array", items: { type: "string" } },
+          candidate_names: { type: "string", description: "Comma-separated names for the confirmation label" },
+          stage: { type: "string", enum: STAGE_KEYS },
+        },
+        required: ["candidate_ids", "candidate_names", "stage"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_position",
+      description: "Propose opening a new requisition/position for an office. Use attached or pasted job descriptions to fill the description and requirements in full, well-written prose.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          location_id: { type: "string", description: "Exact office id, or omit for a region-wide/unassigned req" },
+          location_name: { type: "string" },
+          region: { type: "string" },
+          department: { type: "string" },
+          employment_type: { type: "string", description: "Full-time, Part-time, or PRN" },
+          openings: { type: "number" },
+          priority: { type: "string", enum: ["low", "medium", "high", "critical"] },
+          status: { type: "string", enum: ["open", "on_hold", "closed", "filled"] },
+          description: { type: "string" },
+          requirements: { type: "string" },
+          pay_range: { type: "string" },
+          hiring_manager: { type: "string" },
+        },
+        required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_position",
+      description: "Propose editing an existing requisition. Only include the fields that should change.",
+      parameters: {
+        type: "object",
+        properties: {
+          position_id: { type: "string" },
+          position_title: { type: "string" },
+          title: { type: "string" },
+          department: { type: "string" },
+          employment_type: { type: "string" },
+          openings: { type: "number" },
+          priority: { type: "string" },
+          status: { type: "string" },
+          description: { type: "string" },
+          requirements: { type: "string" },
+          pay_range: { type: "string" },
+          hiring_manager: { type: "string" },
+          location_id: { type: "string" },
+          region: { type: "string" },
+        },
+        required: ["position_id", "position_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_position_status",
+      description: "Propose opening, putting on hold, filling, or closing a requisition.",
+      parameters: {
+        type: "object",
+        properties: {
+          position_id: { type: "string" },
+          position_title: { type: "string" },
+          status: { type: "string", enum: ["open", "on_hold", "closed", "filled"] },
+        },
+        required: ["position_id", "position_title", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "clone_position",
+      description: "Propose duplicating an existing requisition (optionally into a different office and/or with a new title).",
+      parameters: {
+        type: "object",
+        properties: {
+          source_position_id: { type: "string" },
+          source_title: { type: "string" },
+          title: { type: "string", description: "New title (defaults to the source title)" },
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+          openings: { type: "number" },
+          status: { type: "string", enum: ["open", "on_hold", "closed", "filled"] },
+        },
+        required: ["source_position_id", "source_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_position",
+      description: "Propose permanently deleting a requisition. Only use when the user explicitly asks to delete/remove it.",
+      parameters: {
+        type: "object",
+        properties: { position_id: { type: "string" }, position_title: { type: "string" } },
+        required: ["position_id", "position_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_job_template",
+      description: "Propose saving a reusable job description to the Job Library (does not open a requisition).",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          department: { type: "string" },
+          employment_type: { type: "string" },
+          description: { type: "string" },
+          requirements: { type: "string" },
+          pay_range: { type: "string" },
+        },
+        required: ["title", "description"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_interview",
+      description: "Propose scheduling an interview or phone screen on the calendar. starts_at must be a full ISO timestamp.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          title: { type: "string" },
+          event_type: { type: "string", description: "phone_screen, interview, working_interview, or final" },
+          starts_at: { type: "string", description: "ISO 8601 timestamp" },
+          mode: { type: "string", description: "in_person, phone, or video" },
+          location_id: { type: "string" },
+          location_detail: { type: "string" },
+          notes: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "starts_at"],
+      },
+    },
+  },
 ];
 
 const ACTION_LABEL: Record<string, (a: any) => string> = {
@@ -128,7 +322,18 @@ const ACTION_LABEL: Record<string, (a: any) => string> = {
   add_note: (a) => `Add a note to ${a.candidate_name}`,
   share_to_location: (a) => `Share ${a.candidate_name} with ${a.location_name}`,
   update_candidate_info: (a) => `Update ${a.candidate_name}'s info`,
+  set_candidate_status: (a) => `Set ${a.candidate_name}'s status to “${a.status}”`,
+  assign_candidate_to_position: (a) => `Apply ${a.candidate_name} to ${a.position_title}${a.location_name ? ` · ${a.location_name}` : ""}`,
+  bulk_move_stage: (a) => `Move ${(a.candidate_ids || []).length} candidates (${a.candidate_names}) to “${a.stage}”`,
+  create_position: (a) => `Open requisition: ${a.title}${a.location_name ? ` · ${a.location_name}` : ""}`,
+  update_position: (a) => `Edit requisition: ${a.position_title}`,
+  set_position_status: (a) => `Set ${a.position_title} to “${a.status}”`,
+  clone_position: (a) => `Duplicate ${a.source_title}${a.location_name ? ` → ${a.location_name}` : ""}`,
+  delete_position: (a) => `Delete requisition: ${a.position_title}`,
+  create_job_template: (a) => `Save “${a.title}” to the Job Library`,
+  schedule_interview: (a) => `Schedule ${a.event_type || "interview"} for ${a.candidate_name}`,
 };
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
