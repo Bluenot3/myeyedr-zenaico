@@ -368,6 +368,11 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             <div className={`max-w-[88%] space-y-2 ${m.role === "user" ? "items-end" : ""}`}>
               {m.role === "user" ? (
                 <div className="rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm bg-cyan/10 border border-cyan/20 text-foreground">
+                  {m.attachmentName && (
+                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-md bg-background/60 border border-border/60 px-2 py-1 text-[10px] text-muted-foreground">
+                      <FileText className="h-3 w-3 text-cyan" /> {m.attachmentName}
+                    </div>
+                  )}
                   <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
                 </div>
               ) : (
@@ -375,6 +380,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
                   <RichMessage content={m.content} animate={i === animateIndex} />
                 </div>
               )}
+
 
               {/* Proposed actions — confirm before running */}
               {m.role === "assistant" && (m.actions?.length ?? 0) > 0 && (
