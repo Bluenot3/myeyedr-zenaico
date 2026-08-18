@@ -247,32 +247,59 @@ export default function CandidateHistory({ candidate }: { candidate: Candidate }
         )}
       </div>
 
-      {/* Activity timeline */}
+      {/* Chain of record — linked, tamper-evident candidate journey */}
       <div>
-        <h4 className="text-xs font-semibold text-foreground inline-flex items-center gap-1.5 mb-2"><History className="h-3.5 w-3.5 text-emerald" /> Activity timeline</h4>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-xs font-semibold text-foreground inline-flex items-center gap-1.5">
+            <Link2 className="h-3.5 w-3.5 text-emerald" /> Chain of record
+          </h4>
+          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+            <ShieldCheck className="h-3 w-3 text-emerald" /> {chain.length} linked block{chain.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <p className="text-[10px] text-muted-foreground mb-2.5">
+          Every application, stage change, screening, scorecard and note — chained in order, each block fingerprinted against the one before it.
+        </p>
+
         {loadingEvents ? (
           <p className="text-[11px] text-muted-foreground">Loading…</p>
-        ) : events.length === 0 ? (
+        ) : chain.length === 0 ? (
           <p className="text-[11px] text-muted-foreground rounded-lg border border-dashed border-border/60 p-4 text-center">No activity recorded yet.</p>
         ) : (
-          <div className="relative pl-4 space-y-3 before:absolute before:left-1 before:top-1 before:bottom-1 before:w-px before:bg-border">
-            {events.map((e) => {
-              const tone = eventTone[e.event_type] || "180 10% 60%";
+          <div className="relative pl-5 space-y-2 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-gradient-to-b before:from-emerald/40 before:via-border before:to-transparent">
+            {chain.map((b) => {
+              const Icon = b.icon;
               return (
-                <div key={e.id} className="relative">
-                  <span className="absolute -left-[13px] top-1 h-2 w-2 rounded-full ring-2 ring-card" style={{ background: `hsl(${tone})` }} />
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs text-foreground">{e.title || prettyStatus(e.event_type)}</p>
-                      <p className="text-[10px] text-muted-foreground">{prettyStatus(e.event_type)}{e.actor ? ` · ${e.actor}` : ""}</p>
+                <div key={b.key} className="relative">
+                  <span
+                    className="absolute -left-[18px] top-2.5 flex h-3.5 w-3.5 items-center justify-center rounded-full ring-2 ring-card"
+                    style={{ background: `hsl(${b.tone})` }}
+                  />
+                  <div className="rounded-xl border border-border/60 bg-background/40 p-2.5 transition-colors hover:border-emerald/30">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex items-start gap-2">
+                        <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: `hsl(${b.tone})` }} />
+                        <div className="min-w-0">
+                          <p className="text-xs text-foreground leading-snug">{b.title}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{b.detail}{b.actor ? ` · ${b.actor}` : ""}</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground whitespace-nowrap flex items-center gap-1 shrink-0">
+                        <Clock className="h-2.5 w-2.5" /> {relativeTime(b.at)}
+                      </span>
                     </div>
-                    <span className="text-[9px] text-muted-foreground whitespace-nowrap flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {relativeTime(e.created_at)}</span>
+                    <div className="mt-1.5 flex items-center gap-2 text-[9px] font-mono text-muted-foreground/70">
+                      <span className="rounded bg-muted/40 px-1.5 py-0.5">#{String(b.index).padStart(3, "0")}</span>
+                      <span className="truncate">prev {b.prev}</span>
+                      <span className="text-emerald/80 truncate">hash {b.hash}</span>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
+
       </div>
     </div>
   );
