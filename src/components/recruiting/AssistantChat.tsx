@@ -93,16 +93,47 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     if (!busy) inputRef.current?.focus();
   }, [busy]);
 
+  const readAttachment = async (file: File): Promise<string> => {
+    const isText = file.type.startsWith("text/") || /\.(txt|md|csv)$/i.test(file.name);
+    if (isText) {
+      const raw = (await file.text()).slice(0, 40000);
+      return `\n\n---ATTACHED FILE: ${file.name}---\n${raw}\n---END ATTACHMENT---`;
+    }
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(",")[1] || "");
+      r.onerror = () => reject(new Error("Could not read file"));
+      r.readAsDataURL(file);
+    });
+    const { data, error } = await supabase.functions.invoke("parse-job", {
+      body: { fileBase64: base64, fileName: file.name, mimeType: file.type || "application/pdf" },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    const job = data?.job ?? data;
+    return `\n\n---ATTACHED JOB DESCRIPTION (${file.name}), already parsed---\n${JSON.stringify(job)}\n---END ATTACHMENT---`;
+  };
+
   const send = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || busy) return;
-    const next = [...messages, { role: "user" as const, content: trimmed }];
-    setMessages(next);
+    const file = attachment;
+    if ((!trimmed && !file) || busy) return;
     setInput("");
     setBusy(true);
+    const visible = trimmed || `Use the attached file: ${file?.name}`;
+    setMessages((m) => [...m, { role: "user", content: visible, attachmentName: file?.name }]);
     try {
+      let payloadText = visible;
+      if (file) {
+        payloadText += await readAttachment(file);
+        setAttachment(null);
+      }
+      const history = [
+        ...messages.map(({ role, content }) => ({ role, content })),
+        { role: "user" as const, content: payloadText },
+      ];
       const { data, error } = await supabase.functions.invoke("candidate-assistant", {
-        body: { messages: next.map(({ role, content }) => ({ role, content })) },
+        body: { messages: history },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -126,6 +157,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       setBusy(false);
     }
   };
+
 
   const runAction = async (a: ProposedAction) => {
     setStatuses((s) => ({ ...s, [a.id]: "running" }));
