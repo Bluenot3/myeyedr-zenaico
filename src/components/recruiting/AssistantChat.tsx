@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
-import { Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote, Share2, Pencil } from "lucide-react";
+import {
+  Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
+  Share2, Pencil, Paperclip, Briefcase, Copy, Lock, Unlock, CalendarPlus, Users, BookMarked, FileText,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
+  useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
+  useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
 } from "@/hooks/useRecruiting";
 import { stageProgress } from "@/lib/recruiting";
 
@@ -21,6 +26,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   actions?: ProposedAction[];
+  attachmentName?: string;
 }
 
 type ActionStatus = "idle" | "running" | "done" | "error" | "dismissed";
@@ -33,29 +39,51 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   add_note: StickyNote,
   share_to_location: Share2,
   update_candidate_info: Pencil,
+  set_candidate_status: Pencil,
+  assign_candidate_to_position: ArrowRight,
+  bulk_move_stage: Users,
+  create_position: Briefcase,
+  update_position: Pencil,
+  set_position_status: Lock,
+  clone_position: Copy,
+  delete_position: Trash2,
+  create_job_template: BookMarked,
+  schedule_interview: CalendarPlus,
 };
 
 const SUGGESTIONS = [
   "Who are my strongest candidates right now?",
   "Compare my top 3 candidates for the same role",
-  "Which candidates are stuck and need follow-up?",
-  "Move my best applicant to interview",
+  "Open a PSC requisition — attach the job description",
+  "Duplicate my Optician req to another office",
 ];
 
 export default function AssistantChat({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
   const [animateIndex, setAnimateIndex] = useState<number>(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: candidates = [] } = useCandidates();
+  const { data: positions = [] } = usePositions();
+  const { data: locations = [] } = useLocations();
   const updateCandidate = useUpdateCandidate();
+  const bulkUpdate = useBulkUpdateCandidates();
   const addNote = useAddNote();
   const share = useShareCandidate();
   const lifecycle = useCandidateLifecycle();
+  const createPosition = useCreatePosition();
+  const updatePosition = useUpdatePosition();
+  const deletePosition = useDeletePosition();
+  const reassign = useReassignRequisition();
+  const createTemplate = useCreateJobTemplate();
+  const createEvent = useCreateEvent();
+
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
