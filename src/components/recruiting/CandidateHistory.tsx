@@ -83,6 +83,100 @@ export default function CandidateHistory({ candidate }: { candidate: Candidate }
     setNewPos("");
   };
 
+  /** Every recorded touchpoint, chained oldest → newest with linked fingerprints. */
+  const chain = useMemo(() => {
+    const blocks: LedgerBlock[] = [];
+
+    blocks.push({
+      key: `origin-${candidate.id}`,
+      kind: "applied",
+      icon: Flag,
+      title: `${candidate.full_name} entered the system`,
+      detail: `${candidate.applied_role || "Role not set"} · ${candidate.source || "Direct"}`,
+      at: candidate.created_at,
+      actor: candidate.source || "Application",
+      tone: eventTone.applied,
+    });
+
+    for (const a of applications) {
+      const pos = posInfo(a.position_id);
+      blocks.push({
+        key: `app-${a.id}`,
+        kind: "requisition",
+        icon: Briefcase,
+        title: pos ? `Applied to ${pos.req_code ? pos.req_code + " · " : ""}${pos.title}` : "Applied to an unassigned requisition",
+        detail: `${locName(a.location_id)} · stage ${stageMeta(a.stage).label} · ${prettyStatus(a.status)}`,
+        at: a.created_at,
+        actor: a.created_by || "System",
+        tone: eventTone.requisition_add,
+      });
+    }
+
+    for (const e of events) {
+      blocks.push({
+        key: `evt-${e.id}`,
+        kind: e.event_type,
+        icon: History,
+        title: e.title || prettyStatus(e.event_type),
+        detail: prettyStatus(e.event_type),
+        at: e.created_at,
+        actor: e.actor || "System",
+        tone: eventTone[e.event_type] || "180 10% 60%",
+      });
+    }
+
+    for (const t of transcripts) {
+      const q = Object.keys(t.extracted || {}).length;
+      blocks.push({
+        key: `scr-${t.id}`,
+        kind: "screening",
+        icon: Mic,
+        title: t.title || "Phone screen completed",
+        detail: `${t.recommendation || t.sentiment || "recorded"}${t.fit_score != null ? ` · fit ${t.fit_score}` : ""}${q ? ` · ${q} answers captured` : ""}`,
+        at: t.created_at,
+        actor: t.source || "Screening",
+        tone: eventTone.screening,
+      });
+    }
+
+    for (const ev of evaluations) {
+      blocks.push({
+        key: `eval-${ev.id}`,
+        kind: "interview",
+        icon: ClipboardCheck,
+        title: `${ev.template_name || "Interview"} scorecard${ev.submitted ? " submitted" : " drafted"}`,
+        detail: `${ev.overall_score ?? 0}/100 · ${prettyStatus(ev.recommendation || "pending")}`,
+        at: ev.created_at,
+        actor: ev.evaluator || "Evaluator",
+        tone: eventTone.interview,
+      });
+    }
+
+    for (const n of notes) {
+      blocks.push({
+        key: `note-${n.id}`,
+        kind: "note",
+        icon: StickyNote,
+        title: n.body.length > 90 ? n.body.slice(0, 90) + "…" : n.body,
+        detail: "Note added",
+        at: n.created_at,
+        actor: n.author || "Team",
+        tone: eventTone.note,
+      });
+    }
+
+    blocks.sort((a, b) => new Date(a.at || 0).getTime() - new Date(b.at || 0).getTime());
+
+    let prev = "00000000";
+    return blocks.map((b, i) => {
+      const hash = shortHash(`${prev}|${b.kind}|${b.title}|${b.at}|${b.actor}`);
+      const block = { ...b, index: i + 1, hash, prev };
+      prev = hash;
+      return block;
+    });
+  }, [candidate, applications, events, transcripts, evaluations, notes, positions, locations]);
+
+
   return (
     <div className="space-y-5">
       {/* Applications / requisition history */}
