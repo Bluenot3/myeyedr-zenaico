@@ -110,7 +110,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     });
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
-    const job = data?.job ?? data;
+    const job = data?.data ?? data?.job ?? data;
     return `\n\n---ATTACHED JOB DESCRIPTION (${file.name}), already parsed---\n${JSON.stringify(job)}\n---END ATTACHMENT---`;
   };
 
