@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
-import { Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote, Share2, Pencil } from "lucide-react";
+import {
+  Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
+  Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
+  useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
+  useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
 } from "@/hooks/useRecruiting";
 import { stageProgress } from "@/lib/recruiting";
 
@@ -21,6 +26,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   actions?: ProposedAction[];
+  attachmentName?: string;
 }
 
 type ActionStatus = "idle" | "running" | "done" | "error" | "dismissed";
@@ -33,29 +39,51 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   add_note: StickyNote,
   share_to_location: Share2,
   update_candidate_info: Pencil,
+  set_candidate_status: Pencil,
+  assign_candidate_to_position: ArrowRight,
+  bulk_move_stage: Users,
+  create_position: Briefcase,
+  update_position: Pencil,
+  set_position_status: Lock,
+  clone_position: Copy,
+  delete_position: Trash2,
+  create_job_template: BookMarked,
+  schedule_interview: CalendarPlus,
 };
 
 const SUGGESTIONS = [
   "Who are my strongest candidates right now?",
   "Compare my top 3 candidates for the same role",
-  "Which candidates are stuck and need follow-up?",
-  "Move my best applicant to interview",
+  "Open a PSC requisition — attach the job description",
+  "Duplicate my Optician req to another office",
 ];
 
 export default function AssistantChat({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
   const [animateIndex, setAnimateIndex] = useState<number>(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: candidates = [] } = useCandidates();
+  const { data: positions = [] } = usePositions();
+  const { data: locations = [] } = useLocations();
   const updateCandidate = useUpdateCandidate();
+  const bulkUpdate = useBulkUpdateCandidates();
   const addNote = useAddNote();
   const share = useShareCandidate();
   const lifecycle = useCandidateLifecycle();
+  const createPosition = useCreatePosition();
+  const updatePosition = useUpdatePosition();
+  const deletePosition = useDeletePosition();
+  const reassign = useReassignRequisition();
+  const createTemplate = useCreateJobTemplate();
+  const createEvent = useCreateEvent();
+
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -65,16 +93,47 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     if (!busy) inputRef.current?.focus();
   }, [busy]);
 
+  const readAttachment = async (file: File): Promise<string> => {
+    const isText = file.type.startsWith("text/") || /\.(txt|md|csv)$/i.test(file.name);
+    if (isText) {
+      const raw = (await file.text()).slice(0, 40000);
+      return `\n\n---ATTACHED FILE: ${file.name}---\n${raw}\n---END ATTACHMENT---`;
+    }
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(",")[1] || "");
+      r.onerror = () => reject(new Error("Could not read file"));
+      r.readAsDataURL(file);
+    });
+    const { data, error } = await supabase.functions.invoke("parse-job", {
+      body: { fileBase64: base64, fileName: file.name, mimeType: file.type || "application/pdf" },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    const job = data?.data ?? data?.job ?? data;
+    return `\n\n---ATTACHED JOB DESCRIPTION (${file.name}), already parsed---\n${JSON.stringify(job)}\n---END ATTACHMENT---`;
+  };
+
   const send = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed || busy) return;
-    const next = [...messages, { role: "user" as const, content: trimmed }];
-    setMessages(next);
+    const file = attachment;
+    if ((!trimmed && !file) || busy) return;
     setInput("");
     setBusy(true);
+    const visible = trimmed || `Use the attached file: ${file?.name}`;
+    setMessages((m) => [...m, { role: "user", content: visible, attachmentName: file?.name }]);
     try {
+      let payloadText = visible;
+      if (file) {
+        payloadText += await readAttachment(file);
+        setAttachment(null);
+      }
+      const history = [
+        ...messages.map(({ role, content }) => ({ role, content })),
+        { role: "user" as const, content: payloadText },
+      ];
       const { data, error } = await supabase.functions.invoke("candidate-assistant", {
-        body: { messages: next.map(({ role, content }) => ({ role, content })) },
+        body: { messages: history },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -98,6 +157,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       setBusy(false);
     }
   };
+
 
   const runAction = async (a: ProposedAction) => {
     setStatuses((s) => ({ ...s, [a.id]: "running" }));
@@ -134,6 +194,120 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           await updateCandidate.mutateAsync({ id: a.args.candidate_id, ...updates });
           break;
         }
+        case "set_candidate_status": {
+          const updates: Record<string, any> = { status: a.args.status };
+          if (a.args.stage) updates.stage = a.args.stage;
+          if (a.args.status === "active") updates.in_talent_pool = false;
+          await updateCandidate.mutateAsync({ id: a.args.candidate_id, ...updates });
+          break;
+        }
+        case "assign_candidate_to_position": {
+          if (!cand) throw new Error("Candidate not found");
+          const pos = positions.find((p) => p.id === a.args.position_id);
+          if (!pos) throw new Error("Requisition not found");
+          const locId = a.args.location_id || pos.location_id || null;
+          const loc = locations.find((l) => l.id === locId);
+          await reassign.mutateAsync({
+            candidate: cand,
+            position_id: pos.id,
+            location_id: locId,
+            region: loc?.region,
+            positionTitle: pos.title,
+          });
+          break;
+        }
+        case "bulk_move_stage": {
+          const ids: string[] = Array.isArray(a.args.candidate_ids) ? a.args.candidate_ids : [];
+          if (ids.length === 0) throw new Error("No candidates selected");
+          await bulkUpdate.mutateAsync({
+            ids,
+            updates: { stage: a.args.stage, score: stageProgress(a.args.stage) } as any,
+          });
+          break;
+        }
+        case "create_position": {
+          const loc = locations.find((l) => l.id === a.args.location_id);
+          await createPosition.mutateAsync({
+            title: a.args.title,
+            location_id: a.args.location_id || null,
+            region: a.args.region || loc?.region || "",
+            department: a.args.department || "",
+            employment_type: a.args.employment_type || "Full-time",
+            openings: Number(a.args.openings) > 0 ? Number(a.args.openings) : 1,
+            status: a.args.status || "open",
+            priority: a.args.priority || "medium",
+            description: a.args.description || "",
+            requirements: a.args.requirements || "",
+            pay_range: a.args.pay_range || "",
+            hiring_manager: a.args.hiring_manager || loc?.manager || "",
+          } as any);
+          break;
+        }
+        case "update_position": {
+          const updates: Record<string, any> = {};
+          for (const k of ["title", "department", "employment_type", "openings", "priority", "status", "description", "requirements", "pay_range", "hiring_manager", "location_id", "region"]) {
+            if (a.args[k] !== undefined && a.args[k] !== null && a.args[k] !== "") updates[k] = a.args[k];
+          }
+          if (Object.keys(updates).length === 0) throw new Error("No fields to update");
+          await updatePosition.mutateAsync({ id: a.args.position_id, ...updates });
+          break;
+        }
+        case "set_position_status":
+          await updatePosition.mutateAsync({ id: a.args.position_id, status: a.args.status });
+          break;
+        case "clone_position": {
+          const src = positions.find((p) => p.id === a.args.source_position_id);
+          if (!src) throw new Error("Source requisition not found");
+          const locId = a.args.location_id || src.location_id || null;
+          const loc = locations.find((l) => l.id === locId);
+          await createPosition.mutateAsync({
+            title: a.args.title || src.title,
+            location_id: locId,
+            region: loc?.region || src.region,
+            department: src.department,
+            employment_type: src.employment_type,
+            openings: Number(a.args.openings) > 0 ? Number(a.args.openings) : src.openings || 1,
+            status: a.args.status || "open",
+            priority: src.priority,
+            description: src.description,
+            requirements: src.requirements,
+            pay_range: src.pay_range,
+            hiring_manager: loc?.manager || src.hiring_manager || "",
+          } as any);
+          break;
+        }
+        case "delete_position":
+          await deletePosition.mutateAsync(a.args.position_id);
+          break;
+        case "create_job_template":
+          await createTemplate.mutateAsync({
+            title: a.args.title,
+            department: a.args.department || "",
+            employment_type: a.args.employment_type || "Full-time",
+            description: a.args.description || "",
+            requirements: a.args.requirements || "",
+            pay_range: a.args.pay_range || "",
+          } as any);
+          break;
+        case "schedule_interview": {
+          const starts = new Date(a.args.starts_at);
+          if (isNaN(starts.getTime())) throw new Error("Invalid date/time");
+          await createEvent.mutateAsync({
+            candidate_id: a.args.candidate_id,
+            position_id: cand?.position_id ?? null,
+            location_id: a.args.location_id || cand?.location_id || null,
+            title: a.args.title || `${a.args.event_type || "Interview"} · ${a.args.candidate_name}`,
+            event_type: a.args.event_type || "interview",
+            starts_at: starts.toISOString(),
+            status: "scheduled",
+            mode: a.args.mode || "in_person",
+            location_detail: a.args.location_detail || "",
+            notes: a.args.notes || "",
+            created_by: "Talent Assistant",
+          } as any);
+          break;
+        }
+
         default:
           throw new Error("Unknown action");
       }
@@ -194,6 +368,11 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             <div className={`max-w-[88%] space-y-2 ${m.role === "user" ? "items-end" : ""}`}>
               {m.role === "user" ? (
                 <div className="rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm bg-cyan/10 border border-cyan/20 text-foreground">
+                  {m.attachmentName && (
+                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-md bg-background/60 border border-border/60 px-2 py-1 text-[10px] text-muted-foreground">
+                      <FileText className="h-3 w-3 text-cyan" /> {m.attachmentName}
+                    </div>
+                  )}
                   <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
                 </div>
               ) : (
@@ -201,6 +380,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
                   <RichMessage content={m.content} animate={i === animateIndex} />
                 </div>
               )}
+
 
               {/* Proposed actions — confirm before running */}
               {m.role === "assistant" && (m.actions?.length ?? 0) > 0 && (
@@ -254,25 +434,55 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       </div>
 
       <div className={`border-t border-border pt-3 ${compact ? "px-3 pb-3" : "px-1"}`}>
+        {attachment && (
+          <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-cyan/25 bg-cyan/[0.06] px-2.5 py-1.5 text-[11px] text-foreground">
+            <FileText className="h-3.5 w-3.5 text-cyan shrink-0" />
+            <span className="truncate max-w-[220px]">{attachment.name}</span>
+            <button onClick={() => setAttachment(null)} className="text-muted-foreground hover:text-foreground" aria-label="Remove attachment">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.txt,.md,.csv,image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) setAttachment(f);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+            className="h-11 w-11 shrink-0 p-0"
+            aria-label="Attach a job description"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
           <Textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Ask about candidates or tell me to act…"
+            placeholder="Ask, or tell me to act — attach a job description to open a req…"
             className="min-h-[44px] max-h-32 resize-none text-sm"
             disabled={busy}
           />
           <Button
             onClick={() => send(input)}
-            disabled={busy || !input.trim()}
+            disabled={busy || (!input.trim() && !attachment)}
             className="h-11 w-11 shrink-0 bg-emerald text-primary-foreground hover:bg-emerald/90 p-0"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
       </div>
+
     </div>
   );
 }
