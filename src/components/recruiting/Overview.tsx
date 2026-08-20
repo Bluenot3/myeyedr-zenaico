@@ -13,6 +13,7 @@ import StageBadge from "./StageBadge";
 import ScoreRing from "./ScoreRing";
 
 import { EyeMark } from "./Logo";
+import DailyBrief from "./DailyBrief";
 import { useAuth } from "@/hooks/useAuth";
 
 const EVENT_META: Record<string, { label: string; hsl: string; icon: typeof CalendarClock }> = {
@@ -184,6 +185,9 @@ export default function Overview() {
           </p>
         </div>
       </div>
+
+      {/* AI briefing — personal, role-scoped */}
+      <DailyBrief />
 
       {/* Next Up — highlighted scheduled event */}
       {nextEvent && (() => {

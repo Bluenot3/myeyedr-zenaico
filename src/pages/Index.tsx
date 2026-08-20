@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, Bot, Swords, Glasses, Users, LogOut, Crown, Globe, Building2, CalendarDays, FileText, LineChart as LineChartIcon } from "lucide-react";
+import { ScanEye, GitBranch, Sparkles, ClipboardList, MapPin, Bot, Swords, Glasses, Users, LogOut, Crown, Globe, Building2, CalendarDays, FileText, LineChart as LineChartIcon, Plug } from "lucide-react";
 import Overview from "@/components/recruiting/Overview";
 import PipelineBoard from "@/components/recruiting/PipelineBoard";
 import Openings from "@/components/recruiting/Openings";
@@ -13,6 +13,7 @@ import AgentStudio from "@/components/recruiting/AgentStudio";
 import DecisionTool from "@/components/recruiting/DecisionTool";
 import UsersManager from "@/components/recruiting/UsersManager";
 import CandidateAssistant from "@/components/recruiting/CandidateAssistant";
+import Integrations from "@/components/recruiting/Integrations";
 import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
 import MobileNav from "@/components/recruiting/MobileNav";
 import Logo from "@/components/recruiting/Logo";
@@ -23,7 +24,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-type Tab = "overview" | "pipeline" | "openings" | "jobs" | "calendar" | "insights" | "pool" | "askai" | "agents" | "decision" | "library" | "locations" | "users";
+type Tab = "overview" | "pipeline" | "openings" | "jobs" | "calendar" | "insights" | "pool" | "askai" | "agents" | "decision" | "library" | "locations" | "integrations" | "users";
 
 const TAB_KEY = "cc.activeTab";
 
@@ -40,6 +41,7 @@ const NAV: { key: Tab; label: string; icon: typeof ScanEye; adminOnly?: boolean;
   { key: "decision", label: "Decision", icon: Swords, adminOnly: true },
   { key: "library", label: "Library", icon: ClipboardList },
   { key: "locations", label: "Locations", icon: MapPin },
+  { key: "integrations", label: "Integrations", icon: Plug, adminOnly: true },
   { key: "users", label: "Team & Access", icon: Users, ownerOnly: true },
 ];
 
@@ -157,6 +159,7 @@ const Index = () => {
             {activeTab === "decision" && isAdmin && <DecisionTool />}
             {activeTab === "library" && <ScreeningLibrary />}
             {activeTab === "locations" && <LocationsManager />}
+            {activeTab === "integrations" && isAdmin && <Integrations />}
             {activeTab === "users" && isOwner && <UsersManager />}
           </ErrorBoundary>
         </main>
