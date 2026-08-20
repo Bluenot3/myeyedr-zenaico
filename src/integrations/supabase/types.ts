@@ -633,6 +633,7 @@ export type Database = {
           last_contacted_at: string | null
           last_contacted_by: string
           location_id: string | null
+          notion_page_id: string | null
           parse_confidence: number | null
           phone: string
           position_id: string | null
@@ -671,6 +672,7 @@ export type Database = {
           last_contacted_at?: string | null
           last_contacted_by?: string
           location_id?: string | null
+          notion_page_id?: string | null
           parse_confidence?: number | null
           phone?: string
           position_id?: string | null
@@ -709,6 +711,7 @@ export type Database = {
           last_contacted_at?: string | null
           last_contacted_by?: string
           location_id?: string | null
+          notion_page_id?: string | null
           parse_confidence?: number | null
           phone?: string
           position_id?: string | null
@@ -1147,6 +1150,114 @@ export type Database = {
         }
         Relationships: []
       }
+      login_briefs: {
+        Row: {
+          brief: string
+          generated_at: string
+          headline: string
+          id: string
+          model: string
+          stats: Json
+          user_id: string
+        }
+        Insert: {
+          brief?: string
+          generated_at?: string
+          headline?: string
+          id?: string
+          model?: string
+          stats?: Json
+          user_id: string
+        }
+        Update: {
+          brief?: string
+          generated_at?: string
+          headline?: string
+          id?: string
+          model?: string
+          stats?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notion_sync_runs: {
+        Row: {
+          created_at: string
+          created_count: number
+          errors: Json
+          id: string
+          kind: string
+          message: string
+          run_by: string | null
+          skipped_count: number
+          status: string
+          updated_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_count?: number
+          errors?: Json
+          id?: string
+          kind: string
+          message?: string
+          run_by?: string | null
+          skipped_count?: number
+          status?: string
+          updated_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_count?: number
+          errors?: Json
+          id?: string
+          kind?: string
+          message?: string
+          run_by?: string | null
+          skipped_count?: number
+          status?: string
+          updated_count?: number
+        }
+        Relationships: []
+      }
+      notion_sync_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          database_id: string
+          database_title: string
+          enabled: boolean
+          field_map: Json
+          id: string
+          kind: string
+          last_synced_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          database_id: string
+          database_title?: string
+          enabled?: boolean
+          field_map?: Json
+          id?: string
+          kind: string
+          last_synced_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          database_id?: string
+          database_title?: string
+          enabled?: boolean
+          field_map?: Json
+          id?: string
+          kind?: string
+          last_synced_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       positions: {
         Row: {
           created_at: string
@@ -1156,6 +1267,7 @@ export type Database = {
           hiring_manager: string
           id: string
           location_id: string | null
+          notion_page_id: string | null
           openings: number
           pay_range: string
           posting_locations: Json
@@ -1176,6 +1288,7 @@ export type Database = {
           hiring_manager?: string
           id?: string
           location_id?: string | null
+          notion_page_id?: string | null
           openings?: number
           pay_range?: string
           posting_locations?: Json
@@ -1196,6 +1309,7 @@ export type Database = {
           hiring_manager?: string
           id?: string
           location_id?: string | null
+          notion_page_id?: string | null
           openings?: number
           pay_range?: string
           posting_locations?: Json
