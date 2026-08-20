@@ -739,3 +739,7 @@
   .theme-orb:hover { filter: drop-shadow(0 0 6px currentColor); }
 }
 
+
+/* Horizontal stat rails in briefing cards */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
