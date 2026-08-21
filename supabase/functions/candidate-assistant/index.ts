@@ -432,9 +432,13 @@ serve(async (req) => {
     const locName = (id: string | null) => (locations ?? []).find((l: any) => l.id === id)?.site_name ?? "Unassigned";
     const posTitle = (id: string | null) => (positions ?? []).find((p: any) => p.id === id)?.title ?? "";
 
+    const DAY = 86400000;
+    const days = (iso: string | null) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / DAY) : null);
+
     const compact = (candidates ?? []).map((c: any) => ({
       id: c.id,
       name: c.full_name,
+      email: c.email,
       role: c.applied_role || posTitle(c.position_id) || "—",
       requisition: posTitle(c.position_id),
       office: locName(c.location_id),
@@ -450,9 +454,13 @@ serve(async (req) => {
       screening: c.screening_status,
       interview: c.interview_status,
       talent_pool: c.in_talent_pool,
+      best_fit_roles: c.best_fit_roles,
       source: c.source,
       touchpoints: c.contact_count,
+      days_since_applied: days(c.created_at),
+      days_since_contact: days(c.last_contacted_at),
     }));
+
 
     const officeList = (locations ?? []).map((l: any) => ({ location_id: l.id, name: l.site_name, region: l.region }));
 
