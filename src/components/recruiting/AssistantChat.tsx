@@ -45,6 +45,7 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   update_candidate_info: Pencil,
   set_candidate_status: Pencil,
   assign_candidate_to_position: ArrowRight,
+  apply_to_additional_position: Briefcase,
   bulk_move_stage: Users,
   create_position: Briefcase,
   update_position: Pencil,
