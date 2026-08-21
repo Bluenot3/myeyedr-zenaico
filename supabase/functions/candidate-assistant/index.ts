@@ -312,7 +312,46 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "draft_email",
+      description:
+        "Write a ready-to-send email on the admin's behalf (outreach, interview invite, offer congratulations, decline, talent-pool re-engagement, or a note to a hiring manager). The admin can edit it, then send it from their own mailbox in one click — sending is also logged as a touchpoint on the candidate. Always write the full subject and body; never leave placeholders like [Name].",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string", description: "Include when the email is about/to a candidate so the send is logged as a touchpoint" },
+          candidate_name: { type: "string" },
+          to: { type: "string", description: "Recipient email address if known" },
+          purpose: { type: "string", description: "Short label, e.g. 'Phone screen invite'" },
+          subject: { type: "string" },
+          body: { type: "string", description: "Full email body, plain text with line breaks, signed 'Alexander Leschik, MyEyeDr'" },
+        },
+        required: ["subject", "body"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "log_contact",
+      description: "Propose logging a touchpoint (call, email, text) on a candidate so outreach history stays accurate.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          method: { type: "string", description: "email, phone, text, or in_person" },
+          outcome: { type: "string", description: "e.g. connected, left_voicemail, no_answer, sent" },
+          notes: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "method"],
+      },
+    },
+  },
 ];
+
 
 const ACTION_LABEL: Record<string, (a: any) => string> = {
   move_stage: (a) => `Move ${a.candidate_name} to “${a.stage}”`,
