@@ -371,7 +371,10 @@ const ACTION_LABEL: Record<string, (a: any) => string> = {
   delete_position: (a) => `Delete requisition: ${a.position_title}`,
   create_job_template: (a) => `Save “${a.title}” to the Job Library`,
   schedule_interview: (a) => `Schedule ${a.event_type || "interview"} for ${a.candidate_name}`,
+  draft_email: (a) => `${a.purpose || "Email draft"}${a.candidate_name ? ` · ${a.candidate_name}` : ""}`,
+  log_contact: (a) => `Log ${a.method || "contact"} with ${a.candidate_name}`,
 };
+
 
 
 serve(async (req) => {
