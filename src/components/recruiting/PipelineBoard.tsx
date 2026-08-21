@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, CheckSquare, Zap, ChevronDown, Sparkles, Users, Lock, Briefcase, MapPin, Eye, EyeOff } from "lucide-react";
 import { useCandidates, useLocations, usePositions, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
 import { useAuth } from "@/hooks/useAuth";
-import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
+import { STAGES, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
 import CandidateTable from "./CandidateTable";
@@ -11,7 +11,6 @@ import BulkResumeUpload from "./BulkResumeUpload";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 
 type ViewMode = "board" | "list" | "table";
 
@@ -233,7 +232,7 @@ export default function PipelineBoard() {
               </div>
               <div className="space-y-2 min-h-[60px]">
                 {byStage[s.key].map((c) => (
-                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable={!isClosedPipeline} selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
                 ))}
                 {byStage[s.key].length === 0 && <div className="rounded-lg border border-dashed border-border/60 py-6 text-center text-[10px] text-muted-foreground">Empty</div>}
               </div>
@@ -251,7 +250,7 @@ export default function PipelineBoard() {
             </div>
           )}
           {filtered.sort((a, b) => stageIndex(a.stage) - stageIndex(b.stage)).map((c) => (
-            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable={!isClosedPipeline} selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
           ))}
         </div>
       )}
