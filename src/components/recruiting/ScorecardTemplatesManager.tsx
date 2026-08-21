@@ -3,12 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Copy, Trash2, Pencil, X, ClipboardCheck, Phone, Sparkles } from "lucide-react";
+import { Plus, Copy, Trash2, Pencil, X, ClipboardCheck, Phone, Sparkles, Wand2, Loader2 } from "lucide-react";
 import {
   ScorecardTemplate, Competency, TemplateKind, usePositions,
   useScorecardTemplates, useCreateScorecardTemplate, useUpdateScorecardTemplate, useDeleteScorecardTemplate,
 } from "@/hooks/useRecruiting";
 import { blankCompetency } from "@/lib/scorecard";
+import { ROLE_BLUEPRINTS, blueprintFor, buildForms, buildCompetencies } from "@/lib/evaluationBlueprints";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 type Editing = {
