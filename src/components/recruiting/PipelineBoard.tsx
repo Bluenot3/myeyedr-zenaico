@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
-import { Search, ArrowUpDown, CheckSquare, Square, Zap, ChevronDown, Sparkles, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, CheckSquare, Zap, ChevronDown, Sparkles, Users, Lock, Briefcase, MapPin, Eye, EyeOff } from "lucide-react";
 import { useCandidates, useLocations, usePositions, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
-import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
+import { useAuth } from "@/hooks/useAuth";
+import { STAGES, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
 import CandidateTable from "./CandidateTable";
@@ -10,15 +11,18 @@ import BulkResumeUpload from "./BulkResumeUpload";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 
 type ViewMode = "board" | "list" | "table";
+
+const CLOSED_STATUSES = new Set(["closed", "filled"]);
+const REQ_KEY = "cc.pipeline.req";
 
 export default function PipelineBoard() {
   const { data: candidates = [], isLoading } = useCandidates();
   const { data: locations = [] } = useLocations();
   const { data: positions = [] } = usePositions();
   const bulkUpdate = useBulkUpdateCandidates();
+  const { hasAllAccess } = useAuth();
 
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("All");
@@ -27,22 +31,39 @@ export default function PipelineBoard() {
   const [profileTab, setProfileTab] = useState<string>("match");
   const [ids, setIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<ViewMode>("board");
+  const [reqId, setReqId] = useState<string>(() => localStorage.getItem(REQ_KEY) || "all");
+  const [showClosedReqs, setShowClosedReqs] = useState(false);
+
+  useEffect(() => { localStorage.setItem(REQ_KEY, reqId); }, [reqId]);
+
+  const openReqs = useMemo(() => positions.filter((p) => !CLOSED_STATUSES.has(p.status)), [positions]);
+  const closedReqs = useMemo(() => positions.filter((p) => CLOSED_STATUSES.has(p.status)), [positions]);
+  const visibleReqs = useMemo(() => (showClosedReqs ? [...openReqs, ...closedReqs] : openReqs), [openReqs, closedReqs, showClosedReqs]);
+
+  const activeReq = useMemo(() => positions.find((p) => p.id === reqId) || null, [positions, reqId]);
+  const isClosedPipeline = !!activeReq && CLOSED_STATUSES.has(activeReq.status);
+
+  // If a selected requisition disappears (no access / deleted), fall back to all.
+  useEffect(() => {
+    if (reqId !== "all" && positions.length > 0 && !positions.some((p) => p.id === reqId)) setReqId("all");
+  }, [reqId, positions]);
+
+  // Closed pipelines are read-only — drop any pending selection.
+  useEffect(() => { if (isClosedPipeline) setIds(new Set()); }, [isClosedPipeline]);
 
   const filtered = useMemo(() => {
     return candidates.filter((c) => {
-      if (c.status === "hired" && view === "board") { /* still show in hired column */ }
       const s = !search || [c.full_name, c.applied_role, c.headline, c.email].some((f) => f.toLowerCase().includes(search.toLowerCase()));
       const r = region === "All" || c.region === region;
-      return s && r;
+      const q = reqId === "all" || c.position_id === reqId;
+      return s && r && q;
     });
-  }, [candidates, search, region, view]);
+  }, [candidates, search, region, reqId]);
 
   const regionOptions = useMemo(
     () => Array.from(new Set(candidates.map((c) => c.region).filter(Boolean))),
     [candidates]
   );
-
-
 
   const byStage = useMemo(() => {
     const map: Record<string, Candidate[]> = {};
@@ -56,6 +77,7 @@ export default function PipelineBoard() {
 
   const toggle = (id: string) => setIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const clearSel = () => setIds(new Set());
+
 
   const bulkAdvance = async () => {
     const list = candidates.filter((c) => ids.has(c.id));
@@ -74,20 +96,81 @@ export default function PipelineBoard() {
     clearSel();
   };
 
-  const hasSel = ids.size > 0;
+  const hasSel = ids.size > 0 && !isClosedPipeline;
+  const reqCount = (id: string) => candidates.filter((c) => c.position_id === id).length;
 
   return (
     <div className="space-y-4 animate-rise">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-2xl font-bold">Candidate Pipeline</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Move applicants through each stage · click a card for the full profile & ledger.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {hasAllAccess ? "Every requisition you oversee · switch pipelines below." : "Your location's openings · switch between requisition pipelines below."}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <BulkResumeUpload />
           <AddCandidateDialog compact />
         </div>
       </div>
+
+      {/* Requisition switcher */}
+      <div className="glass-panel rounded-xl p-2.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1"><Briefcase className="h-3 w-3" /> Requisition pipelines</span>
+          {closedReqs.length > 0 && (
+            <button onClick={() => setShowClosedReqs((v) => !v)} className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+              {showClosedReqs ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+              {showClosedReqs ? "Hide" : "Show"} closed ({closedReqs.length})
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button
+            onClick={() => setReqId("all")}
+            className={`shrink-0 rounded-lg border px-3 h-9 text-xs transition-colors ${reqId === "all" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
+          >
+            All openings <span className="ml-1 opacity-70">{candidates.length}</span>
+          </button>
+          {visibleReqs.map((p) => {
+            const closed = CLOSED_STATUSES.has(p.status);
+            const active = reqId === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setReqId(p.id)}
+                title={`${p.title} · ${locName(p.location_id) || p.region || "—"}`}
+                className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${active ? (closed ? "border-muted-foreground/40 bg-muted text-foreground" : "border-emerald/40 bg-emerald/12 text-emerald") : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"} ${closed ? "opacity-80" : ""}`}
+              >
+                <span className="flex items-center gap-1.5 text-xs font-medium">
+                  {closed && <Lock className="h-3 w-3 shrink-0" />}
+                  {p.req_code && <span className="font-mono text-[9px] uppercase opacity-70">{p.req_code}</span>}
+                  <span className="truncate max-w-[150px]">{p.title}</span>
+                  <span className="opacity-70 text-[10px]">{reqCount(p.id)}</span>
+                </span>
+                <span className="flex items-center gap-1 text-[9.5px] text-muted-foreground truncate max-w-[190px]">
+                  <MapPin className="h-2.5 w-2.5 shrink-0" /> {locName(p.location_id) || p.region || "Unassigned"}
+                </span>
+              </button>
+            );
+          })}
+          {visibleReqs.length === 0 && <span className="text-[11px] text-muted-foreground px-1 py-2">No open requisitions for your locations.</span>}
+        </div>
+      </div>
+
+      {isClosedPipeline && activeReq && (
+        <div className="rounded-xl border border-muted-foreground/25 bg-muted/40 p-3 flex items-start gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background/60 border border-border">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-foreground">Pipeline closed — {activeReq.title} is {activeReq.status}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              This requisition is no longer hiring, so its pipeline is read-only. Records stay viewable for history and audit. Reopen the role in Openings to resume moving candidates.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Controls */}
       <div className="space-y-2">
@@ -106,6 +189,7 @@ export default function PipelineBoard() {
             <button onClick={() => setView("table")} className={`px-3 h-9 text-xs ${view === "table" ? "bg-emerald/15 text-emerald" : "text-muted-foreground"}`}>Table</button>
           </div>
           {hasSel && (
+
             <div className="flex items-center gap-2 ml-auto">
               <span className="text-xs text-muted-foreground">{ids.size} selected</span>
               <Button size="sm" variant="outline" className="h-8 gap-1 text-xs" onClick={bulkAdvance}><Zap className="h-3 w-3" /> Advance</Button>
@@ -148,7 +232,7 @@ export default function PipelineBoard() {
               </div>
               <div className="space-y-2 min-h-[60px]">
                 {byStage[s.key].map((c) => (
-                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+                  <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable={!isClosedPipeline} selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
                 ))}
                 {byStage[s.key].length === 0 && <div className="rounded-lg border border-dashed border-border/60 py-6 text-center text-[10px] text-muted-foreground">Empty</div>}
               </div>
@@ -166,7 +250,7 @@ export default function PipelineBoard() {
             </div>
           )}
           {filtered.sort((a, b) => stageIndex(a.stage) - stageIndex(b.stage)).map((c) => (
-            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
+            <CandidateCard key={c.id} candidate={c} locationName={locName(c.location_id)} onOpen={() => openCandidate(c)} onEvaluate={() => openCandidate(c, "scorecards")} selectable={!isClosedPipeline} selected={ids.has(c.id)} onToggleSelect={() => toggle(c.id)} />
           ))}
         </div>
       )}
