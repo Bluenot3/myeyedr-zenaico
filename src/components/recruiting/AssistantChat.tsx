@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
+import EmailDraftCard from "./EmailDraftCard";
 import {
   Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
   Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
+  Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,8 +14,10 @@ import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
   useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
+  useLogContact,
 } from "@/hooks/useRecruiting";
 import { stageProgress } from "@/lib/recruiting";
+
 
 interface ProposedAction {
   id: string;
