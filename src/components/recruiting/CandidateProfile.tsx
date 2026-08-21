@@ -358,6 +358,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
           {/* Application & activity history */}
           <TabsContent value="history" className="mt-4 space-y-4">
+            <CandidateApplications candidate={candidate} />
             <ShareToLocation candidate={candidate} />
             <CandidateHistory candidate={candidate} />
           </TabsContent>
