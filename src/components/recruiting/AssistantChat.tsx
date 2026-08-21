@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
+import EmailDraftCard from "./EmailDraftCard";
 import {
   Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
   Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
+  Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,8 +14,10 @@ import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
   useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
+  useLogContact,
 } from "@/hooks/useRecruiting";
 import { stageProgress } from "@/lib/recruiting";
+
 
 interface ProposedAction {
   id: string;
@@ -49,13 +53,34 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   delete_position: Trash2,
   create_job_template: BookMarked,
   schedule_interview: CalendarPlus,
+  draft_email: Mail,
+  log_contact: PhoneCall,
 };
 
-const SUGGESTIONS = [
-  "Who are my strongest candidates right now?",
-  "Compare my top 3 candidates for the same role",
-  "Open a PSC requisition — attach the job description",
-  "Duplicate my Optician req to another office",
+interface Suggestion { label: string; prompt: string; tone?: string }
+
+const TONE_ICON: Record<string, typeof Sparkles> = {
+  urgent: AlertTriangle,
+  warn: AlertTriangle,
+  opportunity: TrendingUp,
+  action: Mail,
+  plan: ClipboardList,
+};
+
+const TONE_CLASS: Record<string, string> = {
+  urgent: "text-destructive",
+  warn: "text-gold",
+  opportunity: "text-emerald",
+  action: "text-cyan",
+  plan: "text-emerald",
+};
+
+const FALLBACK_SUGGESTIONS: Suggestion[] = [
+  { label: "What should I do next?", prompt: "What should I focus on right now? Give me a prioritized plan and propose the actions and emails you can handle.", tone: "plan" },
+  { label: "Who are my strongest candidates right now?", prompt: "Who are my strongest candidates right now?", tone: "opportunity" },
+  { label: "Compare my top 3 candidates for the same role", prompt: "Compare my top 3 candidates for the same role", tone: "opportunity" },
+  { label: "Open a requisition — attach the job description", prompt: "Open a new requisition from the attached job description", tone: "action" },
+
 ];
 
 export default function AssistantChat({ compact = false }: { compact?: boolean }) {
@@ -65,6 +90,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const [attachment, setAttachment] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
   const [animateIndex, setAnimateIndex] = useState<number>(-1);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(FALLBACK_SUGGESTIONS);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -83,6 +109,25 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const reassign = useReassignRequisition();
   const createTemplate = useCreateJobTemplate();
   const createEvent = useCreateEvent();
+  const logContact = useLogContact();
+
+  /* Pull live "what needs you now" starters — deterministic, no AI spend. */
+  useEffect(() => {
+    let cancelled = false;
+    supabase.functions
+      .invoke("candidate-assistant", { body: { mode: "briefing" } })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const s = Array.isArray(data?.suggestions) ? (data.suggestions as Suggestion[]) : [];
+        if (s.length) setSuggestions(s.slice(0, 5));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+
 
 
   useEffect(() => {
@@ -307,9 +352,22 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           } as any);
           break;
         }
+        case "log_contact": {
+          if (!a.args.candidate_id) throw new Error("Candidate not found");
+          await logContact.mutateAsync({
+            candidate_id: a.args.candidate_id,
+            method: a.args.method || "email",
+            outcome: a.args.outcome || "sent",
+            notes: a.args.notes || "",
+            contacted_by: "Talent Assistant",
+            contact_count: cand?.contact_count || 0,
+          });
+          break;
+        }
 
         default:
           throw new Error("Unknown action");
+
       }
       setStatuses((s) => ({ ...s, [a.id]: "done" }));
       toast.success(`Done: ${a.label}`);
@@ -339,20 +397,25 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             <div>
               <p className="font-display font-semibold text-foreground">Talent Assistant</p>
               <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                Ask about your candidates, compare them, or tell me to act — I'll propose the change and you confirm it.
+                Ask, compare, or tell me to act — I'll draft the emails, propose the moves, and you confirm.
               </p>
             </div>
             <div className="flex flex-col gap-1.5 w-full max-w-sm">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="text-left text-[11px] rounded-lg border border-border/70 bg-background/40 px-3 py-2 hover:border-emerald/40 hover:bg-emerald/5 transition-colors inline-flex items-center gap-2"
-                >
-                  <Sparkles className="h-3 w-3 text-emerald shrink-0" /> {s}
-                </button>
-              ))}
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80 text-left px-1">Needs you now</p>
+              {suggestions.map((s) => {
+                const Icon = TONE_ICON[s.tone || "plan"] || Sparkles;
+                return (
+                  <button
+                    key={s.label}
+                    onClick={() => send(s.prompt)}
+                    className="text-left text-[11px] rounded-lg border border-border/70 bg-background/40 px-3 py-2 hover:border-emerald/40 hover:bg-emerald/5 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Icon className={`h-3 w-3 shrink-0 ${TONE_CLASS[s.tone || "plan"] || "text-emerald"}`} /> {s.label}
+                  </button>
+                );
+              })}
             </div>
+
           </div>
         )}
 
@@ -388,8 +451,35 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
                   {m.actions!.map((a) => {
                     const st = statuses[a.id] || "idle";
                     if (st === "dismissed") return null;
+                    if (a.type === "draft_email") {
+                      const c = candidates.find((x) => x.id === a.args.candidate_id);
+                      return (
+                        <EmailDraftCard
+                          key={a.id}
+                          draft={{
+                            to: a.args.to || c?.email || "",
+                            subject: a.args.subject || "",
+                            body: a.args.body || "",
+                            purpose: a.args.purpose,
+                            candidate_name: a.args.candidate_name || c?.full_name,
+                          }}
+                          onSent={(final) => {
+                            if (!a.args.candidate_id) return;
+                            logContact.mutate({
+                              candidate_id: a.args.candidate_id,
+                              method: "email",
+                              outcome: "sent",
+                              notes: final.subject,
+                              contacted_by: "Talent Assistant",
+                              contact_count: c?.contact_count || 0,
+                            });
+                          }}
+                        />
+                      );
+                    }
                     const Icon = ACTION_ICON[a.type] || ArrowRight;
                     return (
+
                       <div key={a.id} className="rounded-xl border border-emerald/25 bg-emerald/[0.06] p-2.5">
                         <div className="flex items-center gap-2">
                           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/25 text-emerald">

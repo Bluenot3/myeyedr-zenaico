@@ -312,7 +312,46 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "draft_email",
+      description:
+        "Write a ready-to-send email on the admin's behalf (outreach, interview invite, offer congratulations, decline, talent-pool re-engagement, or a note to a hiring manager). The admin can edit it, then send it from their own mailbox in one click — sending is also logged as a touchpoint on the candidate. Always write the full subject and body; never leave placeholders like [Name].",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string", description: "Include when the email is about/to a candidate so the send is logged as a touchpoint" },
+          candidate_name: { type: "string" },
+          to: { type: "string", description: "Recipient email address if known" },
+          purpose: { type: "string", description: "Short label, e.g. 'Phone screen invite'" },
+          subject: { type: "string" },
+          body: { type: "string", description: "Full email body, plain text with line breaks, signed 'Alexander Leschik, MyEyeDr'" },
+        },
+        required: ["subject", "body"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "log_contact",
+      description: "Propose logging a touchpoint (call, email, text) on a candidate so outreach history stays accurate.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          method: { type: "string", description: "email, phone, text, or in_person" },
+          outcome: { type: "string", description: "e.g. connected, left_voicemail, no_answer, sent" },
+          notes: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "method"],
+      },
+    },
+  },
 ];
+
 
 const ACTION_LABEL: Record<string, (a: any) => string> = {
   move_stage: (a) => `Move ${a.candidate_name} to “${a.stage}”`,
@@ -332,7 +371,10 @@ const ACTION_LABEL: Record<string, (a: any) => string> = {
   delete_position: (a) => `Delete requisition: ${a.position_title}`,
   create_job_template: (a) => `Save “${a.title}” to the Job Library`,
   schedule_interview: (a) => `Schedule ${a.event_type || "interview"} for ${a.candidate_name}`,
+  draft_email: (a) => `${a.purpose || "Email draft"}${a.candidate_name ? ` · ${a.candidate_name}` : ""}`,
+  log_contact: (a) => `Log ${a.method || "contact"} with ${a.candidate_name}`,
 };
+
 
 
 serve(async (req) => {
@@ -363,8 +405,10 @@ serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
-    if (!Array.isArray(messages)) {
+    const body = await req.json().catch(() => ({}));
+    const mode: string = body?.mode === "briefing" ? "briefing" : "chat";
+    const messages = body?.messages;
+    if (mode === "chat" && !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -373,23 +417,28 @@ serve(async (req) => {
     // Load only what the caller can access (RLS-scoped).
     const [{ data: candidates }, { data: positions }, { data: locations }, { data: goldens }, { data: templates }] = await Promise.all([
       userClient.from("candidates").select(
-        "id, full_name, applied_role, best_fit_roles, location_id, position_id, stage, status, score, rating, years_experience, current_employer, tags, headline, resume_summary, screening_status, interview_status, in_talent_pool, source, contact_count",
+        "id, full_name, email, phone, applied_role, best_fit_roles, location_id, position_id, stage, status, score, rating, years_experience, current_employer, tags, headline, resume_summary, screening_status, interview_status, in_talent_pool, talent_pool_reason, source, contact_count, last_contacted_at, created_at, updated_at",
       ).order("score", { ascending: false }).limit(250),
       userClient.from("positions").select(
-        "id, title, location_id, region, status, req_code, openings, department, employment_type, priority, pay_range, hiring_manager, description, requirements",
+        "id, title, location_id, region, status, req_code, openings, department, employment_type, priority, pay_range, hiring_manager, description, requirements, created_at",
       ),
-      userClient.from("locations").select("id, site_name, region"),
+      userClient.from("locations").select("id, site_name, region, manager, manager_email"),
       userClient.from("golden_profiles").select("position_id, name, is_active, must_have_skills, ideal_years_experience"),
       userClient.from("job_templates").select("id, title, department, employment_type, pay_range"),
     ]);
 
 
+
     const locName = (id: string | null) => (locations ?? []).find((l: any) => l.id === id)?.site_name ?? "Unassigned";
     const posTitle = (id: string | null) => (positions ?? []).find((p: any) => p.id === id)?.title ?? "";
+
+    const DAY = 86400000;
+    const days = (iso: string | null) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / DAY) : null);
 
     const compact = (candidates ?? []).map((c: any) => ({
       id: c.id,
       name: c.full_name,
+      email: c.email,
       role: c.applied_role || posTitle(c.position_id) || "—",
       requisition: posTitle(c.position_id),
       office: locName(c.location_id),
@@ -405,9 +454,13 @@ serve(async (req) => {
       screening: c.screening_status,
       interview: c.interview_status,
       talent_pool: c.in_talent_pool,
+      best_fit_roles: c.best_fit_roles,
       source: c.source,
       touchpoints: c.contact_count,
+      days_since_applied: days(c.created_at),
+      days_since_contact: days(c.last_contacted_at),
     }));
+
 
     const officeList = (locations ?? []).map((l: any) => ({ location_id: l.id, name: l.site_name, region: l.region }));
 
@@ -438,6 +491,125 @@ serve(async (req) => {
       .filter((g: any) => g.is_active)
       .map((g: any) => ({ requisition: posTitle(g.position_id), ideal: g.name, must_have: g.must_have_skills }));
 
+    /* ---------- Proactive intelligence: what needs the admin today ---------- */
+    const openReqs = reqList.filter((r) => r.status === "open");
+    const agingReqs = openReqs
+      .map((r) => {
+        const src = (positions ?? []).find((p: any) => p.id === r.position_id);
+        return { ...r, age_days: days(src?.created_at) ?? 0 };
+      })
+      .filter((r) => r.age_days >= 14)
+      .sort((a, b) => b.age_days - a.age_days)
+      .slice(0, 8);
+
+    const starvedReqs = openReqs
+      .filter((r) => r.applicants === 0 || r.applicants < (r.openings || 1))
+      .map((r) => ({ position_id: r.position_id, title: r.title, office: r.office, applicants: r.applicants, openings: r.openings }))
+      .slice(0, 8);
+
+    const activeCands = compact.filter((c) => c.status === "active" && !c.talent_pool);
+
+    const goingCold = activeCands
+      .filter((c) => (c.days_since_contact ?? c.days_since_applied ?? 0) >= 5)
+      .sort((a, b) => (b.days_since_contact ?? b.days_since_applied ?? 0) - (a.days_since_contact ?? a.days_since_applied ?? 0))
+      .slice(0, 12)
+      .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role, stage: c.stage, days_quiet: c.days_since_contact ?? c.days_since_applied, score: c.general_score }));
+
+    const neverContacted = activeCands
+      .filter((c) => !c.touchpoints)
+      .sort((a, b) => (b.general_score || 0) - (a.general_score || 0))
+      .slice(0, 12)
+      .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role, stage: c.stage, score: c.general_score }));
+
+    const norm = (s: unknown) => String(s ?? "").toLowerCase();
+    const poolCands = compact.filter((c) => c.talent_pool);
+    const poolMatches = openReqs
+      .map((r) => {
+        const words = norm(r.title).split(/[^a-z]+/).filter((w) => w.length > 3);
+        const matches = poolCands
+          .filter((c) => {
+            const hay = `${norm(c.role)} ${norm(c.best_fit_roles)} ${norm(c.headline)} ${(c.tags || []).map(norm).join(" ")}`;
+            return words.some((w) => hay.includes(w));
+          })
+          .sort((a, b) => (b.general_score || 0) - (a.general_score || 0))
+          .slice(0, 4)
+          .map((c) => ({ id: c.id, name: c.name, email: c.email, score: c.general_score, prior_role: c.role }));
+        return matches.length ? { position_id: r.position_id, title: r.title, office: r.office, location_id: r.location_id, pool_candidates: matches } : null;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const awaitingScorecard = activeCands
+      .filter((c) => (c.stage === "interview" || c.stage === "assessment") && c.interview !== "completed" && !c.interview_rating)
+      .slice(0, 10)
+      .map((c) => ({ id: c.id, name: c.name, role: c.role, stage: c.stage, office: c.office }));
+
+    const readyToDecide = activeCands
+      .filter((c) => ["interview", "assessment", "reference", "offer"].includes(c.stage) && (c.general_score || 0) >= 75)
+      .sort((a, b) => (b.general_score || 0) - (a.general_score || 0))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role, stage: c.stage, score: c.general_score, office: c.office }));
+
+    const intel = {
+      open_requisitions: openReqs.length,
+      aging_open_requisitions: agingReqs.map((r) => ({ position_id: r.position_id, title: r.title, office: r.office, age_days: r.age_days, applicants: r.applicants })),
+      under_supplied_requisitions: starvedReqs,
+      candidates_going_cold: goingCold,
+      never_contacted: neverContacted,
+      talent_pool_matches_for_open_reqs: poolMatches,
+      awaiting_scorecard: awaitingScorecard,
+      ready_for_a_decision: readyToDecide,
+      offices: officeList.length,
+    };
+
+    // Deterministic starter prompts for the admin's home screen — no AI spend.
+    const suggestions: { label: string; prompt: string; tone: string }[] = [];
+    if (intel.aging_open_requisitions.length) {
+      const r = intel.aging_open_requisitions[0];
+      suggestions.push({
+        tone: "urgent",
+        label: `${r.title} · ${r.office} open ${r.age_days}d`,
+        prompt: `The ${r.title} requisition at ${r.office} has been open ${r.age_days} days with ${r.applicants} applicants. Give me a recovery plan and propose the actions to fix it.`,
+      });
+    }
+    if (poolMatches.length) {
+      const m: any = poolMatches[0];
+      suggestions.push({
+        tone: "opportunity",
+        label: `${m.pool_candidates.length} talent-pool fits for ${m.title}`,
+        prompt: `Pull the best talent-pool candidates for ${m.title} at ${m.office}, apply them to that requisition, and draft re-engagement emails for each.`,
+      });
+    }
+    if (neverContacted.length) {
+      suggestions.push({
+        tone: "action",
+        label: `${neverContacted.length} strong candidates never contacted`,
+        prompt: `List my highest-scoring candidates who have never been contacted, then draft a first-outreach email for the top three.`,
+      });
+    }
+    if (goingCold.length) {
+      suggestions.push({
+        tone: "warn",
+        label: `${goingCold.length} candidates going cold`,
+        prompt: `Which candidates are going cold? Draft follow-up emails and propose the stage moves you'd make.`,
+      });
+    }
+    if (readyToDecide.length) {
+      suggestions.push({
+        tone: "opportunity",
+        label: `${readyToDecide.length} ready for a decision`,
+        prompt: `Who is ready for a hire/pass decision right now? Compare them and propose the actions plus the emails to send.`,
+      });
+    }
+    suggestions.push({ tone: "plan", label: "Build my hiring plan for this week", prompt: "Build my hiring plan for this week: what to do, in what order, and propose every action and email you can handle for me." });
+
+    if (mode === "briefing") {
+      return new Response(JSON.stringify({ intel, suggestions, candidateCount: compact.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const system = `You are the MyEyeDr Talent Assistant — an expert recruiting analyst AND operations chief of staff for an admin. You reason about candidates and requisitions, and you drive the system on the admin's behalf.
 You can ONLY use the data provided below. It already reflects exactly what this user is permitted to see; never invent candidates, requisitions, scores, or facts not present. If asked about something outside the data, say you don't have that information.
 
@@ -449,6 +621,21 @@ WHAT YOU CAN DO:
 - Candidates: move stage (single or bulk), hire, pool, archive/reject, set status, add notes, share with another office, edit their details, apply/transfer them to a requisition, and schedule interviews or phone screens.
 - Requisitions: create new ones (including from an attached or pasted job description), edit any field including the full description and requirements, open / hold / fill / close them, duplicate them into other offices, and delete them.
 - Job library: save a reusable job description.
+- Communication: write finished emails with draft_email and log touchpoints with log_contact.
+
+BE PROACTIVE (this is what the admin values most):
+- The "Attention now" block below is pre-computed from live data. Use it. When the admin asks something open-ended ("what should I do", "what's next", "any updates"), lead with the 2-4 highest-leverage items from it and immediately propose the tool calls that resolve them.
+- Even when answering a narrow question, close with a short "Recommended next steps" list — and propose the tools for the ones you can handle.
+- Requisitions open 14+ days, requisitions with fewer applicants than openings, candidates going cold, strong candidates never contacted, interviews without a scorecard, and top candidates parked mid-pipeline are all things you should raise unprompted.
+- When a stale open requisition has matching talent-pool candidates, propose applying them to it (apply_to_requisition) AND draft each re-engagement email in the same reply.
+
+EMAIL DRAFTING (draft_email):
+- Write the complete, ready-to-send email: real subject line, warm professional MyEyeDr tone, specific to the candidate, role and office. Never leave bracketed placeholders — use the actual names and details from the data.
+- Keep it tight (under ~150 words), one clear ask, and sign off as "Alexander Leschik\\nMyEyeDr".
+- Always pass candidate_id and the candidate's email from the dataset when the email is to a candidate, so the send is logged as a touchpoint automatically.
+- The admin reviews and edits your draft, then sends it from their own MyEyeDr mailbox in one click. Say "I've drafted it — review and send below", never "I sent it".
+- Batch outreach is fine: propose one draft_email per recipient.
+
 
 REQUISITION AUTHORING:
 - When the user attaches or pastes a job description, rewrite it into clean, professional prose for "description" and a concise must-have list for "requirements" — do not paste raw text with artifacts. Never invent a pay range that isn't given.
@@ -475,6 +662,10 @@ CRITICAL rules for actions:
 
 Valid pipeline stages: ${STAGE_KEYS.join(", ")}.
 Offices (use the exact location_id): ${JSON.stringify(officeList)}
+
+ATTENTION NOW — pre-computed from live data, use this to be proactive:
+${JSON.stringify(intel)}
+
 
 Requisitions visible to this user (${reqList.length}):
 ${JSON.stringify(reqList)}
