@@ -491,6 +491,125 @@ serve(async (req) => {
       .filter((g: any) => g.is_active)
       .map((g: any) => ({ requisition: posTitle(g.position_id), ideal: g.name, must_have: g.must_have_skills }));
 
+    /* ---------- Proactive intelligence: what needs the admin today ---------- */
+    const openReqs = reqList.filter((r) => r.status === "open");
+    const agingReqs = openReqs
+      .map((r) => {
+        const src = (positions ?? []).find((p: any) => p.id === r.position_id);
+        return { ...r, age_days: days(src?.created_at) ?? 0 };
+      })
+      .filter((r) => r.age_days >= 14)
+      .sort((a, b) => b.age_days - a.age_days)
+      .slice(0, 8);
+
+    const starvedReqs = openReqs
+      .filter((r) => r.applicants === 0 || r.applicants < (r.openings || 1))
+      .map((r) => ({ position_id: r.position_id, title: r.title, office: r.office, applicants: r.applicants, openings: r.openings }))
+      .slice(0, 8);
+
+    const activeCands = compact.filter((c) => c.status === "active" && !c.talent_pool);
+
+    const goingCold = activeCands
+      .filter((c) => (c.days_since_contact ?? c.days_since_applied ?? 0) >= 5)
+      .sort((a, b) => (b.days_since_contact ?? b.days_since_applied ?? 0) - (a.days_since_contact ?? a.days_since_applied ?? 0))
+      .slice(0, 12)
+      .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role, stage: c.stage, days_quiet: c.days_since_contact ?? c.days_since_applied, score: c.general_score }));
+
+    const neverContacted = activeCands
+      .filter((c) => !c.touchpoints)
+      .sort((a, b) => (b.general_score || 0) - (a.general_score || 0))
+      .slice(0, 12)
+      .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role, stage: c.stage, score: c.general_score }));
+
+    const norm = (s: unknown) => String(s ?? "").toLowerCase();
+    const poolCands = compact.filter((c) => c.talent_pool);
+    const poolMatches = openReqs
+      .map((r) => {
+        const words = norm(r.title).split(/[^a-z]+/).filter((w) => w.length > 3);
+        const matches = poolCands
+          .filter((c) => {
+            const hay = `${norm(c.role)} ${norm(c.best_fit_roles)} ${norm(c.headline)} ${(c.tags || []).map(norm).join(" ")}`;
+            return words.some((w) => hay.includes(w));
+          })
+          .sort((a, b) => (b.general_score || 0) - (a.general_score || 0))
+          .slice(0, 4)
+          .map((c) => ({ id: c.id, name: c.name, email: c.email, score: c.general_score, prior_role: c.role }));
+        return matches.length ? { position_id: r.position_id, title: r.title, office: r.office, location_id: r.location_id, pool_candidates: matches } : null;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const awaitingScorecard = activeCands
+      .filter((c) => (c.stage === "interview" || c.stage === "assessment") && c.interview !== "completed" && !c.interview_rating)
+      .slice(0, 10)
+      .map((c) => ({ id: c.id, name: c.name, role: c.role, stage: c.stage, office: c.office }));
+
+    const readyToDecide = activeCands
+      .filter((c) => ["interview", "assessment", "reference", "offer"].includes(c.stage) && (c.general_score || 0) >= 75)
+      .sort((a, b) => (b.general_score || 0) - (a.general_score || 0))
+      .slice(0, 8)
+      .map((c) => ({ id: c.id, name: c.name, email: c.email, role: c.role, stage: c.stage, score: c.general_score, office: c.office }));
+
+    const intel = {
+      open_requisitions: openReqs.length,
+      aging_open_requisitions: agingReqs.map((r) => ({ position_id: r.position_id, title: r.title, office: r.office, age_days: r.age_days, applicants: r.applicants })),
+      under_supplied_requisitions: starvedReqs,
+      candidates_going_cold: goingCold,
+      never_contacted: neverContacted,
+      talent_pool_matches_for_open_reqs: poolMatches,
+      awaiting_scorecard: awaitingScorecard,
+      ready_for_a_decision: readyToDecide,
+      offices: officeList.length,
+    };
+
+    // Deterministic starter prompts for the admin's home screen — no AI spend.
+    const suggestions: { label: string; prompt: string; tone: string }[] = [];
+    if (intel.aging_open_requisitions.length) {
+      const r = intel.aging_open_requisitions[0];
+      suggestions.push({
+        tone: "urgent",
+        label: `${r.title} · ${r.office} open ${r.age_days}d`,
+        prompt: `The ${r.title} requisition at ${r.office} has been open ${r.age_days} days with ${r.applicants} applicants. Give me a recovery plan and propose the actions to fix it.`,
+      });
+    }
+    if (poolMatches.length) {
+      const m: any = poolMatches[0];
+      suggestions.push({
+        tone: "opportunity",
+        label: `${m.pool_candidates.length} talent-pool fits for ${m.title}`,
+        prompt: `Pull the best talent-pool candidates for ${m.title} at ${m.office}, apply them to that requisition, and draft re-engagement emails for each.`,
+      });
+    }
+    if (neverContacted.length) {
+      suggestions.push({
+        tone: "action",
+        label: `${neverContacted.length} strong candidates never contacted`,
+        prompt: `List my highest-scoring candidates who have never been contacted, then draft a first-outreach email for the top three.`,
+      });
+    }
+    if (goingCold.length) {
+      suggestions.push({
+        tone: "warn",
+        label: `${goingCold.length} candidates going cold`,
+        prompt: `Which candidates are going cold? Draft follow-up emails and propose the stage moves you'd make.`,
+      });
+    }
+    if (readyToDecide.length) {
+      suggestions.push({
+        tone: "opportunity",
+        label: `${readyToDecide.length} ready for a decision`,
+        prompt: `Who is ready for a hire/pass decision right now? Compare them and propose the actions plus the emails to send.`,
+      });
+    }
+    suggestions.push({ tone: "plan", label: "Build my hiring plan for this week", prompt: "Build my hiring plan for this week: what to do, in what order, and propose every action and email you can handle for me." });
+
+    if (mode === "briefing") {
+      return new Response(JSON.stringify({ intel, suggestions, candidateCount: compact.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const system = `You are the MyEyeDr Talent Assistant — an expert recruiting analyst AND operations chief of staff for an admin. You reason about candidates and requisitions, and you drive the system on the admin's behalf.
 You can ONLY use the data provided below. It already reflects exactly what this user is permitted to see; never invent candidates, requisitions, scores, or facts not present. If asked about something outside the data, say you don't have that information.
 
