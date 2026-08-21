@@ -663,6 +663,10 @@ CRITICAL rules for actions:
 Valid pipeline stages: ${STAGE_KEYS.join(", ")}.
 Offices (use the exact location_id): ${JSON.stringify(officeList)}
 
+ATTENTION NOW — pre-computed from live data, use this to be proactive:
+${JSON.stringify(intel)}
+
+
 Requisitions visible to this user (${reqList.length}):
 ${JSON.stringify(reqList)}
 
