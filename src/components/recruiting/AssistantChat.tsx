@@ -14,7 +14,7 @@ import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
   useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
-  useLogContact,
+  useLogContact, useCreateApplication,
 } from "@/hooks/useRecruiting";
 import { stageProgress } from "@/lib/recruiting";
 
