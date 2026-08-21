@@ -451,8 +451,35 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
                   {m.actions!.map((a) => {
                     const st = statuses[a.id] || "idle";
                     if (st === "dismissed") return null;
+                    if (a.type === "draft_email") {
+                      const c = candidates.find((x) => x.id === a.args.candidate_id);
+                      return (
+                        <EmailDraftCard
+                          key={a.id}
+                          draft={{
+                            to: a.args.to || c?.email || "",
+                            subject: a.args.subject || "",
+                            body: a.args.body || "",
+                            purpose: a.args.purpose,
+                            candidate_name: a.args.candidate_name || c?.full_name,
+                          }}
+                          onSent={(final) => {
+                            if (!a.args.candidate_id) return;
+                            logContact.mutate({
+                              candidate_id: a.args.candidate_id,
+                              method: "email",
+                              outcome: "sent",
+                              notes: final.subject,
+                              contacted_by: "Talent Assistant",
+                              contact_count: c?.contact_count || 0,
+                            });
+                          }}
+                        />
+                      );
+                    }
                     const Icon = ACTION_ICON[a.type] || ArrowRight;
                     return (
+
                       <div key={a.id} className="rounded-xl border border-emerald/25 bg-emerald/[0.06] p-2.5">
                         <div className="flex items-center gap-2">
                           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/25 text-emerald">
