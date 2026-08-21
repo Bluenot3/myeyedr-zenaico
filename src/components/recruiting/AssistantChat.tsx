@@ -110,6 +110,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const createTemplate = useCreateJobTemplate();
   const createEvent = useCreateEvent();
   const logContact = useLogContact();
+  const createApplication = useCreateApplication();
 
   /* Pull live "what needs you now" starters — deterministic, no AI spend. */
   useEffect(() => {
