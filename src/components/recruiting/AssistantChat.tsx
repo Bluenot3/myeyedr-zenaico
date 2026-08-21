@@ -261,6 +261,21 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           });
           break;
         }
+        case "apply_to_additional_position": {
+          if (!cand) throw new Error("Candidate not found");
+          const pos = positions.find((p) => p.id === a.args.position_id);
+          if (!pos) throw new Error("Requisition not found");
+          await createApplication.mutateAsync({
+            candidate_id: cand.id,
+            position_id: pos.id,
+            location_id: a.args.location_id || pos.location_id || null,
+            source: cand.source,
+            stage: "applied",
+            is_primary: false,
+            title: `Also applied to ${pos.title}${a.args.reason ? ` — ${a.args.reason}` : ""}`,
+          });
+          break;
+        }
         case "bulk_move_stage": {
           const ids: string[] = Array.isArray(a.args.candidate_ids) ? a.args.candidate_ids : [];
           if (ids.length === 0) throw new Error("No candidates selected");
