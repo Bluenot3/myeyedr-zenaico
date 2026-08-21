@@ -397,20 +397,25 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             <div>
               <p className="font-display font-semibold text-foreground">Talent Assistant</p>
               <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                Ask about your candidates, compare them, or tell me to act — I'll propose the change and you confirm it.
+                Ask, compare, or tell me to act — I'll draft the emails, propose the moves, and you confirm.
               </p>
             </div>
             <div className="flex flex-col gap-1.5 w-full max-w-sm">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="text-left text-[11px] rounded-lg border border-border/70 bg-background/40 px-3 py-2 hover:border-emerald/40 hover:bg-emerald/5 transition-colors inline-flex items-center gap-2"
-                >
-                  <Sparkles className="h-3 w-3 text-emerald shrink-0" /> {s}
-                </button>
-              ))}
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80 text-left px-1">Needs you now</p>
+              {suggestions.map((s) => {
+                const Icon = TONE_ICON[s.tone || "plan"] || Sparkles;
+                return (
+                  <button
+                    key={s.label}
+                    onClick={() => send(s.prompt)}
+                    className="text-left text-[11px] rounded-lg border border-border/70 bg-background/40 px-3 py-2 hover:border-emerald/40 hover:bg-emerald/5 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Icon className={`h-3 w-3 shrink-0 ${TONE_CLASS[s.tone || "plan"] || "text-emerald"}`} /> {s.label}
+                  </button>
+                );
+              })}
             </div>
+
           </div>
         )}
 
