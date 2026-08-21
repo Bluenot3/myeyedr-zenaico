@@ -20,6 +20,7 @@ import EvaluationPanel from "./EvaluationPanel";
 import CandidateSignals from "./CandidateSignals";
 import OnboardingTracker from "./OnboardingTracker";
 import CandidateHistory from "./CandidateHistory";
+import CandidateApplications from "./CandidateApplications";
 import ShareToLocation from "./ShareToLocation";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
@@ -358,6 +359,7 @@ export default function CandidateProfile({ candidate, open, onOpenChange, initia
 
           {/* Application & activity history */}
           <TabsContent value="history" className="mt-4 space-y-4">
+            <CandidateApplications candidate={candidate} />
             <ShareToLocation candidate={candidate} />
             <CandidateHistory candidate={candidate} />
           </TabsContent>

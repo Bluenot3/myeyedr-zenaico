@@ -139,7 +139,7 @@ const tools = [
     type: "function",
     function: {
       name: "assign_candidate_to_position",
-      description: "Propose applying/transferring a candidate to a requisition (position) at an office. Prior applications are preserved as history.",
+      description: "Propose TRANSFERRING a candidate's primary application to a different requisition. Prior applications are preserved as history. Use apply_to_additional_position when they should stay in their current pipeline too.",
       parameters: {
         type: "object",
         properties: {
@@ -149,6 +149,26 @@ const tools = [
           position_title: { type: "string" },
           location_id: { type: "string" },
           location_name: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "position_id", "position_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "apply_to_additional_position",
+      description: "Propose ALSO applying a candidate to another open requisition, in parallel with the ones they are already in. Their existing primary application and pipeline stage are untouched. Use this whenever a candidate matches more than one opening.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          position_id: { type: "string", description: "Exact requisition id from the requisition dataset" },
+          position_title: { type: "string" },
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+          reason: { type: "string", description: "One short line on why they fit this second opening" },
         },
         required: ["candidate_id", "candidate_name", "position_id", "position_title"],
       },
@@ -362,7 +382,8 @@ const ACTION_LABEL: Record<string, (a: any) => string> = {
   share_to_location: (a) => `Share ${a.candidate_name} with ${a.location_name}`,
   update_candidate_info: (a) => `Update ${a.candidate_name}'s info`,
   set_candidate_status: (a) => `Set ${a.candidate_name}'s status to “${a.status}”`,
-  assign_candidate_to_position: (a) => `Apply ${a.candidate_name} to ${a.position_title}${a.location_name ? ` · ${a.location_name}` : ""}`,
+  assign_candidate_to_position: (a) => `Move ${a.candidate_name}'s application to ${a.position_title}${a.location_name ? ` · ${a.location_name}` : ""}`,
+  apply_to_additional_position: (a) => `Also apply ${a.candidate_name} to ${a.position_title}${a.location_name ? ` · ${a.location_name}` : ""}`,
   bulk_move_stage: (a) => `Move ${(a.candidate_ids || []).length} candidates (${a.candidate_names}) to “${a.stage}”`,
   create_position: (a) => `Open requisition: ${a.title}${a.location_name ? ` · ${a.location_name}` : ""}`,
   update_position: (a) => `Edit requisition: ${a.position_title}`,
@@ -621,16 +642,22 @@ You help with two things:
 2) TAKING ACTION — you have tools that PROPOSE changes to candidates, requisitions, the job library, and the calendar. Calling a tool never applies the change directly: the admin sees a confirmation card and approves it.
 
 WHAT YOU CAN DO:
-- Candidates: move stage (single or bulk), hire, pool, archive/reject, set status, add notes, share with another office, edit their details, apply/transfer them to a requisition, and schedule interviews or phone screens.
+- Candidates: move stage (single or bulk), hire, pool, archive/reject, set status, add notes, share with another office, edit their details, transfer their application (assign_candidate_to_position), apply them to ADDITIONAL openings in parallel (apply_to_additional_position), and schedule interviews or phone screens.
 - Requisitions: create new ones (including from an attached or pasted job description), edit any field including the full description and requirements, open / hold / fill / close them, duplicate them into other offices, and delete them.
 - Job library: save a reusable job description.
 - Communication: write finished emails with draft_email and log touchpoints with log_contact.
+
+MULTI-REQUISITION MATCHING (do this unprompted):
+- A candidate can be active on several requisitions at once. Whenever you review or discuss a candidate, scan the open requisitions for other openings they fit — same role family, same or nearby office, comparable experience — and propose apply_to_additional_position with a one-line reason for each.
+- Use apply_to_additional_position (parallel) unless the admin clearly wants to MOVE them off their current requisition, which is assign_candidate_to_position.
+- Never propose an opening that is not "open", and never propose one they are already applied to.
+- When a requisition is short of applicants, work the reverse direction too: name the existing candidates from other pipelines and the talent pool who fit it, and propose applying them.
 
 BE PROACTIVE (this is what the admin values most):
 - The "Attention now" block below is pre-computed from live data. Use it. When the admin asks something open-ended ("what should I do", "what's next", "any updates"), lead with the 2-4 highest-leverage items from it and immediately propose the tool calls that resolve them.
 - Even when answering a narrow question, close with a short "Recommended next steps" list — and propose the tools for the ones you can handle.
 - Requisitions open 14+ days, requisitions with fewer applicants than openings, candidates going cold, strong candidates never contacted, interviews without a scorecard, and top candidates parked mid-pipeline are all things you should raise unprompted.
-- When a stale open requisition has matching talent-pool candidates, propose applying them to it (apply_to_requisition) AND draft each re-engagement email in the same reply.
+- When a stale open requisition has matching talent-pool candidates, propose applying them to it AND draft each re-engagement email in the same reply.
 
 EMAIL DRAFTING (draft_email):
 - Write the complete, ready-to-send email: real subject line, warm professional MyEyeDr tone, specific to the candidate, role and office. Never leave bracketed placeholders — use the actual names and details from the data.

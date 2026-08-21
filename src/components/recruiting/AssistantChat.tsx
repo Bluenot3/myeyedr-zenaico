@@ -14,7 +14,7 @@ import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
   useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
-  useLogContact,
+  useLogContact, useCreateApplication,
 } from "@/hooks/useRecruiting";
 import { stageProgress } from "@/lib/recruiting";
 
@@ -45,6 +45,7 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   update_candidate_info: Pencil,
   set_candidate_status: Pencil,
   assign_candidate_to_position: ArrowRight,
+  apply_to_additional_position: Briefcase,
   bulk_move_stage: Users,
   create_position: Briefcase,
   update_position: Pencil,
@@ -110,6 +111,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const createTemplate = useCreateJobTemplate();
   const createEvent = useCreateEvent();
   const logContact = useLogContact();
+  const createApplication = useCreateApplication();
 
   /* Pull live "what needs you now" starters — deterministic, no AI spend. */
   useEffect(() => {
@@ -258,6 +260,21 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             location_id: locId,
             region: loc?.region,
             positionTitle: pos.title,
+          });
+          break;
+        }
+        case "apply_to_additional_position": {
+          if (!cand) throw new Error("Candidate not found");
+          const pos = positions.find((p) => p.id === a.args.position_id);
+          if (!pos) throw new Error("Requisition not found");
+          await createApplication.mutateAsync({
+            candidate_id: cand.id,
+            position_id: pos.id,
+            location_id: a.args.location_id || pos.location_id || null,
+            source: cand.source,
+            stage: "applied",
+            is_primary: false,
+            title: `Also applied to ${pos.title}${a.args.reason ? ` — ${a.args.reason}` : ""}`,
           });
           break;
         }
