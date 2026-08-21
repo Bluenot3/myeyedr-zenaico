@@ -352,9 +352,22 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           } as any);
           break;
         }
+        case "log_contact": {
+          if (!a.args.candidate_id) throw new Error("Candidate not found");
+          await logContact.mutateAsync({
+            candidate_id: a.args.candidate_id,
+            method: a.args.method || "email",
+            outcome: a.args.outcome || "sent",
+            notes: a.args.notes || "",
+            contacted_by: "Talent Assistant",
+            contact_count: cand?.contact_count || 0,
+          });
+          break;
+        }
 
         default:
           throw new Error("Unknown action");
+
       }
       setStatuses((s) => ({ ...s, [a.id]: "done" }));
       toast.success(`Done: ${a.label}`);
