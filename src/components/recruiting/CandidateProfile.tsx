@@ -20,6 +20,7 @@ import EvaluationPanel from "./EvaluationPanel";
 import CandidateSignals from "./CandidateSignals";
 import OnboardingTracker from "./OnboardingTracker";
 import CandidateHistory from "./CandidateHistory";
+import CandidateApplications from "./CandidateApplications";
 import ShareToLocation from "./ShareToLocation";
 import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import {
