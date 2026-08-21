@@ -507,7 +507,10 @@ serve(async (req) => {
       .map((r) => ({ position_id: r.position_id, title: r.title, office: r.office, applicants: r.applicants, openings: r.openings }))
       .slice(0, 8);
 
-    const activeCands = compact.filter((c) => c.status === "active" && !c.talent_pool);
+    const activeCands = compact.filter(
+      (c) => c.status === "active" && !c.talent_pool && !["hired", "rejected", "withdrawn"].includes(c.stage),
+    );
+
 
     const goingCold = activeCands
       .filter((c) => (c.days_since_contact ?? c.days_since_applied ?? 0) >= 5)
