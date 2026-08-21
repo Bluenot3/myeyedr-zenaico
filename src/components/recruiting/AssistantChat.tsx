@@ -53,13 +53,34 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   delete_position: Trash2,
   create_job_template: BookMarked,
   schedule_interview: CalendarPlus,
+  draft_email: Mail,
+  log_contact: PhoneCall,
 };
 
-const SUGGESTIONS = [
-  "Who are my strongest candidates right now?",
-  "Compare my top 3 candidates for the same role",
-  "Open a PSC requisition — attach the job description",
-  "Duplicate my Optician req to another office",
+interface Suggestion { label: string; prompt: string; tone?: string }
+
+const TONE_ICON: Record<string, typeof Sparkles> = {
+  urgent: AlertTriangle,
+  warn: AlertTriangle,
+  opportunity: TrendingUp,
+  action: Mail,
+  plan: ClipboardList,
+};
+
+const TONE_CLASS: Record<string, string> = {
+  urgent: "text-destructive",
+  warn: "text-gold",
+  opportunity: "text-emerald",
+  action: "text-cyan",
+  plan: "text-emerald",
+};
+
+const FALLBACK_SUGGESTIONS: Suggestion[] = [
+  { label: "What should I do next?", prompt: "What should I focus on right now? Give me a prioritized plan and propose the actions and emails you can handle.", tone: "plan" },
+  { label: "Who are my strongest candidates right now?", prompt: "Who are my strongest candidates right now?", tone: "opportunity" },
+  { label: "Compare my top 3 candidates for the same role", prompt: "Compare my top 3 candidates for the same role", tone: "opportunity" },
+  { label: "Open a requisition — attach the job description", prompt: "Open a new requisition from the attached job description", tone: "action" },
+
 ];
 
 export default function AssistantChat({ compact = false }: { compact?: boolean }) {
