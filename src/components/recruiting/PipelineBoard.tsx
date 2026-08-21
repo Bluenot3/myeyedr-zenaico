@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { Search, ArrowUpDown, CheckSquare, Square, Zap, ChevronDown, Sparkles, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, CheckSquare, Zap, ChevronDown, Sparkles, Users, Lock, Briefcase, MapPin, Eye, EyeOff } from "lucide-react";
 import { useCandidates, useLocations, usePositions, useBulkUpdateCandidates, Candidate } from "@/hooks/useRecruiting";
+import { useAuth } from "@/hooks/useAuth";
 import { STAGES, stageMeta, stageProgress, stageIndex } from "@/lib/recruiting";
 import CandidateCard from "./CandidateCard";
 import CandidateProfile from "./CandidateProfile";
@@ -14,11 +15,15 @@ import { toast } from "sonner";
 
 type ViewMode = "board" | "list" | "table";
 
+const CLOSED_STATUSES = new Set(["closed", "filled"]);
+const REQ_KEY = "cc.pipeline.req";
+
 export default function PipelineBoard() {
   const { data: candidates = [], isLoading } = useCandidates();
   const { data: locations = [] } = useLocations();
   const { data: positions = [] } = usePositions();
   const bulkUpdate = useBulkUpdateCandidates();
+  const { hasAllAccess } = useAuth();
 
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("All");
@@ -27,22 +32,39 @@ export default function PipelineBoard() {
   const [profileTab, setProfileTab] = useState<string>("match");
   const [ids, setIds] = useState<Set<string>>(new Set());
   const [view, setView] = useState<ViewMode>("board");
+  const [reqId, setReqId] = useState<string>(() => localStorage.getItem(REQ_KEY) || "all");
+  const [showClosedReqs, setShowClosedReqs] = useState(false);
+
+  useEffect(() => { localStorage.setItem(REQ_KEY, reqId); }, [reqId]);
+
+  const openReqs = useMemo(() => positions.filter((p) => !CLOSED_STATUSES.has(p.status)), [positions]);
+  const closedReqs = useMemo(() => positions.filter((p) => CLOSED_STATUSES.has(p.status)), [positions]);
+  const visibleReqs = useMemo(() => (showClosedReqs ? [...openReqs, ...closedReqs] : openReqs), [openReqs, closedReqs, showClosedReqs]);
+
+  const activeReq = useMemo(() => positions.find((p) => p.id === reqId) || null, [positions, reqId]);
+  const isClosedPipeline = !!activeReq && CLOSED_STATUSES.has(activeReq.status);
+
+  // If a selected requisition disappears (no access / deleted), fall back to all.
+  useEffect(() => {
+    if (reqId !== "all" && positions.length > 0 && !positions.some((p) => p.id === reqId)) setReqId("all");
+  }, [reqId, positions]);
+
+  // Closed pipelines are read-only — drop any pending selection.
+  useEffect(() => { if (isClosedPipeline) setIds(new Set()); }, [isClosedPipeline]);
 
   const filtered = useMemo(() => {
     return candidates.filter((c) => {
-      if (c.status === "hired" && view === "board") { /* still show in hired column */ }
       const s = !search || [c.full_name, c.applied_role, c.headline, c.email].some((f) => f.toLowerCase().includes(search.toLowerCase()));
       const r = region === "All" || c.region === region;
-      return s && r;
+      const q = reqId === "all" || c.position_id === reqId;
+      return s && r && q;
     });
-  }, [candidates, search, region, view]);
+  }, [candidates, search, region, reqId]);
 
   const regionOptions = useMemo(
     () => Array.from(new Set(candidates.map((c) => c.region).filter(Boolean))),
     [candidates]
   );
-
-
 
   const byStage = useMemo(() => {
     const map: Record<string, Candidate[]> = {};
@@ -56,6 +78,7 @@ export default function PipelineBoard() {
 
   const toggle = (id: string) => setIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const clearSel = () => setIds(new Set());
+
 
   const bulkAdvance = async () => {
     const list = candidates.filter((c) => ids.has(c.id));
