@@ -90,6 +90,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const [attachment, setAttachment] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
   const [animateIndex, setAnimateIndex] = useState<number>(-1);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>(FALLBACK_SUGGESTIONS);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -108,6 +109,25 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const reassign = useReassignRequisition();
   const createTemplate = useCreateJobTemplate();
   const createEvent = useCreateEvent();
+  const logContact = useLogContact();
+
+  /* Pull live "what needs you now" starters — deterministic, no AI spend. */
+  useEffect(() => {
+    let cancelled = false;
+    supabase.functions
+      .invoke("candidate-assistant", { body: { mode: "briefing" } })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const s = Array.isArray(data?.suggestions) ? (data.suggestions as Suggestion[]) : [];
+        if (s.length) setSuggestions(s.slice(0, 5));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+
 
 
   useEffect(() => {
