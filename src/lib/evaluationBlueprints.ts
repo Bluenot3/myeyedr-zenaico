@@ -12,13 +12,13 @@ import type { Competency, TemplateKind } from "@/hooks/useRecruiting";
  * someone actually becomes.
  */
 
-type Rich = Omit<Competency, "weight"> & { weight?: number };
+type Rich = Partial<Competency> & { id: string };
 
 const comp = (c: Rich): Competency => ({
   weight: 10,
+  ...c,
   label: c.title || c.label || "",
   guidance: c.guidance || c.evidence || "",
-  ...c,
 } as Competency);
 
 /* ------------------------------------------------------------------ */
