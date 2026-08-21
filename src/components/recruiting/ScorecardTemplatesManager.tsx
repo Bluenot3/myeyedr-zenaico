@@ -96,11 +96,76 @@ export default function ScorecardTemplatesManager() {
     setOpen(false);
   };
 
+  /* ---- Position-specific form generator ---- */
+  const [genOpen, setGenOpen] = useState(false);
+  const [genBp, setGenBp] = useState(ROLE_BLUEPRINTS[0].key);
+  const [genPos, setGenPos] = useState("");
+  const [genRole, setGenRole] = useState("");
+  const [genBusy, setGenBusy] = useState(false);
+
+  const openGenerator = () => {
+    setGenBp(ROLE_BLUEPRINTS[0].key);
+    setGenPos("");
+    setGenRole("");
+    setGenOpen(true);
+  };
+
+  const pickPosition = (id: string) => {
+    setGenPos(id);
+    const p = positions.find((x) => x.id === id);
+    if (!p) return;
+    const bp = blueprintFor(p.title);
+    if (bp) setGenBp(bp.key);
+    setGenRole(p.title);
+  };
+
+  const generate = async () => {
+    const bp = ROLE_BLUEPRINTS.find((b) => b.key === genBp);
+    if (!bp) return;
+    setGenBusy(true);
+    try {
+      const forms = buildForms(bp, genRole || undefined);
+      let made = 0;
+      let skipped = 0;
+      for (const f of forms) {
+        const dupe = templates.some(
+          (t) => t.name.toLowerCase() === f.name.toLowerCase() && (t.position_id || "") === (genPos || ""),
+        );
+        if (dupe) { skipped++; continue; }
+        await createT.mutateAsync({
+          name: f.name,
+          role: f.role,
+          position_id: genPos || null,
+          description: f.description,
+          kind: f.kind,
+          competencies: f.competencies,
+          is_default: false,
+          created_by: profile?.full_name || profile?.email?.split("@")[0] || "",
+        } as any);
+        made++;
+      }
+      toast.success(
+        made ? `Created ${made} form${made === 1 ? "" : "s"}${skipped ? ` · ${skipped} already existed` : ""}`
+             : "Those forms already exist for this position",
+      );
+      setGenOpen(false);
+    } catch (e: any) {
+      toast.error("Could not generate forms: " + (e?.message || "unknown error"));
+    } finally {
+      setGenBusy(false);
+    }
+  };
+
+  const activeBp = ROLE_BLUEPRINTS.find((b) => b.key === genBp);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <p className="text-[11px] text-muted-foreground">Interview & phone-screen forms plus quick scorecards. Edit, duplicate, and reuse across positions.</p>
+        <p className="text-[11px] text-muted-foreground">Interview & phone-screen forms plus quick scorecards. Same structure for every position — position-specific questions plus a shared work-ethic, reliability and teamwork block.</p>
         <div className="flex items-center gap-1.5">
+          <Button size="sm" variant="outline" onClick={openGenerator} className="gap-1.5">
+            <Wand2 className="h-4 w-4" /> Generate for a position
+          </Button>
           <Button size="sm" variant="outline" onClick={() => openNew("phone_screen")} className="gap-1.5">
             <Phone className="h-4 w-4" /> Phone Screen
           </Button>
@@ -109,6 +174,51 @@ export default function ScorecardTemplatesManager() {
           </Button>
         </div>
       </div>
+
+      {/* Generator dialog */}
+      <Dialog open={genOpen} onOpenChange={setGenOpen}>
+        <DialogContent className="sm:max-w-lg glass-panel max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display text-xl">Generate position forms</DialogTitle></DialogHeader>
+          <p className="text-[11px] text-muted-foreground">
+            Creates a matched pair — phone screen + interview evaluation — using the same proven structure, with questions written for this position plus the work ethic, reliability, teamwork, coachability and integrity block.
+          </p>
+          <div className="space-y-3 mt-1">
+            <div>
+              <Label className="text-[10px]">Tie to an opening (optional)</Label>
+              <select value={genPos} onChange={(e) => pickPosition(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-2 text-sm mt-1">
+                <option value="">— generic (reusable across offices) —</option>
+                {positions.map((p) => <option key={p.id} value={p.id}>{p.title}{p.req_code ? ` · ${p.req_code}` : ""}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label className="text-[10px]">Position blueprint</Label>
+              <select value={genBp} onChange={(e) => setGenBp(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-2 text-sm mt-1">
+                {ROLE_BLUEPRINTS.map((b) => <option key={b.key} value={b.key}>{b.role}</option>)}
+              </select>
+              {activeBp && <p className="text-[10px] text-muted-foreground mt-1">{activeBp.summary}</p>}
+            </div>
+            <div>
+              <Label className="text-[10px]">Role label on the forms</Label>
+              <Input value={genRole} onChange={(e) => setGenRole(e.target.value)} placeholder={activeBp?.role} className="mt-1" />
+            </div>
+            {activeBp && (
+              <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+                <p className="micro-label text-emerald text-[10px] mb-1.5">What gets created</p>
+                <div className="space-y-1">
+                  <p className="text-[11px] text-foreground/85">Phone Screen — {buildCompetencies(activeBp, "phone_screen").length} competencies</p>
+                  <p className="text-[11px] text-foreground/85">Interview Evaluation — {buildCompetencies(activeBp, "interview").length} competencies</p>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border">
+            <Button variant="outline" onClick={() => setGenOpen(false)}>Cancel</Button>
+            <Button onClick={generate} disabled={genBusy} className="bg-emerald text-primary-foreground hover:bg-emerald/90 gap-1.5">
+              {genBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Generate forms
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {templates.map((t) => (
