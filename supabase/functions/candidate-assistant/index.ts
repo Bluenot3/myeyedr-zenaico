@@ -139,7 +139,7 @@ const tools = [
     type: "function",
     function: {
       name: "assign_candidate_to_position",
-      description: "Propose applying/transferring a candidate to a requisition (position) at an office. Prior applications are preserved as history.",
+      description: "Propose TRANSFERRING a candidate's primary application to a different requisition. Prior applications are preserved as history. Use apply_to_additional_position when they should stay in their current pipeline too.",
       parameters: {
         type: "object",
         properties: {
@@ -149,6 +149,26 @@ const tools = [
           position_title: { type: "string" },
           location_id: { type: "string" },
           location_name: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "position_id", "position_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "apply_to_additional_position",
+      description: "Propose ALSO applying a candidate to another open requisition, in parallel with the ones they are already in. Their existing primary application and pipeline stage are untouched. Use this whenever a candidate matches more than one opening.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          position_id: { type: "string", description: "Exact requisition id from the requisition dataset" },
+          position_title: { type: "string" },
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+          reason: { type: "string", description: "One short line on why they fit this second opening" },
         },
         required: ["candidate_id", "candidate_name", "position_id", "position_title"],
       },
