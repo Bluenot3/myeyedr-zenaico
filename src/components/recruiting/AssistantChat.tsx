@@ -309,8 +309,15 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
         const { data, error } = await supabase.functions.invoke("candidate-assistant", {
           body: { messages: history, prefs: prefsPayload(), ...modelPayload() },
         });
-        if (error) throw error;
+        // supabase-js masks non-2xx as a generic message — read the function's own error.
+        if (error) {
+          let detail = "";
+          try { detail = (await (error as any).context?.text?.()) || ""; } catch { /* body already read */ }
+          try { detail = JSON.parse(detail)?.error || detail; } catch { /* plain text */ }
+          throw new Error(detail || error.message);
+        }
         if (data?.error) throw new Error(data.error);
+
         replyText = data.reply || "I couldn't produce a response.";
         const acts: ProposedAction[] = Array.isArray(data.proposed_actions) ? data.proposed_actions : [];
         lastActions.current = acts;

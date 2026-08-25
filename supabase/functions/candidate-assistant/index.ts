@@ -826,14 +826,30 @@ BATCHING IS MANDATORY: when the same change applies to more than one record, emi
       stream: wantsStream,
     };
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${authKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(gatewayBody),
-    });
+    const callGateway = (model: string) =>
+      fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...gatewayBody, model }),
+      });
+
+    let res = await callGateway(chosenModel);
+
+    // A busy or unavailable upstream model must never surface as a dead assistant.
+    // Fall back once to the fast workspace model so the request still completes.
+    const FALLBACK_MODEL = "google/gemini-2.5-flash";
+    if (!useByok && !res.ok && res.status >= 500 && chosenModel !== FALLBACK_MODEL) {
+      console.error(`Model ${chosenModel} failed with ${res.status} — retrying on ${FALLBACK_MODEL}`);
+      res = await callGateway(FALLBACK_MODEL);
+    }
+    if (!useByok && (res.status === 400 || res.status === 404) && chosenModel !== FALLBACK_MODEL) {
+      console.error(`Model ${chosenModel} rejected (${res.status}) — retrying on ${FALLBACK_MODEL}`);
+      res = await callGateway(FALLBACK_MODEL);
+    }
+
 
 
     if (res.status === 429) {
@@ -858,8 +874,17 @@ BATCHING IS MANDATORY: when the same change applies to more than one record, emi
     }
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(err || `AI error ${res.status}`);
+      console.error(`AI gateway ${res.status}: ${err}`);
+      let msg = `The AI service returned ${res.status}.`;
+      try {
+        const parsed = JSON.parse(err);
+        msg = parsed?.error?.message || parsed?.message || msg;
+      } catch { if (err) msg = err.slice(0, 400); }
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
 
     const buildActions = (toolCalls: any[]) => {
       const proposed_actions: any[] = [];
@@ -960,9 +985,11 @@ BATCHING IS MANDATORY: when the same change applies to more than one record, emi
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error("candidate-assistant failed:", e);
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 });
 
