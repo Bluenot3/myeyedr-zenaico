@@ -568,8 +568,29 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
               })}
             </div>
 
+            {due.length > 0 && (
+              <div className="flex flex-col gap-1.5 w-full max-w-sm">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80 text-left px-1 inline-flex items-center gap-1">
+                  <CalendarClock className="h-3 w-3 text-cyan" /> Scheduled tasks due
+                </p>
+                {due.slice(0, 3).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => runTask(t)}
+                    className="text-left text-[11px] rounded-lg border border-cyan/30 bg-cyan/[0.06] px-3 py-2 hover:border-cyan/50 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Play className="h-3 w-3 shrink-0 text-cyan" /> Run “{t.title}”
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground/70">
+              {LENGTH_LABEL[prefs.length]} · {STYLE_LABEL[prefs.style]} · {prefs.streaming ? "live streaming" : "buffered"}
+            </p>
           </div>
         )}
+
 
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
