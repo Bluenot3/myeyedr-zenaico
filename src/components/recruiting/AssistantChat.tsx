@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
 import EmailDraftCard from "./EmailDraftCard";
+import AssistantSettings from "./AssistantSettings";
 import {
   Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
   Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
-  Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList,
+  Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList, Square, CalendarClock, Play,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,14 @@ import {
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
   useLogContact, useCreateApplication,
 } from "@/hooks/useRecruiting";
+import {
+  useAssistantTasks, useRecordTaskRun, dueTasks, type AssistantTask,
+} from "@/hooks/useAssistantTasks";
+import {
+  loadPrefs, savePrefs, LENGTH_LABEL, STYLE_LABEL, type AssistantPrefs,
+} from "@/lib/assistantPrefs";
 import { stageProgress } from "@/lib/recruiting";
+
 
 
 interface ProposedAction {
@@ -88,17 +96,23 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [streamIndex, setStreamIndex] = useState(-1);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
   const [animateIndex, setAnimateIndex] = useState<number>(-1);
   const [suggestions, setSuggestions] = useState<Suggestion[]>(FALLBACK_SUGGESTIONS);
+  const [prefs, setPrefs] = useState<AssistantPrefs>(() => loadPrefs());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const activeTask = useRef<AssistantTask | null>(null);
 
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
+  const { data: tasks = [] } = useAssistantTasks();
+  const recordRun = useRecordTaskRun();
   const updateCandidate = useUpdateCandidate();
   const bulkUpdate = useBulkUpdateCandidates();
   const addNote = useAddNote();
@@ -112,6 +126,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const createEvent = useCreateEvent();
   const logContact = useLogContact();
   const createApplication = useCreateApplication();
+
+  const due = dueTasks(tasks);
+
+  const applyPrefs = (p: AssistantPrefs) => {
+    setPrefs(p);
+    savePrefs(p);
+  };
+
 
   /* Pull live "what needs you now" starters — deterministic, no AI spend. */
   useEffect(() => {
@@ -161,12 +183,96 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     return `\n\n---ATTACHED JOB DESCRIPTION (${file.name}), already parsed---\n${JSON.stringify(job)}\n---END ATTACHMENT---`;
   };
 
-  const send = async (text: string) => {
+  const prefsPayload = () => ({
+    length: prefs.length,
+    style: prefs.style,
+    charts: prefs.charts,
+    tables: prefs.tables,
+    proactive: prefs.proactive,
+    autoActions: prefs.autoActions,
+    temperature: prefs.temperature,
+  });
+
+  /** Token-by-token stream straight from the edge function's SSE channel. */
+  const streamReply = async (history: { role: string; content: string }[]) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) throw new Error("Session expired — sign in again.");
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/candidate-assistant`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+        },
+        body: JSON.stringify({ messages: history, stream: true, prefs: prefsPayload() }),
+        signal: controller.signal,
+      },
+    );
+    if (!res.ok || !res.body) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(detail || `AI error ${res.status}`);
+    }
+
+    // Placeholder message that grows as tokens land.
+    let index = -1;
+    setMessages((m) => {
+      index = m.length;
+      setStreamIndex(index);
+      return [...m, { role: "assistant", content: "", actions: [] }];
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let text = "";
+
+    const patch = (updater: (msg: ChatMessage) => ChatMessage) =>
+      setMessages((m) => m.map((msg, i) => (i === index ? updater(msg) : msg)));
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t.startsWith("data:")) continue;
+        let ev: any;
+        try { ev = JSON.parse(t.slice(5).trim()); } catch { continue; }
+        if (ev.t === "delta") {
+          text += ev.v;
+          patch((msg) => ({ ...msg, content: text }));
+        } else if (ev.t === "done") {
+          patch((msg) => ({
+            ...msg,
+            content: text || "I couldn't produce a response.",
+            actions: Array.isArray(ev.actions) ? ev.actions : [],
+          }));
+        } else if (ev.t === "error") {
+          throw new Error(ev.message || "Stream failed");
+        }
+      }
+    }
+    setStreamIndex(-1);
+    abortRef.current = null;
+    return text;
+  };
+
+  const send = async (text: string, opts?: { task?: AssistantTask }) => {
     const trimmed = text.trim();
     const file = attachment;
     if ((!trimmed && !file) || busy) return;
     setInput("");
     setBusy(true);
+    activeTask.current = opts?.task ?? null;
     const visible = trimmed || `Use the attached file: ${file?.name}`;
     setMessages((m) => [...m, { role: "user", content: visible, attachmentName: file?.name }]);
     try {
@@ -179,31 +285,60 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
         ...messages.map(({ role, content }) => ({ role, content })),
         { role: "user" as const, content: payloadText },
       ];
-      const { data, error } = await supabase.functions.invoke("candidate-assistant", {
-        body: { messages: history },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setMessages((m) => {
-        setAnimateIndex(m.length);
-        return [...m, {
-          role: "assistant",
-          content: data.reply || "I couldn't produce a response.",
-          actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
-        }];
-      });
+
+      let replyText = "";
+      if (prefs.streaming) {
+        replyText = await streamReply(history);
+      } else {
+        const { data, error } = await supabase.functions.invoke("candidate-assistant", {
+          body: { messages: history, prefs: prefsPayload() },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        replyText = data.reply || "I couldn't produce a response.";
+        setMessages((m) => {
+          setAnimateIndex(m.length);
+          return [...m, {
+            role: "assistant",
+            content: replyText,
+            actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
+          }];
+        });
+      }
+
+      const task = activeTask.current;
+      if (task && replyText) {
+        recordRun.mutate({ task, result: replyText });
+      }
     } catch (e: any) {
-      const msg = e?.message?.includes("402")
-        ? "AI credits exhausted — add credits to continue."
-        : e?.message?.includes("429")
-        ? "Rate limit reached — please retry shortly."
-        : e?.message || "Something went wrong.";
-      toast.error(msg);
-      setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${msg}` }]);
+      if (e?.name === "AbortError") {
+        setStreamIndex(-1);
+      } else {
+        const msg = e?.message?.includes("402")
+          ? "AI credits exhausted — add credits to continue."
+          : e?.message?.includes("429")
+          ? "Rate limit reached — please retry shortly."
+          : e?.message || "Something went wrong.";
+        toast.error(msg);
+        setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${msg}` }]);
+      }
     } finally {
+      activeTask.current = null;
+      abortRef.current = null;
+      setStreamIndex(-1);
       setBusy(false);
     }
   };
+
+  const stop = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  };
+
+  const runTask = (task: AssistantTask) => {
+    send(`Run my standing task “${task.title}”.\n\n${task.prompt}`, { task });
+  };
+
 
 
   const runAction = async (a: ProposedAction) => {
@@ -433,8 +568,29 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
               })}
             </div>
 
+            {due.length > 0 && (
+              <div className="flex flex-col gap-1.5 w-full max-w-sm">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80 text-left px-1 inline-flex items-center gap-1">
+                  <CalendarClock className="h-3 w-3 text-cyan" /> Scheduled tasks due
+                </p>
+                {due.slice(0, 3).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => runTask(t)}
+                    className="text-left text-[11px] rounded-lg border border-cyan/30 bg-cyan/[0.06] px-3 py-2 hover:border-cyan/50 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Play className="h-3 w-3 shrink-0 text-cyan" /> Run “{t.title}”
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="text-[10px] text-muted-foreground/70">
+              {LENGTH_LABEL[prefs.length]} · {STYLE_LABEL[prefs.style]} · {prefs.streaming ? "live streaming" : "buffered"}
+            </p>
           </div>
         )}
+
 
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
@@ -457,8 +613,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
                 </div>
               ) : (
                 <div className="px-0.5 pt-0.5 text-[14px] text-foreground">
-                  <RichMessage content={m.content} animate={i === animateIndex} />
+                  <RichMessage
+                    content={m.content}
+                    animate={i === animateIndex}
+                    live={i === streamIndex}
+                    streamStyle={prefs.streamStyle}
+                  />
                 </div>
+
               )}
 
 
@@ -527,17 +689,18 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           </div>
         ))}
 
-        {busy && (
+        {busy && streamIndex === -1 && (
           <div className="flex gap-2.5">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30">
               <Bot className="h-3.5 w-3.5 text-emerald" />
             </div>
             <div className="pt-1.5 inline-flex items-center gap-1.5 text-[13px]">
-              <span className="claude-thinking">Thinking</span>
+              <span className="claude-thinking">{activeTask.current ? "Working the task" : "Thinking"}</span>
               <span className="claude-dots"><i /><i /><i /></span>
             </div>
           </div>
         )}
+
       </div>
 
       <div className={`border-t border-border pt-3 ${compact ? "px-3 pb-3" : "px-1"}`}>
@@ -571,6 +734,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           >
             <Paperclip className="h-4 w-4" />
           </Button>
+          <AssistantSettings prefs={prefs} onChange={applyPrefs} onRunTask={runTask} running={busy} />
           <Textarea
             ref={inputRef}
             value={input}
@@ -580,14 +744,26 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             className="min-h-[44px] max-h-32 resize-none text-sm"
             disabled={busy}
           />
-          <Button
-            onClick={() => send(input)}
-            disabled={busy || (!input.trim() && !attachment)}
-            className="h-11 w-11 shrink-0 bg-emerald text-primary-foreground hover:bg-emerald/90 p-0"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+          {busy && prefs.streaming ? (
+            <Button
+              onClick={stop}
+              variant="outline"
+              className="h-11 w-11 shrink-0 p-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+              aria-label="Stop generating"
+            >
+              <Square className="h-3.5 w-3.5 fill-current" />
+            </Button>
+          ) : (
+            <Button
+              onClick={() => send(input)}
+              disabled={busy || (!input.trim() && !attachment)}
+              className="h-11 w-11 shrink-0 bg-emerald text-primary-foreground hover:bg-emerald/90 p-0"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
+
       </div>
 
     </div>

@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      assistant_task_runs: {
+        Row: {
+          created_at: string
+          id: string
+          result: string
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          result?: string
+          status?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          result?: string
+          status?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_task_runs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_tasks: {
+        Row: {
+          active: boolean
+          cadence: string
+          created_at: string
+          id: string
+          last_run_at: string | null
+          next_run_at: string
+          prompt: string
+          runs: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          cadence?: string
+          created_at?: string
+          id?: string
+          last_run_at?: string | null
+          next_run_at?: string
+          prompt: string
+          runs?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          cadence?: string
+          created_at?: string
+          id?: string
+          last_run_at?: string | null
+          next_run_at?: string
+          prompt?: string
+          runs?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       candidate_badges: {
         Row: {
           badge_type: string
