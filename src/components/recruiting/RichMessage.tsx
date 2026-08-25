@@ -172,15 +172,62 @@ function useReveal(content: string, animate: boolean) {
   return shown;
 }
 
+/**
+ * Smoothing buffer for live token streams: the visible text trails the incoming
+ * buffer slightly and catches up frame by frame, which removes the jittery
+ * chunk-by-chunk feel of raw SSE deltas.
+ */
+function useLiveReveal(content: string, style: "smooth" | "typewriter" | "instant") {
+  const [shown, setShown] = useState(content);
+  const target = useRef(content);
+  const len = useRef(content.length);
+  target.current = content;
+
+  useEffect(() => {
+    if (style === "instant") {
+      setShown(content);
+      len.current = content.length;
+      return;
+    }
+    let raf = 0;
+    const tick = () => {
+      const total = target.current.length;
+      if (len.current > total) len.current = total; // new message / reset
+      if (len.current < total) {
+        const remaining = total - len.current;
+        const step =
+          style === "typewriter"
+            ? Math.max(1, Math.ceil(remaining * 0.06))
+            : Math.max(2, Math.ceil(remaining * 0.22));
+        len.current = Math.min(total, len.current + step);
+        setShown(target.current.slice(0, len.current));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [style, content]);
+
+  return style === "instant" ? content : shown;
+}
+
 export default function RichMessage({
   content,
   animate = false,
+  live = false,
+  streamStyle = "smooth",
 }: {
   content: string;
   animate?: boolean;
+  /** True while tokens are still arriving for this message. */
+  live?: boolean;
+  streamStyle?: "smooth" | "typewriter" | "instant";
 }) {
-  const shown = useReveal(content, animate);
-  const streaming = animate && shown.length < content.length;
+  const revealed = useReveal(content, animate && !live);
+  const streamed = useLiveReveal(content, streamStyle);
+  const shown = live ? streamed : revealed;
+  const streaming = live || (animate && shown.length < content.length);
+
 
   const components = useMemo(
     () => ({
