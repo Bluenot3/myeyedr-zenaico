@@ -179,13 +179,93 @@ export default function Openings() {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Portfolio summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+        {[
+          { label: "Requisitions", value: summary.reqs, tone: "hsl(var(--foreground))" },
+          { label: "Open", value: summary.open, tone: statusColor.open },
+          { label: "Open seats", value: summary.seats, tone: "hsl(var(--gold))" },
+          { label: "On hold", value: summary.hold, tone: statusColor.on_hold },
+          { label: "Closed / filled", value: summary.closed, tone: statusColor.closed },
+        ].map((s) => (
+          <div key={s.label} className="glass-panel rounded-xl px-3 py-2.5">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+            <p className="font-display text-xl font-bold leading-tight mt-0.5" style={{ color: s.tone }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search title, req code, manager…"
+            className="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-input bg-card/60 focus:outline-none focus:ring-2 focus:ring-emerald/40"
+          />
+        </div>
         <Filter className="h-3.5 w-3.5 text-muted-foreground" />
         <select value={region} onChange={(e) => setRegion(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
           <option value="All">All Regions</option>
           {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
+          <option value="all">All statuses</option>
+          {POSITION_STATUS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+        </select>
+        <button
+          onClick={() => (allFilteredSelected ? clearSel() : selectAllFiltered())}
+          className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+        >
+          {allFilteredSelected ? <CheckSquare className="h-3.5 w-3.5 text-emerald" /> : <Square className="h-3.5 w-3.5" />}
+          Select all ({filtered.length})
+        </button>
       </div>
+
+      {/* Bulk toolbar */}
+      {sel.size > 0 && (
+        <div className="sticky top-2 z-20 glass-panel rounded-xl border border-emerald/30 bg-emerald/[0.07] px-3 py-2.5 flex items-center gap-2 flex-wrap">
+          <Layers className="h-4 w-4 text-emerald shrink-0" />
+          <span className="text-xs font-semibold text-foreground">{sel.size} requisition{sel.size === 1 ? "" : "s"} selected</span>
+          {bulkBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald" />}
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={bulkBusy} className="h-8 gap-1 text-xs">Set status <ChevronDown className="h-3 w-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="text-xs">Move all to…</DropdownMenuLabel>
+                {POSITION_STATUS.map((s) => (
+                  <DropdownMenuItem key={s} onClick={() => bulkApply({ status: s } as any, `Set to ${s.replace("_", " ")}`)}>
+                    {s === "closed" || s === "filled" ? <Lock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /> : <Briefcase className="h-3.5 w-3.5 mr-1.5 text-emerald" />}
+                    {s.replace("_", " ")}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={bulkBusy} className="h-8 gap-1 text-xs">Priority <ChevronDown className="h-3 w-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="text-xs">Set priority</DropdownMenuLabel>
+                {PRIORITIES.map((pr) => (
+                  <DropdownMenuItem key={pr} onClick={() => bulkApply({ priority: pr } as any, `Priority → ${pr}`)}>{pr}</DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs">Seats per req</DropdownMenuLabel>
+                {[1, 2, 3, 4].map((n) => (
+                  <DropdownMenuItem key={n} onClick={() => bulkApply({ openings: n } as any, `Seats → ${n}`)}>{n} seat{n > 1 ? "s" : ""}</DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button onClick={clearSel} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>
+          </div>
+        </div>
+      )}
+
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}</div>
