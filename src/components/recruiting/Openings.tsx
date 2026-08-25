@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe } from "lucide-react";
+import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe, Search, CheckSquare, Square, Layers, ChevronDown, Lock } from "lucide-react";
 import { usePositions, useCandidates, useLocations, useCreatePosition, useUpdatePosition, Position, PostingLocation } from "@/hooks/useRecruiting";
 import { REGIONS, PRIORITIES, POSITION_STATUS, stageMeta, initials } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import BestFitControl from "./BestFitControl";
+
 
 const priorityColor: Record<string, string> = {
   urgent: "hsl(var(--destructive))",
@@ -41,7 +44,63 @@ export default function Openings() {
   const [postDesc, setPostDesc] = useState("");
   const [postReq, setPostReq] = useState("");
 
-  const filtered = useMemo(() => positions.filter((p) => region === "All" || p.region === region), [positions, region]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const filtered = useMemo(
+    () =>
+      positions.filter((p) => {
+        const r = region === "All" || p.region === region;
+        const st = statusFilter === "all" || p.status === statusFilter;
+        const q =
+          !search ||
+          [p.title, p.req_code, p.department, p.hiring_manager, p.region]
+            .filter(Boolean)
+            .some((f) => String(f).toLowerCase().includes(search.toLowerCase()));
+        return r && st && q;
+      }),
+    [positions, region, statusFilter, search],
+  );
+
+  const summary = useMemo(() => {
+    const count = (s: string) => positions.filter((p) => p.status === s).length;
+    const openPos = positions.filter((p) => p.status === "open");
+    return {
+      reqs: positions.length,
+      open: count("open"),
+      hold: count("on_hold"),
+      closed: count("closed") + count("filled"),
+      seats: openPos.reduce((n, p) => n + (p.openings || 1), 0),
+    };
+  }, [positions]);
+
+  const toggleSel = (id: string) =>
+    setSel((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const clearSel = () => setSel(new Set());
+  const selectAllFiltered = () => setSel(new Set(filtered.map((p) => p.id)));
+  const allFilteredSelected = filtered.length > 0 && filtered.every((p) => sel.has(p.id));
+
+  /** Apply the same edit to every selected requisition in one sweep. */
+  const bulkApply = async (updates: Partial<Position>, label: string) => {
+    const ids = Array.from(sel);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    let ok = 0;
+    try {
+      for (const id of ids) {
+        try { await updatePosition.mutateAsync({ id, ...updates } as any); ok++; } catch { /* keep sweeping */ }
+      }
+      ok === ids.length
+        ? toast.success(`${label} · ${ok} requisition${ok === 1 ? "" : "s"}`)
+        : toast.warning(`${label} · ${ok} of ${ids.length} updated`);
+      if (ok) clearSel();
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
   const candForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.status === "active");
 
@@ -120,13 +179,93 @@ export default function Openings() {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Portfolio summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+        {[
+          { label: "Requisitions", value: summary.reqs, tone: "hsl(var(--foreground))" },
+          { label: "Open", value: summary.open, tone: statusColor.open },
+          { label: "Open seats", value: summary.seats, tone: "hsl(var(--gold))" },
+          { label: "On hold", value: summary.hold, tone: statusColor.on_hold },
+          { label: "Closed / filled", value: summary.closed, tone: statusColor.closed },
+        ].map((s) => (
+          <div key={s.label} className="glass-panel rounded-xl px-3 py-2.5">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+            <p className="font-display text-xl font-bold leading-tight mt-0.5" style={{ color: s.tone }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search title, req code, manager…"
+            className="w-full h-9 pl-8 pr-3 text-xs rounded-lg border border-input bg-card/60 focus:outline-none focus:ring-2 focus:ring-emerald/40"
+          />
+        </div>
         <Filter className="h-3.5 w-3.5 text-muted-foreground" />
         <select value={region} onChange={(e) => setRegion(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
           <option value="All">All Regions</option>
           {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
+          <option value="all">All statuses</option>
+          {POSITION_STATUS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+        </select>
+        <button
+          onClick={() => (allFilteredSelected ? clearSel() : selectAllFiltered())}
+          className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+        >
+          {allFilteredSelected ? <CheckSquare className="h-3.5 w-3.5 text-emerald" /> : <Square className="h-3.5 w-3.5" />}
+          Select all ({filtered.length})
+        </button>
       </div>
+
+      {/* Bulk toolbar */}
+      {sel.size > 0 && (
+        <div className="sticky top-2 z-20 glass-panel rounded-xl border border-emerald/30 bg-emerald/[0.07] px-3 py-2.5 flex items-center gap-2 flex-wrap">
+          <Layers className="h-4 w-4 text-emerald shrink-0" />
+          <span className="text-xs font-semibold text-foreground">{sel.size} requisition{sel.size === 1 ? "" : "s"} selected</span>
+          {bulkBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald" />}
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={bulkBusy} className="h-8 gap-1 text-xs">Set status <ChevronDown className="h-3 w-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="text-xs">Move all to…</DropdownMenuLabel>
+                {POSITION_STATUS.map((s) => (
+                  <DropdownMenuItem key={s} onClick={() => bulkApply({ status: s } as any, `Set to ${s.replace("_", " ")}`)}>
+                    {s === "closed" || s === "filled" ? <Lock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" /> : <Briefcase className="h-3.5 w-3.5 mr-1.5 text-emerald" />}
+                    {s.replace("_", " ")}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={bulkBusy} className="h-8 gap-1 text-xs">Priority <ChevronDown className="h-3 w-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="text-xs">Set priority</DropdownMenuLabel>
+                {PRIORITIES.map((pr) => (
+                  <DropdownMenuItem key={pr} onClick={() => bulkApply({ priority: pr } as any, `Priority → ${pr}`)}>{pr}</DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs">Seats per req</DropdownMenuLabel>
+                {[1, 2, 3, 4].map((n) => (
+                  <DropdownMenuItem key={n} onClick={() => bulkApply({ openings: n } as any, `Seats → ${n}`)}>{n} seat{n > 1 ? "s" : ""}</DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button onClick={clearSel} className="text-xs text-muted-foreground hover:text-foreground">Clear</button>
+          </div>
+        </div>
+      )}
+
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}</div>
@@ -136,15 +275,26 @@ export default function Openings() {
             const cands = candForPos(p.id);
             const postLocsList = Array.isArray(p.posting_locations) ? p.posting_locations : [];
             return (
-              <div key={p.id} className="glass-panel rounded-xl p-4 hover-lift">
+              <div
+                key={p.id}
+                className={`glass-panel rounded-xl p-4 hover-lift transition-shadow ${sel.has(p.id) ? "ring-1 ring-emerald/50 border-emerald/40" : ""}`}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2.5 min-w-0">
+                    <button
+                      onClick={() => toggleSel(p.id)}
+                      aria-label={sel.has(p.id) ? `Deselect ${p.title}` : `Select ${p.title}`}
+                      className="mt-0.5 shrink-0 text-muted-foreground hover:text-emerald"
+                    >
+                      {sel.has(p.id) ? <CheckSquare className="h-4 w-4 text-emerald" /> : <Square className="h-4 w-4" />}
+                    </button>
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30 shrink-0"><Briefcase className="h-4 w-4 text-emerald" /></div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         {p.req_code && <span className="text-[8.5px] font-mono uppercase tracking-wide text-emerald bg-emerald/10 border border-emerald/25 rounded px-1 py-0.5 shrink-0">{p.req_code}</span>}
                         <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
                       </div>
+
                       <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(p.location_id)} · {p.region}{p.hiring_manager ? ` · ${p.hiring_manager}` : ""}</p>
                     </div>
                   </div>

@@ -9,16 +9,18 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  Settings2, Sparkles, Play, Trash2, Plus, Clock, Loader2, CalendarClock, Gauge,
+  Settings2, Sparkles, Play, Trash2, Plus, Clock, Loader2, CalendarClock, Gauge, Cpu, KeyRound,
 } from "lucide-react";
 import {
-  type AssistantPrefs, type AssistantLength, type AssistantStyle, type StreamStyle,
+  type AssistantPrefs, type AssistantLength, type AssistantStyle, type StreamStyle, type ByokProvider,
   LENGTH_LABEL, STYLE_LABEL, STREAM_LABEL, CADENCE_LABEL, type Cadence, DEFAULT_PREFS,
+  MANAGED_MODELS, BYOK_LABEL, BYOK_PLACEHOLDER,
 } from "@/lib/assistantPrefs";
 import {
   useAssistantTasks, useCreateAssistantTask, useUpdateAssistantTask, useDeleteAssistantTask,
   type AssistantTask,
 } from "@/hooks/useAssistantTasks";
+
 
 const SEGMENT =
   "flex-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors border";
@@ -150,12 +152,89 @@ export default function AssistantSettings({
         </SheetHeader>
 
         <Tabs defaultValue="output" className="mt-5">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="output" className="text-xs gap-1.5"><Gauge className="h-3.5 w-3.5" /> Output</TabsTrigger>
+            <TabsTrigger value="model" className="text-xs gap-1.5"><Cpu className="h-3.5 w-3.5" /> Model</TabsTrigger>
             <TabsTrigger value="tasks" className="text-xs gap-1.5">
               <CalendarClock className="h-3.5 w-3.5" /> Tasks{tasks.length ? ` (${tasks.length})` : ""}
             </TabsTrigger>
           </TabsList>
+
+          {/* ------------------------- MODEL ------------------------- */}
+          <TabsContent value="model" className="space-y-4 pt-4">
+            <Row
+              label="Workspace models"
+              hint="Included with the account — no key needed. Heavier models reason better on comparisons and long audits."
+            >
+              <div className="space-y-1.5">
+                {MANAGED_MODELS.map((m) => {
+                  const active = !prefs.byokEnabled && prefs.model === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => set({ model: m.id, byokEnabled: false })}
+                      className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${active ? ON : OFF}`}
+                    >
+                      <p className="text-[11.5px] font-semibold">{m.label}</p>
+                      <p className="text-[10px] text-muted-foreground leading-snug">{m.note}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </Row>
+
+            <Toggle
+              label="Use my own API key"
+              hint="Route every request through your own provider account instead of the workspace credits."
+              checked={prefs.byokEnabled}
+              onChange={(v) => set({ byokEnabled: v })}
+            />
+
+            {prefs.byokEnabled && (
+              <div className="space-y-3 rounded-xl border border-border/70 bg-background/40 p-3">
+                <Row label="Provider">
+                  <Segmented<ByokProvider>
+                    value={prefs.byokProvider}
+                    options={["openai", "openrouter", "groq"]}
+                    labels={BYOK_LABEL}
+                    onChange={(v) => set({ byokProvider: v, byokModel: BYOK_PLACEHOLDER[v] })}
+                  />
+                </Row>
+                <Row label="API key" hint="Stored only in this browser and sent per request over TLS — never saved server-side.">
+                  <Input
+                    type="password"
+                    value={prefs.byokKey}
+                    onChange={(e) => set({ byokKey: e.target.value })}
+                    placeholder="sk-…"
+                    className="h-9 text-xs font-mono"
+                    autoComplete="off"
+                  />
+                </Row>
+                <Row label="Model id" hint="Any chat model your key can reach.">
+                  <Input
+                    value={prefs.byokModel}
+                    onChange={(e) => set({ byokModel: e.target.value })}
+                    placeholder={BYOK_PLACEHOLDER[prefs.byokProvider]}
+                    className="h-9 text-xs font-mono"
+                  />
+                </Row>
+                <p className="text-[10px] text-muted-foreground leading-snug flex items-start gap-1.5">
+                  <KeyRound className="h-3 w-3 mt-[1px] shrink-0 text-gold" />
+                  Tool actions, streaming and controls all work the same on your key. Clear the key to fall back to workspace models.
+                </p>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-border/70 bg-background/40 px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80">Routing right now</p>
+              <p className="text-xs font-semibold text-foreground mt-0.5">
+                {prefs.byokEnabled && prefs.byokKey.trim()
+                  ? `${BYOK_LABEL[prefs.byokProvider]} · ${prefs.byokModel || BYOK_PLACEHOLDER[prefs.byokProvider]} (your key)`
+                  : `${MANAGED_MODELS.find((m) => m.id === prefs.model)?.label ?? prefs.model} · workspace`}
+              </p>
+            </div>
+          </TabsContent>
+
 
           {/* ------------------------- OUTPUT ------------------------- */}
           <TabsContent value="output" className="space-y-4 pt-4">
@@ -230,6 +309,13 @@ export default function AssistantSettings({
                 checked={prefs.autoActions}
                 onChange={(v) => set({ autoActions: v })}
               />
+              <Toggle
+                label="Apply actions automatically"
+                hint="Skip per-row confirming: every prepared move, requisition change or bulk update runs as soon as the answer lands. Email drafts still wait for you."
+                checked={prefs.autoRun}
+                onChange={(v) => set({ autoRun: v })}
+              />
+
             </div>
 
             <Button variant="ghost" className="w-full text-[11px] text-muted-foreground" onClick={() => onChange(DEFAULT_PREFS)}>
