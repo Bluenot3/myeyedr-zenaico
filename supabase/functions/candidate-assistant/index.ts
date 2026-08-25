@@ -428,12 +428,25 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const mode: string = body?.mode === "briefing" ? "briefing" : "chat";
+    const wantsStream: boolean = body?.stream === true;
+    const prefs = {
+      length: ["brief", "standard", "deep"].includes(body?.prefs?.length) ? body.prefs.length : "standard",
+      style: ["analyst", "executive", "coach", "direct"].includes(body?.prefs?.style) ? body.prefs.style : "analyst",
+      charts: body?.prefs?.charts === false ? false : true,
+      tables: body?.prefs?.tables === false ? false : true,
+      proactive: body?.prefs?.proactive === false ? false : true,
+      autoActions: body?.prefs?.autoActions === false ? false : true,
+      temperature: typeof body?.prefs?.temperature === "number"
+        ? Math.min(1, Math.max(0, body.prefs.temperature))
+        : 0.4,
+    };
     const messages = body?.messages;
     if (mode === "chat" && !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Load only what the caller can access (RLS-scoped).
     const [{ data: candidates }, { data: positions }, { data: locations }, { data: goldens }, { data: templates }] = await Promise.all([
