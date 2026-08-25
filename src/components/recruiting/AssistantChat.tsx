@@ -734,6 +734,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           >
             <Paperclip className="h-4 w-4" />
           </Button>
+          <AssistantSettings prefs={prefs} onChange={applyPrefs} onRunTask={runTask} running={busy} />
           <Textarea
             ref={inputRef}
             value={input}
@@ -743,14 +744,26 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
             className="min-h-[44px] max-h-32 resize-none text-sm"
             disabled={busy}
           />
-          <Button
-            onClick={() => send(input)}
-            disabled={busy || (!input.trim() && !attachment)}
-            className="h-11 w-11 shrink-0 bg-emerald text-primary-foreground hover:bg-emerald/90 p-0"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+          {busy && prefs.streaming ? (
+            <Button
+              onClick={stop}
+              variant="outline"
+              className="h-11 w-11 shrink-0 p-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+              aria-label="Stop generating"
+            >
+              <Square className="h-3.5 w-3.5 fill-current" />
+            </Button>
+          ) : (
+            <Button
+              onClick={() => send(input)}
+              disabled={busy || (!input.trim() && !attachment)}
+              className="h-11 w-11 shrink-0 bg-emerald text-primary-foreground hover:bg-emerald/90 p-0"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
+
       </div>
 
     </div>
