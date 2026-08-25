@@ -181,12 +181,12 @@ export default function CandidateHistory({ candidate }: { candidate: Candidate }
     <div className="space-y-5">
       {/* Applications / requisition history */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-semibold text-foreground inline-flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5 text-emerald" /> Requisitions & applications</h4>
+        <div className="flex items-center justify-end mb-2">
           <Button size="sm" variant="outline" className="h-7 gap-1 text-[11px]" onClick={() => setShowAssign((s) => !s)}>
             <ArrowRightLeft className="h-3 w-3" /> Assign / reassign
           </Button>
         </div>
+
 
         {showAssign && (
           <div className="mb-3 rounded-xl border border-emerald/25 bg-emerald/[0.05] p-3 space-y-2">
