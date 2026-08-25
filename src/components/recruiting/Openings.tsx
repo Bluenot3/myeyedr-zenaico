@@ -303,11 +303,31 @@ export default function Openings() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="glass-panel rounded-2xl border-dashed border-border/70 py-14 px-6 text-center">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-emerald/12 border border-emerald/30">
+            <Briefcase className="h-5 w-5 text-emerald" />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-foreground">
+            {view === "active" ? "No roles are actively hiring" : view === "filled" ? "Nothing filled yet" : view === "closed" ? "No closed requisitions" : "No requisitions match"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
+            {view === "active"
+              ? "Every seat is either filled or closed. Open a new requisition to start a pipeline."
+              : "Adjust the search, region, or switch tabs to see other requisitions."}
+          </p>
+          {view === "active" && (
+            <Button size="sm" onClick={() => setAddOpen(true)} className="mt-4 gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90"><Plus className="h-4 w-4" /> New opening</Button>
+          )}
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map((p) => {
             const cands = candForPos(p.id);
+            const hired = hiredForPos(p.id);
+            const seatsFull = p.status === "open" && hired >= (p.openings || 1);
             const postLocsList = Array.isArray(p.posting_locations) ? p.posting_locations : [];
+
             return (
               <div
                 key={p.id}
