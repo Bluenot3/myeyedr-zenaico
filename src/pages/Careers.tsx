@@ -125,10 +125,16 @@ export default function Careers() {
           </div>
         )}
 
+        {/* MyEyeDr growth story + doctor career path */}
+        <div className="pb-16">
+          <GrowthStory />
+        </div>
+
         {/* Industry + opportunity breakdown */}
         <div className="pb-16">
           <IndustryGrowth />
         </div>
+
 
 
         {/* Openings */}
