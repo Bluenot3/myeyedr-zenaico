@@ -55,6 +55,8 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   assign_candidate_to_position: ArrowRight,
   apply_to_additional_position: Briefcase,
   bulk_move_stage: Users,
+  bulk_set_position_status: Lock,
+  bulk_update_positions: Pencil,
   create_position: Briefcase,
   update_position: Pencil,
   set_position_status: Lock,
@@ -107,6 +109,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const activeTask = useRef<AssistantTask | null>(null);
+  const lastActions = useRef<ProposedAction[]>([]);
 
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
@@ -193,6 +196,15 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     temperature: prefs.temperature,
   });
 
+  /** Model routing — workspace model, or the operator's own key when enabled. */
+  const modelPayload = () => ({
+    model: prefs.model,
+    byok: prefs.byokEnabled && prefs.byokKey.trim()
+      ? { provider: prefs.byokProvider, key: prefs.byokKey.trim(), model: prefs.byokModel.trim() }
+      : undefined,
+  });
+
+
   /** Token-by-token stream straight from the edge function's SSE channel. */
   const streamReply = async (history: { role: string; content: string }[]) => {
     const { data: sess } = await supabase.auth.getSession();
@@ -211,7 +223,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
         },
-        body: JSON.stringify({ messages: history, stream: true, prefs: prefsPayload() }),
+        body: JSON.stringify({ messages: history, stream: true, prefs: prefsPayload(), ...modelPayload() }),
         signal: controller.signal,
       },
     );
@@ -251,11 +263,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           text += ev.v;
           patch((msg) => ({ ...msg, content: text }));
         } else if (ev.t === "done") {
+          const acts: ProposedAction[] = Array.isArray(ev.actions) ? ev.actions : [];
+          lastActions.current = acts;
           patch((msg) => ({
             ...msg,
             content: text || "I couldn't produce a response.",
-            actions: Array.isArray(ev.actions) ? ev.actions : [],
+            actions: acts,
           }));
+
         } else if (ev.t === "error") {
           throw new Error(ev.message || "Stream failed");
         }
@@ -276,6 +291,7 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     const visible = trimmed || `Use the attached file: ${file?.name}`;
     setMessages((m) => [...m, { role: "user", content: visible, attachmentName: file?.name }]);
     try {
+      lastActions.current = [];
       let payloadText = visible;
       if (file) {
         payloadText += await readAttachment(file);
@@ -291,18 +307,16 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
         replyText = await streamReply(history);
       } else {
         const { data, error } = await supabase.functions.invoke("candidate-assistant", {
-          body: { messages: history, prefs: prefsPayload() },
+          body: { messages: history, prefs: prefsPayload(), ...modelPayload() },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         replyText = data.reply || "I couldn't produce a response.";
+        const acts: ProposedAction[] = Array.isArray(data.proposed_actions) ? data.proposed_actions : [];
+        lastActions.current = acts;
         setMessages((m) => {
           setAnimateIndex(m.length);
-          return [...m, {
-            role: "assistant",
-            content: replyText,
-            actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
-          }];
+          return [...m, { role: "assistant", content: replyText, actions: acts }];
         });
       }
 
@@ -310,7 +324,13 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       if (task && replyText) {
         recordRun.mutate({ task, result: replyText });
       }
+
+      // Auto-apply mode: execute everything the assistant prepared, no row-by-row clicking.
+      if (prefs.autoRun && lastActions.current.length > 0) {
+        await runAll(lastActions.current);
+      }
     } catch (e: any) {
+
       if (e?.name === "AbortError") {
         setStreamIndex(-1);
       } else {
@@ -516,6 +536,23 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           });
           break;
         }
+        case "bulk_set_position_status": {
+          const pids: string[] = Array.isArray(a.args.position_ids) ? a.args.position_ids : [];
+          if (pids.length === 0) throw new Error("No requisitions selected");
+          for (const id of pids) await updatePosition.mutateAsync({ id, status: a.args.status });
+          break;
+        }
+        case "bulk_update_positions": {
+          const pids: string[] = Array.isArray(a.args.position_ids) ? a.args.position_ids : [];
+          if (pids.length === 0) throw new Error("No requisitions selected");
+          const updates: Record<string, any> = {};
+          for (const k of ["priority", "openings", "employment_type", "pay_range", "hiring_manager", "department", "status"]) {
+            if (a.args[k] !== undefined && a.args[k] !== null && a.args[k] !== "") updates[k] = a.args[k];
+          }
+          if (Object.keys(updates).length === 0) throw new Error("No fields to update");
+          for (const id of pids) await updatePosition.mutateAsync({ id, ...updates });
+          break;
+        }
 
         default:
           throw new Error("Unknown action");
@@ -523,13 +560,34 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
       }
       setStatuses((s) => ({ ...s, [a.id]: "done" }));
       toast.success(`Done: ${a.label}`);
+      return true;
     } catch (e: any) {
       setStatuses((s) => ({ ...s, [a.id]: "error" }));
       toast.error(e?.message || "Action failed");
+      return false;
     }
   };
 
+  /** Run every pending action in a reply in one go — no row-by-row confirming. */
+  const runAll = async (actions: ProposedAction[]) => {
+    const pending = actions.filter(
+      (a) => a.type !== "draft_email" && !["done", "running", "dismissed"].includes(statuses[a.id] || "idle"),
+    );
+    if (pending.length === 0) return;
+    let ok = 0;
+    for (const a of pending) if (await runAction(a)) ok++;
+    if (ok) toast.success(`Applied ${ok} of ${pending.length} action${pending.length === 1 ? "" : "s"}`);
+  };
+
+  const dismissAll = (actions: ProposedAction[]) =>
+    setStatuses((s) => {
+      const n = { ...s };
+      actions.forEach((a) => { if (!["done", "running"].includes(n[a.id] || "idle")) n[a.id] = "dismissed"; });
+      return n;
+    });
+
   const dismissAction = (a: ProposedAction) => setStatuses((s) => ({ ...s, [a.id]: "dismissed" }));
+
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -624,10 +682,40 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
               )}
 
 
-              {/* Proposed actions — confirm before running */}
+              {/* Proposed actions — confirm one, or apply the whole batch at once */}
               {m.role === "assistant" && (m.actions?.length ?? 0) > 0 && (
                 <div className="space-y-1.5">
+                  {(() => {
+                    const pending = m.actions!.filter(
+                      (a) => a.type !== "draft_email" && !["done", "running", "dismissed"].includes(statuses[a.id] || "idle"),
+                    );
+                    if (pending.length < 2) return null;
+                    return (
+                      <div className="flex items-center gap-2 rounded-xl border border-emerald/30 bg-emerald/[0.08] px-3 py-2">
+                        <Users className="h-3.5 w-3.5 text-emerald shrink-0" />
+                        <p className="text-[11.5px] font-medium text-foreground flex-1 min-w-0">
+                          {pending.length} actions ready — apply them together
+                        </p>
+                        <Button
+                          size="sm"
+                          className="h-7 px-2.5 text-[11px] gap-1 bg-emerald text-primary-foreground hover:bg-emerald/90"
+                          onClick={() => runAll(m.actions!)}
+                        >
+                          <Check className="h-3 w-3" /> Apply all
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] text-muted-foreground"
+                          onClick={() => dismissAll(m.actions!)}
+                        >
+                          Dismiss all
+                        </Button>
+                      </div>
+                    );
+                  })()}
                   {m.actions!.map((a) => {
+
                     const st = statuses[a.id] || "idle";
                     if (st === "dismissed") return null;
                     if (a.type === "draft_email") {

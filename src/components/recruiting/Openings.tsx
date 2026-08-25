@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe } from "lucide-react";
+import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe, Search, CheckSquare, Square, Layers, ChevronDown, Lock } from "lucide-react";
 import { usePositions, useCandidates, useLocations, useCreatePosition, useUpdatePosition, Position, PostingLocation } from "@/hooks/useRecruiting";
 import { REGIONS, PRIORITIES, POSITION_STATUS, stageMeta, initials } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import BestFitControl from "./BestFitControl";
+
 
 const priorityColor: Record<string, string> = {
   urgent: "hsl(var(--destructive))",
@@ -41,7 +44,63 @@ export default function Openings() {
   const [postDesc, setPostDesc] = useState("");
   const [postReq, setPostReq] = useState("");
 
-  const filtered = useMemo(() => positions.filter((p) => region === "All" || p.region === region), [positions, region]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const filtered = useMemo(
+    () =>
+      positions.filter((p) => {
+        const r = region === "All" || p.region === region;
+        const st = statusFilter === "all" || p.status === statusFilter;
+        const q =
+          !search ||
+          [p.title, p.req_code, p.department, p.hiring_manager, p.region]
+            .filter(Boolean)
+            .some((f) => String(f).toLowerCase().includes(search.toLowerCase()));
+        return r && st && q;
+      }),
+    [positions, region, statusFilter, search],
+  );
+
+  const summary = useMemo(() => {
+    const count = (s: string) => positions.filter((p) => p.status === s).length;
+    const openPos = positions.filter((p) => p.status === "open");
+    return {
+      reqs: positions.length,
+      open: count("open"),
+      hold: count("on_hold"),
+      closed: count("closed") + count("filled"),
+      seats: openPos.reduce((n, p) => n + (p.openings || 1), 0),
+    };
+  }, [positions]);
+
+  const toggleSel = (id: string) =>
+    setSel((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const clearSel = () => setSel(new Set());
+  const selectAllFiltered = () => setSel(new Set(filtered.map((p) => p.id)));
+  const allFilteredSelected = filtered.length > 0 && filtered.every((p) => sel.has(p.id));
+
+  /** Apply the same edit to every selected requisition in one sweep. */
+  const bulkApply = async (updates: Partial<Position>, label: string) => {
+    const ids = Array.from(sel);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    let ok = 0;
+    try {
+      for (const id of ids) {
+        try { await updatePosition.mutateAsync({ id, ...updates } as any); ok++; } catch { /* keep sweeping */ }
+      }
+      ok === ids.length
+        ? toast.success(`${label} · ${ok} requisition${ok === 1 ? "" : "s"}`)
+        : toast.warning(`${label} · ${ok} of ${ids.length} updated`);
+      if (ok) clearSel();
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
   const candForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.status === "active");
 

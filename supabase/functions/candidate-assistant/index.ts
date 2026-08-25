@@ -370,7 +370,48 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "bulk_set_position_status",
+      description:
+        "Propose changing the status of MANY requisitions in one action. ALWAYS prefer this over repeating set_position_status when more than one requisition is affected (e.g. 'close every filled req', 'reopen all Tampa roles').",
+      parameters: {
+        type: "object",
+        properties: {
+          position_ids: { type: "array", items: { type: "string" } },
+          summary: { type: "string", description: "Short human summary of which reqs are included" },
+          status: { type: "string", enum: ["open", "on_hold", "closed", "filled"] },
+        },
+        required: ["position_ids", "summary", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_update_positions",
+      description:
+        "Propose applying the same field edits to MANY requisitions at once (priority, seats, employment type, pay range, hiring manager, department, status). Use this instead of many update_position calls.",
+      parameters: {
+        type: "object",
+        properties: {
+          position_ids: { type: "array", items: { type: "string" } },
+          summary: { type: "string", description: "Short human summary of which reqs are included" },
+          priority: { type: "string" },
+          openings: { type: "number" },
+          employment_type: { type: "string" },
+          pay_range: { type: "string" },
+          hiring_manager: { type: "string" },
+          department: { type: "string" },
+          status: { type: "string", enum: ["open", "on_hold", "closed", "filled"] },
+        },
+        required: ["position_ids", "summary"],
+      },
+    },
+  },
 ];
+
 
 
 const ACTION_LABEL: Record<string, (a: any) => string> = {
@@ -394,7 +435,10 @@ const ACTION_LABEL: Record<string, (a: any) => string> = {
   schedule_interview: (a) => `Schedule ${a.event_type || "interview"} for ${a.candidate_name}`,
   draft_email: (a) => `${a.purpose || "Email draft"}${a.candidate_name ? ` · ${a.candidate_name}` : ""}`,
   log_contact: (a) => `Log ${a.method || "contact"} with ${a.candidate_name}`,
+  bulk_set_position_status: (a) => `Set ${(a.position_ids || []).length} requisitions to “${a.status}” — ${a.summary}`,
+  bulk_update_positions: (a) => `Update ${(a.position_ids || []).length} requisitions — ${a.summary}`,
 };
+
 
 
 
@@ -440,6 +484,29 @@ serve(async (req) => {
         ? Math.min(1, Math.max(0, body.prefs.temperature))
         : 0.4,
     };
+
+    /* ---- Model routing: workspace-managed models, or the user's own key ---- */
+    const MANAGED_MODELS = [
+      "google/gemini-2.5-pro",
+      "google/gemini-2.5-flash",
+      "google/gemini-2.5-flash-lite",
+      "openai/gpt-5",
+      "openai/gpt-5-mini",
+    ];
+    const BYOK_ENDPOINT: Record<string, string> = {
+      openai: "https://api.openai.com/v1/chat/completions",
+      openrouter: "https://openrouter.ai/api/v1/chat/completions",
+      groq: "https://api.groq.com/openai/v1/chat/completions",
+    };
+    const byokKey: string = typeof body?.byok?.key === "string" ? body.byok.key.trim() : "";
+    const byokProvider: string = BYOK_ENDPOINT[body?.byok?.provider] ? body.byok.provider : "openai";
+    const useByok = byokKey.length > 20;
+    const endpoint = useByok ? BYOK_ENDPOINT[byokProvider] : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const authKey = useByok ? byokKey : LOVABLE_API_KEY;
+    const chosenModel = useByok
+      ? (typeof body?.byok?.model === "string" && body.byok.model.trim() ? body.byok.model.trim() : "gpt-4.1")
+      : MANAGED_MODELS.includes(body?.model) ? body.model : "google/gemini-2.5-flash";
+
     const messages = body?.messages;
     if (mode === "chat" && !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array required" }), {
@@ -743,10 +810,11 @@ ${prefs.tables ? "Use markdown tables for any comparison of 2+ records." : "Do N
 ${prefs.charts ? "Include a ```chart JSON block whenever numeric comparison would be clearer visually (real dataset values only)." : "Do NOT include chart blocks."}
 ${prefs.proactive ? "Close with a short \"Recommended next steps\" list and raise unprompted risks from the ATTENTION NOW block." : "Answer only what was asked; do not append proactive suggestions unless requested."}
 ${prefs.autoActions ? "Propose the tool calls that carry out the work whenever the request implies a change." : "Only call tools when the user explicitly asks you to change something."}
-LARGE TASKS: If the request spans many records or several steps, do not refuse or ask to narrow it. Work it end to end: state a short plan, execute the analysis over the whole dataset, group results by requisition or office, and propose every action needed — batching with bulk tools where possible.`;
+LARGE TASKS: If the request spans many records or several steps, do not refuse or ask to narrow it. Work it end to end: state a short plan, execute the analysis over the whole dataset, group results by requisition or office, and propose every action needed — batching with bulk tools where possible.
+BATCHING IS MANDATORY: when the same change applies to more than one record, emit ONE bulk tool call (bulk_set_position_status, bulk_update_positions, bulk_move_stage) covering every affected id. Never emit a series of single-record calls for work that a bulk tool can express — the user must never confirm the same change one row at a time.`;
 
-    const gatewayBody = {
-      model: "google/gemini-2.5-flash",
+    const gatewayBody: Record<string, unknown> = {
+      model: chosenModel,
       messages: [
         { role: "system", content: system },
         { role: "system", content: prefDirective },
@@ -758,14 +826,15 @@ LARGE TASKS: If the request spans many records or several steps, do not refuse o
       stream: wantsStream,
     };
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${authKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(gatewayBody),
     });
+
 
     if (res.status === 429) {
       return new Response(JSON.stringify({ error: "Rate limit reached, please retry shortly." }), {
@@ -775,6 +844,16 @@ LARGE TASKS: If the request spans many records or several steps, do not refuse o
     if (res.status === 402) {
       return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits to continue." }), {
         status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (useByok && (res.status === 401 || res.status === 403)) {
+      return new Response(JSON.stringify({ error: `Your ${byokProvider} API key was rejected — check the key and model id in Assistant controls.` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (useByok && res.status === 404) {
+      return new Response(JSON.stringify({ error: `Model “${chosenModel}” is not available on your ${byokProvider} key.` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (!res.ok) {
