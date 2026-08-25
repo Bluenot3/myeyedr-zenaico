@@ -49,7 +49,7 @@ export default function CareersInfographics({ stats }: { stats: PublicStats }) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metric icon={Sparkles} value={stats.open_roles} label="Open roles" sub="Actively interviewing right now" />
         <Metric icon={Users} value={stats.seats} label="Seats to fill" sub="Total headcount across openings" />
-        <Metric icon={Building2} value={stats.offices} label="Offices hiring" sub={`of ${stats.network_offices} in the network`} />
+        <Metric icon={Building2} value={stats.offices} label="Offices hiring" sub="Across our 1,200+ office network" />
         <Metric icon={MapPin} value={stats.regions} label="Regions" sub="Counties currently recruiting" />
       </div>
 

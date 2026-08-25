@@ -9,6 +9,8 @@ import EyeChartField from "@/components/recruiting/EyeChartField";
 import ApplyDialog from "@/components/careers/ApplyDialog";
 import CareersInfographics from "@/components/careers/CareersInfographics";
 import IndustryGrowth from "@/components/careers/IndustryGrowth";
+import GrowthStory from "@/components/careers/GrowthStory";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { jobCity, postedAgo, usePublicJobs, type PublicJob } from "@/lib/careers";
@@ -125,10 +127,16 @@ export default function Careers() {
           </div>
         )}
 
+        {/* MyEyeDr growth story + doctor career path */}
+        <div className="pb-16">
+          <GrowthStory />
+        </div>
+
         {/* Industry + opportunity breakdown */}
         <div className="pb-16">
           <IndustryGrowth />
         </div>
+
 
 
         {/* Openings */}
