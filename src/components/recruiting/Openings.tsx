@@ -45,15 +45,21 @@ export default function Openings() {
   const [postReq, setPostReq] = useState("");
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [view, setView] = useState<"active" | "filled" | "closed" | "all">("active");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  const inView = (status: string) =>
+    view === "all" ? true
+      : view === "active" ? status === "open" || status === "on_hold"
+      : view === "filled" ? status === "filled"
+      : status === "closed";
 
   const filtered = useMemo(
     () =>
       positions.filter((p) => {
         const r = region === "All" || p.region === region;
-        const st = statusFilter === "all" || p.status === statusFilter;
+        const st = inView(p.status);
         const q =
           !search ||
           [p.title, p.req_code, p.department, p.hiring_manager, p.region]
@@ -61,7 +67,7 @@ export default function Openings() {
             .some((f) => String(f).toLowerCase().includes(search.toLowerCase()));
         return r && st && q;
       }),
-    [positions, region, statusFilter, search],
+    [positions, region, view, search],
   );
 
   const summary = useMemo(() => {
@@ -71,7 +77,8 @@ export default function Openings() {
       reqs: positions.length,
       open: count("open"),
       hold: count("on_hold"),
-      closed: count("closed") + count("filled"),
+      filled: count("filled"),
+      closed: count("closed"),
       seats: openPos.reduce((n, p) => n + (p.openings || 1), 0),
     };
   }, [positions]);
@@ -103,6 +110,8 @@ export default function Openings() {
 
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
   const candForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.status === "active");
+  const hiredForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.stage === "hired").length;
+
 
   const submit = async () => {
     if (!form.title.trim()) return;
@@ -133,12 +142,19 @@ export default function Openings() {
   };
 
   return (
-    <div className="space-y-4 animate-rise">
+    <div className="space-y-5 animate-rise">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl font-bold">Open Positions</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Every requisition with live candidate counts and where each role is posted.</p>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">Openings</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {view === "active"
+              ? "Roles you're actively hiring for. Filled and closed requisitions move to their own tabs."
+              : view === "filled" ? "Requisitions whose seats are filled — kept for records."
+              : view === "closed" ? "Closed requisitions, archived for reporting."
+              : "Every requisition on record, in any state."}
+          </p>
         </div>
+
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90"><Plus className="h-4 w-4" /> <span className="hidden sm:inline">New Opening</span></Button>
@@ -180,19 +196,40 @@ export default function Openings() {
       </div>
 
       {/* Portfolio summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
         {[
           { label: "Requisitions", value: summary.reqs, tone: "hsl(var(--foreground))" },
           { label: "Open", value: summary.open, tone: statusColor.open },
           { label: "Open seats", value: summary.seats, tone: "hsl(var(--gold))" },
           { label: "On hold", value: summary.hold, tone: statusColor.on_hold },
-          { label: "Closed / filled", value: summary.closed, tone: statusColor.closed },
+          { label: "Filled / closed", value: summary.filled + summary.closed, tone: statusColor.closed },
         ].map((s) => (
-          <div key={s.label} className="glass-panel rounded-xl px-3 py-2.5">
-            <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
-            <p className="font-display text-xl font-bold leading-tight mt-0.5" style={{ color: s.tone }}>{s.value}</p>
+          <div key={s.label} className="glass-panel rounded-xl px-3.5 py-3 hover-lift transition-shadow">
+            <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{s.label}</p>
+            <p className="font-display text-2xl font-bold leading-none mt-1.5 tabular-nums" style={{ color: s.tone }}>{s.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* View tabs — filled roles never clutter the active list */}
+      <div className="flex items-center gap-1 p-1 rounded-xl border border-border/70 bg-card/50 overflow-x-auto">
+        {([
+          { key: "active", label: "Hiring now", count: summary.open + summary.hold },
+          { key: "filled", label: "Filled", count: summary.filled },
+          { key: "closed", label: "Closed", count: summary.closed },
+          { key: "all", label: "All", count: summary.reqs },
+        ] as const).map((t) => {
+          const active = view === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => { setView(t.key); clearSel(); }}
+              className={`flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-medium transition-all tap-target ${active ? "liquid-glass text-emerald border border-emerald/35 shadow-[0_0_18px_-10px_hsl(var(--emerald)/0.6)]" : "text-muted-foreground hover:text-foreground border border-transparent"}`}
+            >
+              {t.label} <span className="ml-1 tabular-nums opacity-70">{t.count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -211,10 +248,6 @@ export default function Openings() {
           <option value="All">All Regions</option>
           {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
-          <option value="all">All statuses</option>
-          {POSITION_STATUS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-        </select>
         <button
           onClick={() => (allFilteredSelected ? clearSel() : selectAllFiltered())}
           className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
@@ -223,6 +256,7 @@ export default function Openings() {
           Select all ({filtered.length})
         </button>
       </div>
+
 
       {/* Bulk toolbar */}
       {sel.size > 0 && (
@@ -269,11 +303,31 @@ export default function Openings() {
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="glass-panel rounded-2xl border-dashed border-border/70 py-14 px-6 text-center">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-emerald/12 border border-emerald/30">
+            <Briefcase className="h-5 w-5 text-emerald" />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-foreground">
+            {view === "active" ? "No roles are actively hiring" : view === "filled" ? "Nothing filled yet" : view === "closed" ? "No closed requisitions" : "No requisitions match"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
+            {view === "active"
+              ? "Every seat is either filled or closed. Open a new requisition to start a pipeline."
+              : "Adjust the search, region, or switch tabs to see other requisitions."}
+          </p>
+          {view === "active" && (
+            <Button size="sm" onClick={() => setAddOpen(true)} className="mt-4 gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90"><Plus className="h-4 w-4" /> New opening</Button>
+          )}
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map((p) => {
             const cands = candForPos(p.id);
+            const hired = hiredForPos(p.id);
+            const seatsFull = p.status === "open" && hired >= (p.openings || 1);
             const postLocsList = Array.isArray(p.posting_locations) ? p.posting_locations : [];
+
             return (
               <div
                 key={p.id}
@@ -309,8 +363,22 @@ export default function Openings() {
                 <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
                   <span>{p.employment_type}</span>
                   {p.pay_range && <span className="text-gold">{p.pay_range}</span>}
-                  <span>· {p.openings} seat{p.openings > 1 ? "s" : ""}</span>
+                  <span>· {hired}/{p.openings} seat{p.openings > 1 ? "s" : ""} filled</span>
                 </div>
+
+                {seatsFull && (
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-cyan/30 bg-cyan/[0.08] px-2.5 py-2">
+                    <Lock className="h-3.5 w-3.5 text-cyan shrink-0" />
+                    <p className="text-[11px] text-foreground/90 flex-1">All seats are hired — move this out of Hiring now.</p>
+                    <button
+                      onClick={() => updatePosition.mutate({ id: p.id, status: "filled" })}
+                      className="text-[10px] font-semibold text-cyan hover:underline whitespace-nowrap"
+                    >
+                      Mark filled
+                    </button>
+                  </div>
+                )}
+
 
                 {p.description ? (
                   <p className="mt-2.5 text-[11px] text-muted-foreground/90 leading-relaxed line-clamp-3">{p.description}</p>
