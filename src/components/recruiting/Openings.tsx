@@ -45,15 +45,21 @@ export default function Openings() {
   const [postReq, setPostReq] = useState("");
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [view, setView] = useState<"active" | "filled" | "closed" | "all">("active");
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  const inView = (status: string) =>
+    view === "all" ? true
+      : view === "active" ? status === "open" || status === "on_hold"
+      : view === "filled" ? status === "filled"
+      : status === "closed";
 
   const filtered = useMemo(
     () =>
       positions.filter((p) => {
         const r = region === "All" || p.region === region;
-        const st = statusFilter === "all" || p.status === statusFilter;
+        const st = inView(p.status);
         const q =
           !search ||
           [p.title, p.req_code, p.department, p.hiring_manager, p.region]
@@ -61,7 +67,7 @@ export default function Openings() {
             .some((f) => String(f).toLowerCase().includes(search.toLowerCase()));
         return r && st && q;
       }),
-    [positions, region, statusFilter, search],
+    [positions, region, view, search],
   );
 
   const summary = useMemo(() => {
@@ -71,7 +77,8 @@ export default function Openings() {
       reqs: positions.length,
       open: count("open"),
       hold: count("on_hold"),
-      closed: count("closed") + count("filled"),
+      filled: count("filled"),
+      closed: count("closed"),
       seats: openPos.reduce((n, p) => n + (p.openings || 1), 0),
     };
   }, [positions]);
@@ -103,6 +110,8 @@ export default function Openings() {
 
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
   const candForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.status === "active");
+  const hiredForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.stage === "hired").length;
+
 
   const submit = async () => {
     if (!form.title.trim()) return;
