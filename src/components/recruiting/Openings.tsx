@@ -275,15 +275,26 @@ export default function Openings() {
             const cands = candForPos(p.id);
             const postLocsList = Array.isArray(p.posting_locations) ? p.posting_locations : [];
             return (
-              <div key={p.id} className="glass-panel rounded-xl p-4 hover-lift">
+              <div
+                key={p.id}
+                className={`glass-panel rounded-xl p-4 hover-lift transition-shadow ${sel.has(p.id) ? "ring-1 ring-emerald/50 border-emerald/40" : ""}`}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2.5 min-w-0">
+                    <button
+                      onClick={() => toggleSel(p.id)}
+                      aria-label={sel.has(p.id) ? `Deselect ${p.title}` : `Select ${p.title}`}
+                      className="mt-0.5 shrink-0 text-muted-foreground hover:text-emerald"
+                    >
+                      {sel.has(p.id) ? <CheckSquare className="h-4 w-4 text-emerald" /> : <Square className="h-4 w-4" />}
+                    </button>
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30 shrink-0"><Briefcase className="h-4 w-4 text-emerald" /></div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         {p.req_code && <span className="text-[8.5px] font-mono uppercase tracking-wide text-emerald bg-emerald/10 border border-emerald/25 rounded px-1 py-0.5 shrink-0">{p.req_code}</span>}
                         <h3 className="text-sm font-semibold text-foreground truncate">{p.title}</h3>
                       </div>
+
                       <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(p.location_id)} · {p.region}{p.hiring_manager ? ` · ${p.hiring_manager}` : ""}</p>
                     </div>
                   </div>
