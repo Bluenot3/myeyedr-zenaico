@@ -142,12 +142,19 @@ export default function Openings() {
   };
 
   return (
-    <div className="space-y-4 animate-rise">
+    <div className="space-y-5 animate-rise">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl font-bold">Open Positions</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Every requisition with live candidate counts and where each role is posted.</p>
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">Openings</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {view === "active"
+              ? "Roles you're actively hiring for. Filled and closed requisitions move to their own tabs."
+              : view === "filled" ? "Requisitions whose seats are filled — kept for records."
+              : view === "closed" ? "Closed requisitions, archived for reporting."
+              : "Every requisition on record, in any state."}
+          </p>
         </div>
+
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5 bg-emerald text-primary-foreground hover:bg-emerald/90"><Plus className="h-4 w-4" /> <span className="hidden sm:inline">New Opening</span></Button>
