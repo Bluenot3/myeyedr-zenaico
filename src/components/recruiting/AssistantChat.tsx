@@ -613,8 +613,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
                 </div>
               ) : (
                 <div className="px-0.5 pt-0.5 text-[14px] text-foreground">
-                  <RichMessage content={m.content} animate={i === animateIndex} />
+                  <RichMessage
+                    content={m.content}
+                    animate={i === animateIndex}
+                    live={i === streamIndex}
+                    streamStyle={prefs.streamStyle}
+                  />
                 </div>
+
               )}
 
 
