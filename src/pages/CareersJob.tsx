@@ -86,7 +86,7 @@ export default function CareersJob() {
         <Logo markSize={28} />
       </header>
 
-      <main className="relative z-10 mx-auto max-w-4xl px-5 pb-24">
+      <main className="relative z-10 mx-auto max-w-4xl px-5 pb-32 sm:pb-24">
         {isLoading ? (
           <div className="flex items-center justify-center gap-3 py-32 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading this role…
@@ -196,6 +196,18 @@ export default function CareersJob() {
           <ZenSignature />
         </div>
       </footer>
+
+      {job && (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/60 bg-background/85 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl sm:hidden">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">{job.title}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{jobCity(job)} · {job.employment_type}</p>
+            </div>
+            <Button size="lg" className="shrink-0" onClick={() => setApplyOpen(true)}>Apply</Button>
+          </div>
+        </div>
+      )}
 
       <ApplyDialog open={applyOpen} onOpenChange={setApplyOpen} job={job} />
     </div>

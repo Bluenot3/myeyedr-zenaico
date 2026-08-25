@@ -108,3 +108,50 @@ export function jobCity(job: PublicJob): string {
   }
   return job.region || "Multiple offices";
 }
+
+/* ------------------------------------------------------------------ *
+ * Returning-applicant profile (one-tap apply)
+ * Stored locally on the applicant's own device only — never uploaded
+ * anywhere except as part of an application they explicitly submit.
+ * ------------------------------------------------------------------ */
+
+export interface SavedApplicant {
+  full_name: string;
+  email: string;
+  phone?: string;
+  resume_name?: string;
+  saved_at: string;
+}
+
+const APPLICANT_KEY = "myeyedr.careers.applicant";
+
+export function loadSavedApplicant(): SavedApplicant | null {
+  try {
+    const raw = localStorage.getItem(APPLICANT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedApplicant;
+    if (!parsed?.email || !parsed?.full_name) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function saveApplicant(profile: Omit<SavedApplicant, "saved_at">) {
+  try {
+    localStorage.setItem(
+      APPLICANT_KEY,
+      JSON.stringify({ ...profile, saved_at: new Date().toISOString() } satisfies SavedApplicant),
+    );
+  } catch {
+    /* storage unavailable (private mode) — one-tap apply just stays off */
+  }
+}
+
+export function clearSavedApplicant() {
+  try {
+    localStorage.removeItem(APPLICANT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
