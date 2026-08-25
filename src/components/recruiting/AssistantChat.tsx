@@ -183,12 +183,96 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
     return `\n\n---ATTACHED JOB DESCRIPTION (${file.name}), already parsed---\n${JSON.stringify(job)}\n---END ATTACHMENT---`;
   };
 
-  const send = async (text: string) => {
+  const prefsPayload = () => ({
+    length: prefs.length,
+    style: prefs.style,
+    charts: prefs.charts,
+    tables: prefs.tables,
+    proactive: prefs.proactive,
+    autoActions: prefs.autoActions,
+    temperature: prefs.temperature,
+  });
+
+  /** Token-by-token stream straight from the edge function's SSE channel. */
+  const streamReply = async (history: { role: string; content: string }[]) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) throw new Error("Session expired — sign in again.");
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/candidate-assistant`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+        },
+        body: JSON.stringify({ messages: history, stream: true, prefs: prefsPayload() }),
+        signal: controller.signal,
+      },
+    );
+    if (!res.ok || !res.body) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(detail || `AI error ${res.status}`);
+    }
+
+    // Placeholder message that grows as tokens land.
+    let index = -1;
+    setMessages((m) => {
+      index = m.length;
+      setStreamIndex(index);
+      return [...m, { role: "assistant", content: "", actions: [] }];
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let text = "";
+
+    const patch = (updater: (msg: ChatMessage) => ChatMessage) =>
+      setMessages((m) => m.map((msg, i) => (i === index ? updater(msg) : msg)));
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t.startsWith("data:")) continue;
+        let ev: any;
+        try { ev = JSON.parse(t.slice(5).trim()); } catch { continue; }
+        if (ev.t === "delta") {
+          text += ev.v;
+          patch((msg) => ({ ...msg, content: text }));
+        } else if (ev.t === "done") {
+          patch((msg) => ({
+            ...msg,
+            content: text || "I couldn't produce a response.",
+            actions: Array.isArray(ev.actions) ? ev.actions : [],
+          }));
+        } else if (ev.t === "error") {
+          throw new Error(ev.message || "Stream failed");
+        }
+      }
+    }
+    setStreamIndex(-1);
+    abortRef.current = null;
+    return text;
+  };
+
+  const send = async (text: string, opts?: { task?: AssistantTask }) => {
     const trimmed = text.trim();
     const file = attachment;
     if ((!trimmed && !file) || busy) return;
     setInput("");
     setBusy(true);
+    activeTask.current = opts?.task ?? null;
     const visible = trimmed || `Use the attached file: ${file?.name}`;
     setMessages((m) => [...m, { role: "user", content: visible, attachmentName: file?.name }]);
     try {
@@ -201,31 +285,60 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
         ...messages.map(({ role, content }) => ({ role, content })),
         { role: "user" as const, content: payloadText },
       ];
-      const { data, error } = await supabase.functions.invoke("candidate-assistant", {
-        body: { messages: history },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setMessages((m) => {
-        setAnimateIndex(m.length);
-        return [...m, {
-          role: "assistant",
-          content: data.reply || "I couldn't produce a response.",
-          actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
-        }];
-      });
+
+      let replyText = "";
+      if (prefs.streaming) {
+        replyText = await streamReply(history);
+      } else {
+        const { data, error } = await supabase.functions.invoke("candidate-assistant", {
+          body: { messages: history, prefs: prefsPayload() },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        replyText = data.reply || "I couldn't produce a response.";
+        setMessages((m) => {
+          setAnimateIndex(m.length);
+          return [...m, {
+            role: "assistant",
+            content: replyText,
+            actions: Array.isArray(data.proposed_actions) ? data.proposed_actions : [],
+          }];
+        });
+      }
+
+      const task = activeTask.current;
+      if (task && replyText) {
+        recordRun.mutate({ task, result: replyText });
+      }
     } catch (e: any) {
-      const msg = e?.message?.includes("402")
-        ? "AI credits exhausted — add credits to continue."
-        : e?.message?.includes("429")
-        ? "Rate limit reached — please retry shortly."
-        : e?.message || "Something went wrong.";
-      toast.error(msg);
-      setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${msg}` }]);
+      if (e?.name === "AbortError") {
+        setStreamIndex(-1);
+      } else {
+        const msg = e?.message?.includes("402")
+          ? "AI credits exhausted — add credits to continue."
+          : e?.message?.includes("429")
+          ? "Rate limit reached — please retry shortly."
+          : e?.message || "Something went wrong.";
+        toast.error(msg);
+        setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${msg}` }]);
+      }
     } finally {
+      activeTask.current = null;
+      abortRef.current = null;
+      setStreamIndex(-1);
       setBusy(false);
     }
   };
+
+  const stop = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  };
+
+  const runTask = (task: AssistantTask) => {
+    send(`Run my standing task “${task.title}”.\n\n${task.prompt}`, { task });
+  };
+
 
 
   const runAction = async (a: ProposedAction) => {
