@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  History, ArrowRightLeft, Briefcase, MapPin, Clock, Loader2, CheckCircle2, Link2, ShieldCheck,
+  History, ArrowRightLeft, Briefcase, Clock, Loader2, Link2, ShieldCheck,
   Mic, ClipboardCheck, StickyNote, Flag,
 } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import { useTranscripts } from "@/hooks/useAgents";
 import { relativeTime, stageMeta, prettyStatus } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import ApplicationSeals from "./ApplicationSeals";
 
 /** Deterministic short hash (FNV-1a) — gives each ledger block a stable fingerprint. */
 function shortHash(input: string): string {
@@ -47,7 +48,7 @@ const eventTone: Record<string, string> = {
 };
 
 export default function CandidateHistory({ candidate }: { candidate: Candidate }) {
-  const { data: applications = [], isLoading: loadingApps } = useCandidateRequisitions(candidate.id);
+  const { data: applications = [] } = useCandidateRequisitions(candidate.id);
   const { data: events = [], isLoading: loadingEvents } = useCandidateEvents(candidate.id);
   const { data: evaluations = [] } = useCandidateEvaluations(candidate.id);
   const { data: notes = [] } = useCandidateNotes(candidate.id);
