@@ -725,6 +725,38 @@ ${JSON.stringify(compact)}
 REMEMBER: If the user's latest message asks you to change anything — candidates or requisitions — you MUST respond by calling the matching tool(s) with exact ids, not with text that claims the change was made.`;
 
 
+    const LENGTH_RULES: Record<string, string> = {
+      brief: "RESPONSE LENGTH: Be extremely economical. Lead with the answer in one sentence, then at most 3-5 bullets. No headings unless essential. Never exceed ~120 words of prose.",
+      standard: "RESPONSE LENGTH: Balanced analyst brief — a one-line takeaway, then the supporting structure the question deserves. Aim for 150-350 words.",
+      deep: "RESPONSE LENGTH: Full working document. Use headings, comparison tables, risk callouts, and an explicit sequenced plan. Cover second-order effects and edge cases. Long is fine when every line earns its place.",
+    };
+    const STYLE_RULES: Record<string, string> = {
+      analyst: "VOICE: Precise recruiting analyst. Evidence first, quantified, neutral tone.",
+      executive: "VOICE: Board-level brief for a trillion-dollar operator. Decision-first, crisp, zero hedging, always state the recommendation and the risk.",
+      coach: "VOICE: Warm operating partner. Explain the reasoning so the manager learns the judgment, not just the answer.",
+      direct: "VOICE: Blunt and telegraphic. Answer, reason, action. No pleasantries, no restating the question.",
+    };
+    const prefDirective = `OUTPUT PREFERENCES set by this user — follow them exactly.
+${LENGTH_RULES[prefs.length]}
+${STYLE_RULES[prefs.style]}
+${prefs.tables ? "Use markdown tables for any comparison of 2+ records." : "Do NOT use markdown tables; use compact bullet lists instead."}
+${prefs.charts ? "Include a ```chart JSON block whenever numeric comparison would be clearer visually (real dataset values only)." : "Do NOT include chart blocks."}
+${prefs.proactive ? "Close with a short \"Recommended next steps\" list and raise unprompted risks from the ATTENTION NOW block." : "Answer only what was asked; do not append proactive suggestions unless requested."}
+${prefs.autoActions ? "Propose the tool calls that carry out the work whenever the request implies a change." : "Only call tools when the user explicitly asks you to change something."}
+LARGE TASKS: If the request spans many records or several steps, do not refuse or ask to narrow it. Work it end to end: state a short plan, execute the analysis over the whole dataset, group results by requisition or office, and propose every action needed — batching with bulk tools where possible.`;
+
+    const gatewayBody = {
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: system },
+        { role: "system", content: prefDirective },
+        ...messages,
+      ],
+      tools,
+      tool_choice: "auto",
+      temperature: prefs.temperature,
+      stream: wantsStream,
+    };
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -732,13 +764,7 @@ REMEMBER: If the user's latest message asks you to change anything — candidate
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "system", content: system }, ...messages],
-        tools,
-        tool_choice: "auto",
-        temperature: 0.4,
-      }),
+      body: JSON.stringify(gatewayBody),
     });
 
     if (res.status === 429) {
@@ -756,25 +782,95 @@ REMEMBER: If the user's latest message asks you to change anything — candidate
       throw new Error(err || `AI error ${res.status}`);
     }
 
+    const buildActions = (toolCalls: any[]) => {
+      const proposed_actions: any[] = [];
+      for (const tc of toolCalls ?? []) {
+        try {
+          const name = tc.function?.name;
+          const args = JSON.parse(tc.function?.arguments || "{}");
+          if (!name || !ACTION_LABEL[name]) continue;
+          proposed_actions.push({
+            id: tc.id || crypto.randomUUID(),
+            type: name,
+            label: ACTION_LABEL[name](args),
+            args,
+          });
+        } catch (_e) { /* skip malformed tool call */ }
+      }
+      return proposed_actions;
+    };
+
+    /* ---------------- Streaming path: token-by-token SSE ---------------- */
+    if (wantsStream) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const emit = (obj: unknown) =>
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+          const reader = res.body!.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let text = "";
+          const calls: Record<number, { id?: string; name: string; args: string }> = {};
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
+              for (const line of lines) {
+                const t = line.trim();
+                if (!t.startsWith("data:")) continue;
+                const payload = t.slice(5).trim();
+                if (!payload || payload === "[DONE]") continue;
+                let json: any;
+                try { json = JSON.parse(payload); } catch { continue; }
+                const delta = json.choices?.[0]?.delta;
+                if (!delta) continue;
+                if (typeof delta.content === "string" && delta.content) {
+                  text += delta.content;
+                  emit({ t: "delta", v: delta.content });
+                }
+                for (const tc of delta.tool_calls ?? []) {
+                  const i = tc.index ?? 0;
+                  calls[i] ??= { name: "", args: "" };
+                  if (tc.id) calls[i].id = tc.id;
+                  if (tc.function?.name) calls[i].name += tc.function.name;
+                  if (tc.function?.arguments) calls[i].args += tc.function.arguments;
+                }
+              }
+            }
+            const toolCalls = Object.values(calls)
+              .filter((c) => c.name)
+              .map((c) => ({ id: c.id, function: { name: c.name, arguments: c.args } }));
+            const actions = buildActions(toolCalls);
+            if (!text && actions.length) {
+              const filler = `I've prepared ${actions.length} action${actions.length === 1 ? "" : "s"} for your confirmation:`;
+              emit({ t: "delta", v: filler });
+            }
+            emit({ t: "done", actions, candidateCount: compact.length });
+          } catch (e) {
+            emit({ t: "error", message: String(e) });
+          } finally {
+            controller.close();
+          }
+        },
+      });
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
+    }
+
     const data = await res.json();
     const message = data.choices?.[0]?.message ?? {};
     let reply: string = message.content ?? "";
-
-    const proposed_actions: any[] = [];
-    const toolCalls = message.tool_calls ?? [];
-    for (const tc of toolCalls) {
-      try {
-        const name = tc.function?.name;
-        const args = JSON.parse(tc.function?.arguments || "{}");
-        if (!name || !ACTION_LABEL[name]) continue;
-        proposed_actions.push({
-          id: tc.id || crypto.randomUUID(),
-          type: name,
-          label: ACTION_LABEL[name](args),
-          args,
-        });
-      } catch (_e) { /* skip malformed tool call */ }
-    }
+    const proposed_actions = buildActions(message.tool_calls ?? []);
 
     if (!reply && proposed_actions.length > 0) {
       reply = `I've prepared ${proposed_actions.length} action${proposed_actions.length === 1 ? "" : "s"} for your confirmation:`;
@@ -790,3 +886,4 @@ REMEMBER: If the user's latest message asks you to change anything — candidate
     });
   }
 });
+
