@@ -874,8 +874,17 @@ BATCHING IS MANDATORY: when the same change applies to more than one record, emi
     }
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(err || `AI error ${res.status}`);
+      console.error(`AI gateway ${res.status}: ${err}`);
+      let msg = `The AI service returned ${res.status}.`;
+      try {
+        const parsed = JSON.parse(err);
+        msg = parsed?.error?.message || parsed?.message || msg;
+      } catch { if (err) msg = err.slice(0, 400); }
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
 
     const buildActions = (toolCalls: any[]) => {
       const proposed_actions: any[] = [];
