@@ -196,19 +196,40 @@ export default function Openings() {
       </div>
 
       {/* Portfolio summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
         {[
           { label: "Requisitions", value: summary.reqs, tone: "hsl(var(--foreground))" },
           { label: "Open", value: summary.open, tone: statusColor.open },
           { label: "Open seats", value: summary.seats, tone: "hsl(var(--gold))" },
           { label: "On hold", value: summary.hold, tone: statusColor.on_hold },
-          { label: "Closed / filled", value: summary.closed, tone: statusColor.closed },
+          { label: "Filled / closed", value: summary.filled + summary.closed, tone: statusColor.closed },
         ].map((s) => (
-          <div key={s.label} className="glass-panel rounded-xl px-3 py-2.5">
-            <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
-            <p className="font-display text-xl font-bold leading-tight mt-0.5" style={{ color: s.tone }}>{s.value}</p>
+          <div key={s.label} className="glass-panel rounded-xl px-3.5 py-3 hover-lift transition-shadow">
+            <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">{s.label}</p>
+            <p className="font-display text-2xl font-bold leading-none mt-1.5 tabular-nums" style={{ color: s.tone }}>{s.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* View tabs — filled roles never clutter the active list */}
+      <div className="flex items-center gap-1 p-1 rounded-xl border border-border/70 bg-card/50 overflow-x-auto">
+        {([
+          { key: "active", label: "Hiring now", count: summary.open + summary.hold },
+          { key: "filled", label: "Filled", count: summary.filled },
+          { key: "closed", label: "Closed", count: summary.closed },
+          { key: "all", label: "All", count: summary.reqs },
+        ] as const).map((t) => {
+          const active = view === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => { setView(t.key); clearSel(); }}
+              className={`flex-1 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-medium transition-all tap-target ${active ? "liquid-glass text-emerald border border-emerald/35 shadow-[0_0_18px_-10px_hsl(var(--emerald)/0.6)]" : "text-muted-foreground hover:text-foreground border border-transparent"}`}
+            >
+              {t.label} <span className="ml-1 tabular-nums opacity-70">{t.count}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -227,10 +248,6 @@ export default function Openings() {
           <option value="All">All Regions</option>
           {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60">
-          <option value="all">All statuses</option>
-          {POSITION_STATUS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-        </select>
         <button
           onClick={() => (allFilteredSelected ? clearSel() : selectAllFiltered())}
           className="h-9 px-3 text-xs rounded-lg border border-input bg-card/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
@@ -239,6 +256,7 @@ export default function Openings() {
           Select all ({filtered.length})
         </button>
       </div>
+
 
       {/* Bulk toolbar */}
       {sel.size > 0 && (
