@@ -124,6 +124,12 @@ export default function Careers() {
           </div>
         )}
 
+        {/* Industry + opportunity breakdown */}
+        <div className="pb-16">
+          <IndustryGrowth />
+        </div>
+
+
         {/* Openings */}
         <section id="openings" className="scroll-mt-8 space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
