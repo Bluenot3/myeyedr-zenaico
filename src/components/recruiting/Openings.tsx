@@ -363,8 +363,22 @@ export default function Openings() {
                 <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
                   <span>{p.employment_type}</span>
                   {p.pay_range && <span className="text-gold">{p.pay_range}</span>}
-                  <span>· {p.openings} seat{p.openings > 1 ? "s" : ""}</span>
+                  <span>· {hired}/{p.openings} seat{p.openings > 1 ? "s" : ""} filled</span>
                 </div>
+
+                {seatsFull && (
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-cyan/30 bg-cyan/[0.08] px-2.5 py-2">
+                    <Lock className="h-3.5 w-3.5 text-cyan shrink-0" />
+                    <p className="text-[11px] text-foreground/90 flex-1">All seats are hired — move this out of Hiring now.</p>
+                    <button
+                      onClick={() => updatePosition.mutate({ id: p.id, status: "filled" })}
+                      className="text-[10px] font-semibold text-cyan hover:underline whitespace-nowrap"
+                    >
+                      Mark filled
+                    </button>
+                  </div>
+                )}
+
 
                 {p.description ? (
                   <p className="mt-2.5 text-[11px] text-muted-foreground/90 leading-relaxed line-clamp-3">{p.description}</p>
