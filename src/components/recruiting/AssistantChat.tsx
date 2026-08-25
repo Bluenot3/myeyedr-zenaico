@@ -689,17 +689,18 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           </div>
         ))}
 
-        {busy && (
+        {busy && streamIndex === -1 && (
           <div className="flex gap-2.5">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald/12 border border-emerald/30">
               <Bot className="h-3.5 w-3.5 text-emerald" />
             </div>
             <div className="pt-1.5 inline-flex items-center gap-1.5 text-[13px]">
-              <span className="claude-thinking">Thinking</span>
+              <span className="claude-thinking">{activeTask.current ? "Working the task" : "Thinking"}</span>
               <span className="claude-dots"><i /><i /><i /></span>
             </div>
           </div>
         )}
+
       </div>
 
       <div className={`border-t border-border pt-3 ${compact ? "px-3 pb-3" : "px-1"}`}>
