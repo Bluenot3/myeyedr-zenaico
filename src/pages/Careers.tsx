@@ -97,7 +97,7 @@ export default function Careers() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Button size="lg" asChild>
               <a href="#openings">
-                See {isLoading ? "" : `${jobs.length} `}open roles <ArrowRight className="ml-2 h-4 w-4" />
+                See {isLoading ? "open roles" : `${jobs.length} open ${jobs.length === 1 ? "role" : "roles"}`} <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
             <Button size="lg" variant="outline" onClick={() => openApply(null)}>
