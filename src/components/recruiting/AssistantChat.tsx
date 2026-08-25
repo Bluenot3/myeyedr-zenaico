@@ -96,17 +96,23 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [streamIndex, setStreamIndex] = useState(-1);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, ActionStatus>>({});
   const [animateIndex, setAnimateIndex] = useState<number>(-1);
   const [suggestions, setSuggestions] = useState<Suggestion[]>(FALLBACK_SUGGESTIONS);
+  const [prefs, setPrefs] = useState<AssistantPrefs>(() => loadPrefs());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const activeTask = useRef<AssistantTask | null>(null);
 
   const { data: candidates = [] } = useCandidates();
   const { data: positions = [] } = usePositions();
   const { data: locations = [] } = useLocations();
+  const { data: tasks = [] } = useAssistantTasks();
+  const recordRun = useRecordTaskRun();
   const updateCandidate = useUpdateCandidate();
   const bulkUpdate = useBulkUpdateCandidates();
   const addNote = useAddNote();
@@ -120,6 +126,14 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const createEvent = useCreateEvent();
   const logContact = useLogContact();
   const createApplication = useCreateApplication();
+
+  const due = dueTasks(tasks);
+
+  const applyPrefs = (p: AssistantPrefs) => {
+    setPrefs(p);
+    savePrefs(p);
+  };
+
 
   /* Pull live "what needs you now" starters — deterministic, no AI spend. */
   useEffect(() => {
