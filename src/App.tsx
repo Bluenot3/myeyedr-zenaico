@@ -11,6 +11,8 @@ import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Careers from "./pages/Careers.tsx";
+import CareersJob from "./pages/CareersJob.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +54,10 @@ function AppRoutes() {
       <Route path="/auth" element={<PublicOnly><Auth /></PublicOnly>} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<Protected><Index /></Protected>} />
+      {/* Public applicant-facing careers portal */}
+      <Route path="/careers" element={<Careers />} />
+      <Route path="/careers/:id" element={<CareersJob />} />
+      <Route path="/hired" element={<Navigate to="/careers" replace />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
