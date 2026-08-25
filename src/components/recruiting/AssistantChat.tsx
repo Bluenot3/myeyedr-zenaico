@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import RichMessage from "./RichMessage";
 import EmailDraftCard from "./EmailDraftCard";
+import AssistantSettings from "./AssistantSettings";
 import {
   Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
   Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
-  Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList,
+  Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList, Square, CalendarClock, Play,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,14 @@ import {
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
   useLogContact, useCreateApplication,
 } from "@/hooks/useRecruiting";
+import {
+  useAssistantTasks, useRecordTaskRun, dueTasks, type AssistantTask,
+} from "@/hooks/useAssistantTasks";
+import {
+  loadPrefs, savePrefs, LENGTH_LABEL, STYLE_LABEL, type AssistantPrefs,
+} from "@/lib/assistantPrefs";
 import { stageProgress } from "@/lib/recruiting";
+
 
 
 interface ProposedAction {
