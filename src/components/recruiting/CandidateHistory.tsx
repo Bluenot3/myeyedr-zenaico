@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  History, ArrowRightLeft, Briefcase, MapPin, Clock, Loader2, CheckCircle2, Link2, ShieldCheck,
+  History, ArrowRightLeft, Briefcase, Clock, Loader2, Link2, ShieldCheck,
   Mic, ClipboardCheck, StickyNote, Flag,
 } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import { useTranscripts } from "@/hooks/useAgents";
 import { relativeTime, stageMeta, prettyStatus } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import ApplicationSeals from "./ApplicationSeals";
 
 /** Deterministic short hash (FNV-1a) — gives each ledger block a stable fingerprint. */
 function shortHash(input: string): string {
@@ -47,7 +48,7 @@ const eventTone: Record<string, string> = {
 };
 
 export default function CandidateHistory({ candidate }: { candidate: Candidate }) {
-  const { data: applications = [], isLoading: loadingApps } = useCandidateRequisitions(candidate.id);
+  const { data: applications = [] } = useCandidateRequisitions(candidate.id);
   const { data: events = [], isLoading: loadingEvents } = useCandidateEvents(candidate.id);
   const { data: evaluations = [] } = useCandidateEvaluations(candidate.id);
   const { data: notes = [] } = useCandidateNotes(candidate.id);
@@ -181,12 +182,12 @@ export default function CandidateHistory({ candidate }: { candidate: Candidate }
     <div className="space-y-5">
       {/* Applications / requisition history */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-semibold text-foreground inline-flex items-center gap-1.5"><Briefcase className="h-3.5 w-3.5 text-emerald" /> Requisitions & applications</h4>
+        <div className="flex items-center justify-end mb-2">
           <Button size="sm" variant="outline" className="h-7 gap-1 text-[11px]" onClick={() => setShowAssign((s) => !s)}>
             <ArrowRightLeft className="h-3 w-3" /> Assign / reassign
           </Button>
         </div>
+
 
         {showAssign && (
           <div className="mb-3 rounded-xl border border-emerald/25 bg-emerald/[0.05] p-3 space-y-2">
@@ -216,35 +217,8 @@ export default function CandidateHistory({ candidate }: { candidate: Candidate }
           </div>
         )}
 
-        {loadingApps ? (
-          <p className="text-[11px] text-muted-foreground">Loading…</p>
-        ) : applications.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground rounded-lg border border-dashed border-border/60 p-4 text-center">No requisition assignments recorded yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {applications.map((a) => {
-              const pos = posInfo(a.position_id);
-              const meta = stageMeta(a.stage);
-              return (
-                <div key={a.id} className="rounded-lg border border-border/60 bg-background/40 p-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">
-                        {pos ? `${pos.req_code ? pos.req_code + " · " : ""}${pos.title}` : "Unassigned requisition"}
-                        {a.is_primary && <span className="ml-2 text-[9px] uppercase tracking-wide text-emerald inline-flex items-center gap-0.5"><CheckCircle2 className="h-2.5 w-2.5" /> current</span>}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(a.location_id)} · {a.source || "—"}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-mono uppercase" style={{ color: `hsl(${meta.hsl})` }}>{meta.label}</span>
-                      <p className="text-[9px] text-muted-foreground">{relativeTime(a.created_at)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ApplicationSeals candidate={candidate} />
+
       </div>
 
       {/* Chain of record — linked, tamper-evident candidate journey */}
