@@ -826,14 +826,30 @@ BATCHING IS MANDATORY: when the same change applies to more than one record, emi
       stream: wantsStream,
     };
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${authKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(gatewayBody),
-    });
+    const callGateway = (model: string) =>
+      fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...gatewayBody, model }),
+      });
+
+    let res = await callGateway(chosenModel);
+
+    // A busy or unavailable upstream model must never surface as a dead assistant.
+    // Fall back once to the fast workspace model so the request still completes.
+    const FALLBACK_MODEL = "google/gemini-2.5-flash";
+    if (!useByok && !res.ok && res.status >= 500 && chosenModel !== FALLBACK_MODEL) {
+      console.error(`Model ${chosenModel} failed with ${res.status} — retrying on ${FALLBACK_MODEL}`);
+      res = await callGateway(FALLBACK_MODEL);
+    }
+    if (!useByok && (res.status === 400 || res.status === 404) && chosenModel !== FALLBACK_MODEL) {
+      console.error(`Model ${chosenModel} rejected (${res.status}) — retrying on ${FALLBACK_MODEL}`);
+      res = await callGateway(FALLBACK_MODEL);
+    }
+
 
 
     if (res.status === 429) {
