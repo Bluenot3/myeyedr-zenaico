@@ -216,35 +216,8 @@ export default function CandidateHistory({ candidate }: { candidate: Candidate }
           </div>
         )}
 
-        {loadingApps ? (
-          <p className="text-[11px] text-muted-foreground">Loading…</p>
-        ) : applications.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground rounded-lg border border-dashed border-border/60 p-4 text-center">No requisition assignments recorded yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {applications.map((a) => {
-              const pos = posInfo(a.position_id);
-              const meta = stageMeta(a.stage);
-              return (
-                <div key={a.id} className="rounded-lg border border-border/60 bg-background/40 p-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">
-                        {pos ? `${pos.req_code ? pos.req_code + " · " : ""}${pos.title}` : "Unassigned requisition"}
-                        {a.is_primary && <span className="ml-2 text-[9px] uppercase tracking-wide text-emerald inline-flex items-center gap-0.5"><CheckCircle2 className="h-2.5 w-2.5" /> current</span>}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> {locName(a.location_id)} · {a.source || "—"}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-mono uppercase" style={{ color: `hsl(${meta.hsl})` }}>{meta.label}</span>
-                      <p className="text-[9px] text-muted-foreground">{relativeTime(a.created_at)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ApplicationSeals candidate={candidate} />
+
       </div>
 
       {/* Chain of record — linked, tamper-evident candidate journey */}
