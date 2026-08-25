@@ -8,6 +8,7 @@ import ZenSignature from "@/components/recruiting/ZenSignature";
 import EyeChartField from "@/components/recruiting/EyeChartField";
 import ApplyDialog from "@/components/careers/ApplyDialog";
 import CareersInfographics from "@/components/careers/CareersInfographics";
+import IndustryGrowth from "@/components/careers/IndustryGrowth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { jobCity, postedAgo, usePublicJobs, type PublicJob } from "@/lib/careers";
@@ -79,7 +80,7 @@ export default function Careers() {
         </Button>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-5 pb-24">
+      <main className="relative z-10 mx-auto max-w-6xl px-5 pb-28 sm:pb-24">
         {/* Hero */}
         <section className="py-12 sm:py-20">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
@@ -225,7 +226,7 @@ export default function Careers() {
                       </p>
                     )}
 
-                    <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                       <span className="text-[11px] text-muted-foreground">
                         {job.pay_range ? job.pay_range : postedAgo(job.posted_at)}
                       </span>
@@ -233,7 +234,7 @@ export default function Careers() {
                         <Button size="sm" variant="ghost" asChild>
                           <Link to={`/careers/${job.id}`}>Details</Link>
                         </Button>
-                        <Button size="sm" onClick={() => openApply(job)}>Apply</Button>
+                        <Button size="sm" onClick={() => openApply(job)}>Apply in one tap</Button>
                       </div>
                     </div>
                   </div>
