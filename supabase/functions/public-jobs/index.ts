@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { isPositionAcceptingApplications } from "../_shared/careers-routing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +28,7 @@ serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    const [{ data: positions, error: pErr }, { data: locations }] = await Promise.all([
+    const [{ data: positions, error: pErr }, { data: locations, error: lErr }] = await Promise.all([
       admin
         .from("positions")
         .select(
@@ -38,10 +39,14 @@ serve(async (req) => {
       admin.from("locations").select("id, site_name, city, state, region, active"),
     ]);
     if (pErr) throw pErr;
+    if (lErr) throw lErr;
 
     const locById = new Map((locations || []).map((l) => [l.id, l]));
 
-    const jobs = (positions || []).map((p) => {
+    const jobs = (positions || []).filter((p) => {
+      const loc = p.location_id ? locById.get(p.location_id) : null;
+      return isPositionAcceptingApplications(p, loc);
+    }).map((p) => {
       const loc = p.location_id ? locById.get(p.location_id) : null;
       return {
         id: p.id,

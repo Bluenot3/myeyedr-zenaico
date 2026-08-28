@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe, Search, CheckSquare, Square, Layers, ChevronDown, Lock } from "lucide-react";
-import { usePositions, useCandidates, useLocations, useCreatePosition, useUpdatePosition, Position, PostingLocation } from "@/hooks/useRecruiting";
+import { usePositions, useCandidates, useLocations, useCreatePosition, useUpdatePosition, useAllCandidateRequisitions, Position, PostingLocation } from "@/hooks/useRecruiting";
 import { REGIONS, PRIORITIES, POSITION_STATUS, stageMeta, initials } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ const statusColor: Record<string, string> = {
 export default function Openings() {
   const { data: positions = [], isLoading } = usePositions();
   const { data: candidates = [] } = useCandidates();
+  const { data: applications = [] } = useAllCandidateRequisitions();
   const { data: locations = [] } = useLocations();
   const createPosition = useCreatePosition();
   const updatePosition = useUpdatePosition();
@@ -109,8 +110,64 @@ export default function Openings() {
   };
 
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
-  const candForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.status === "active");
-  const hiredForPos = (id: string) => candidates.filter((c) => c.position_id === id && c.stage === "hired").length;
+  const candidateById = useMemo(() => new Map(candidates.map((c) => [c.id, c])), [candidates]);
+  const applicationsByPosition = useMemo(() => {
+    const grouped = new Map<string, typeof applications>();
+    for (const application of applications) {
+      if (!application.position_id) continue;
+      const list = grouped.get(application.position_id) || [];
+      list.push(application);
+      grouped.set(application.position_id, list);
+    }
+    return grouped;
+  }, [applications]);
+  const candidatesWithApplications = useMemo(
+    () => new Set(applications.map((application) => application.candidate_id)),
+    [applications],
+  );
+
+  const candForPos = (id: string) => {
+    const seen = new Set<string>();
+    const linked = (applicationsByPosition.get(id) || []).flatMap((application) => {
+      if (seen.has(application.candidate_id)) return [];
+      const candidate = candidateById.get(application.candidate_id);
+      if (!candidate) return [];
+      const stage = application.is_primary ? candidate.stage : application.stage;
+      const status = application.is_primary ? candidate.status : application.status;
+      if (status !== "active") return [];
+      seen.add(candidate.id);
+      return [{ ...candidate, stage, status }];
+    });
+    const legacy = candidates.filter(
+      (candidate) =>
+        !candidatesWithApplications.has(candidate.id) &&
+        candidate.position_id === id &&
+        candidate.status === "active",
+    );
+    return [...linked, ...legacy];
+  };
+
+  const hiredForPos = (id: string) => {
+    const seen = new Set<string>();
+    let hired = 0;
+    for (const application of applicationsByPosition.get(id) || []) {
+      if (seen.has(application.candidate_id)) continue;
+      const candidate = candidateById.get(application.candidate_id);
+      if (!candidate) continue;
+      const stage = application.is_primary ? candidate.stage : application.stage;
+      const status = application.is_primary ? candidate.status : application.status;
+      if (stage === "hired" || status === "hired") hired += 1;
+      seen.add(application.candidate_id);
+    }
+    for (const candidate of candidates) {
+      if (
+        !candidatesWithApplications.has(candidate.id) &&
+        candidate.position_id === id &&
+        (candidate.stage === "hired" || candidate.status === "hired")
+      ) hired += 1;
+    }
+    return hired;
+  };
 
 
   const submit = async () => {

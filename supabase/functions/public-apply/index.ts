@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  buildPrimaryCandidatePatch,
+  isPositionAcceptingApplications,
+  type CareersLocation,
+} from "../_shared/careers-routing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,15 +65,31 @@ serve(async (req) => {
     /* ---- requisition (must be open) ---- */
     let position: { id: string; title: string; location_id: string | null; region: string; status: string } | null = null;
     if (positionId) {
-      const { data } = await admin
+      const { data, error: positionError } = await admin
         .from("positions")
         .select("id, title, location_id, region, status")
         .eq("id", positionId)
         .maybeSingle();
-      if (!data || data.status !== "open") {
+      if (positionError) throw positionError;
+      if (!data) {
         return json({ error: "That opening is no longer accepting applications." }, 409);
       }
       position = data;
+
+      let positionLocation: CareersLocation | null = null;
+      if (position.location_id) {
+        const { data: location, error: locationError } = await admin
+          .from("locations")
+          .select("id, active, region")
+          .eq("id", position.location_id)
+          .maybeSingle();
+        if (locationError) throw locationError;
+        positionLocation = location;
+        position.region = position.region || location?.region || "";
+      }
+      if (!isPositionAcceptingApplications(position, positionLocation)) {
+        return json({ error: "That opening is no longer accepting applications." }, 409);
+      }
     }
 
     /* ---- résumé upload (service role) ---- */
@@ -113,11 +134,14 @@ serve(async (req) => {
     ].filter(Boolean);
 
     /* ---- dedupe on email ---- */
-    const { data: existing } = await admin
+    const { data: existing, error: existingError } = await admin
       .from("candidates")
-      .select("id, full_name, position_id, in_talent_pool, resume_url, resume_text, resume_summary, years_experience")
+      .select("id, full_name, position_id, in_talent_pool, resume_url, resume_text, resume_summary, years_experience, stage, status")
       .ilike("email", email)
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
+    if (existingError) throw existingError;
 
     const summary = clean(parsed.summary || parsed.resume_summary, 4000);
     const rawText = typeof parsed.raw_text === "string" ? parsed.raw_text.slice(0, 60000) : "";
@@ -143,7 +167,8 @@ serve(async (req) => {
       }
       if (talentPool && !existing.position_id) updates.in_talent_pool = true;
       Object.keys(updates).forEach((k) => updates[k] === undefined && delete updates[k]);
-      await admin.from("candidates").update(updates).eq("id", existing.id);
+      const { error: updateCandidateError } = await admin.from("candidates").update(updates).eq("id", existing.id);
+      if (updateCandidateError) throw updateCandidateError;
     } else {
       const insert: Record<string, unknown> = {
         full_name: fullName,
@@ -178,29 +203,82 @@ serve(async (req) => {
     /* ---- application row (parallel applications supported) ---- */
     let alreadyApplied = false;
     if (position) {
-      const { data: existingApp } = await admin
+      const { data: existingApp, error: existingAppError } = await admin
         .from("candidate_requisitions")
         .select("id")
         .eq("candidate_id", candidateId)
         .eq("position_id", position.id)
         .maybeSingle();
+      if (existingAppError) throw existingAppError;
+
+      let applicationId = existingApp?.id || "";
       if (existingApp) {
         alreadyApplied = true;
       } else {
-        const { count } = await admin
-          .from("candidate_requisitions")
-          .select("id", { count: "exact", head: true })
-          .eq("candidate_id", candidateId);
-        await admin.from("candidate_requisitions").insert({
+        const { data: createdApp, error: createAppError } = await admin.from("candidate_requisitions").insert({
           candidate_id: candidateId,
           position_id: position.id,
           location_id: position.location_id,
           stage: "applied",
           status: "active",
           source: "Careers Site",
-          is_primary: !count,
+          is_primary: false,
           created_by: "careers-site",
-        });
+        }).select("id").single();
+
+        if (createAppError?.code === "23505") {
+          const { data: concurrentApp, error: concurrentAppError } = await admin
+            .from("candidate_requisitions")
+            .select("id")
+            .eq("candidate_id", candidateId)
+            .eq("position_id", position.id)
+            .single();
+          if (concurrentAppError) throw concurrentAppError;
+          applicationId = concurrentApp.id;
+          alreadyApplied = true;
+        } else if (createAppError) {
+          throw createAppError;
+        } else {
+          applicationId = createdApp?.id || "";
+        }
+      }
+
+      if (!applicationId) throw new Error("Application record was not created");
+
+      const preserveHiredPlacement = existing?.status === "hired";
+      const isCurrentHiredPosition = preserveHiredPlacement && existing?.position_id === position.id;
+      const { error: primaryError } = await admin
+        .from("candidate_requisitions")
+        .update({
+          location_id: position.location_id,
+          source: "Careers Site",
+          ...(!isCurrentHiredPosition ? { stage: "applied", status: "active" } : {}),
+          is_primary: preserveHiredPlacement ? isCurrentHiredPosition : true,
+        })
+        .eq("id", applicationId);
+      if (primaryError) throw primaryError;
+
+      if (!preserveHiredPlacement) {
+        const { error: demoteError } = await admin
+          .from("candidate_requisitions")
+          .update({ is_primary: false })
+          .eq("candidate_id", candidateId)
+          .eq("is_primary", true)
+          .neq("id", applicationId);
+        if (demoteError) throw demoteError;
+      }
+
+      const candidateUpdates = buildPrimaryCandidatePatch(
+        position,
+        existing?.status,
+        new Date().toISOString(),
+      );
+      if (candidateUpdates) {
+        const { error: candidatePointerError } = await admin
+          .from("candidates")
+          .update(candidateUpdates)
+          .eq("id", candidateId);
+        if (candidatePointerError) throw candidatePointerError;
       }
     }
 

@@ -1770,28 +1770,53 @@ export function useReassignRequisition() {
       positionTitle?: string;
     }) => {
       const actor = payload.actor ?? "Administrator";
-      // Demote existing primary applications for this candidate.
-      await db.from("candidate_requisitions")
+      let primaryApplicationId = "";
+      if (payload.position_id) {
+        const { data: existingApplication, error: existingApplicationError } = await db
+          .from("candidate_requisitions")
+          .select("id")
+          .eq("candidate_id", payload.candidate.id)
+          .eq("position_id", payload.position_id)
+          .maybeSingle();
+        if (existingApplicationError) throw existingApplicationError;
+
+        if (existingApplication) {
+          primaryApplicationId = existingApplication.id;
+          const { error } = await db.from("candidate_requisitions")
+            .update({ location_id: payload.location_id, status: "active", is_primary: true })
+            .eq("id", existingApplication.id);
+          if (error) throw error;
+        } else {
+          const { data: createdApplication, error } = await db.from("candidate_requisitions").insert([{
+            candidate_id: payload.candidate.id,
+            position_id: payload.position_id,
+            location_id: payload.location_id,
+            source: payload.candidate.source ?? "",
+            stage: "applied",
+            status: "active",
+            is_primary: true,
+            created_by: actor,
+          }]).select("id").single();
+          if (error) throw error;
+          primaryApplicationId = createdApplication.id;
+        }
+      }
+
+      const demoteQuery = db.from("candidate_requisitions")
         .update({ is_primary: false })
         .eq("candidate_id", payload.candidate.id)
         .eq("is_primary", true);
-      // New primary application.
-      const { error } = await db.from("candidate_requisitions").insert([{
-        candidate_id: payload.candidate.id,
-        position_id: payload.position_id,
-        location_id: payload.location_id,
-        source: payload.candidate.source ?? "",
-        stage: payload.candidate.stage ?? "applied",
-        status: "active",
-        is_primary: true,
-        created_by: actor,
-      }]);
-      if (error) throw error;
+      const { error: demoteError } = primaryApplicationId
+        ? await demoteQuery.neq("id", primaryApplicationId)
+        : await demoteQuery;
+      if (demoteError) throw demoteError;
+
       // Update the master candidate pointer.
       const { error: upErr } = await db.from("candidates")
         .update({
           position_id: payload.position_id,
           location_id: payload.location_id,
+          ...(payload.positionTitle ? { applied_role: payload.positionTitle } : {}),
           ...(payload.region ? { region: payload.region } : {}),
         })
         .eq("id", payload.candidate.id);
