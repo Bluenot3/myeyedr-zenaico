@@ -78,62 +78,62 @@
     --glow-emerald: 0 0 38px -16px rgba(29,111,255,0.6);
   }
 
-  /* ============ LIGHT MODE (DEFAULT) — white → electric blue gradient ============ */
+  /* ============ LIGHT MODE (DEFAULT) — Clinical Precision ============ */
   :root.light {
-    --background: 210 60% 98%;
-    --foreground: 220 55% 12%;
+    --background: 216 46% 98%;
+    --foreground: 217 51% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 52% 13%;
+    --card-foreground: 217 51% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 52% 13%;
+    --popover-foreground: 217 51% 12%;
 
-    --primary: 214 92% 50%;
+    --primary: 222 82% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 211 60% 95%;
-    --secondary-foreground: 220 52% 15%;
+    --secondary: 216 55% 95%;
+    --secondary-foreground: 217 48% 16%;
 
-    --muted: 211 48% 94%;
-    --muted-foreground: 218 22% 42%;
+    --muted: 216 52% 94%;
+    --muted-foreground: 217 20% 44%;
 
-    --accent: 200 92% 48%;
+    --accent: 214 88% 46%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 4 74% 52%;
+    --destructive: 4 74% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 40% 88%;
-    --input: 214 40% 86%;
-    --ring: 214 92% 50%;
+    --border: 216 38% 89%;
+    --input: 216 38% 86%;
+    --ring: 222 82% 48%;
 
     /* Brand tokens tuned for contrast on white */
-    --gold: 206 84% 46%;       /* deep sky accent */
-    --emerald: 214 92% 48%;
-    --holo: 208 82% 50%;
-    --cyan: 192 88% 42%;
+    --gold: 214 84% 44%;
+    --emerald: 222 82% 48%;
+    --holo: 212 80% 48%;
+    --cyan: 196 84% 40%;
     --orange: 24 84% 50%;
-    --lime: 158 62% 38%;
-    --ink: 220 55% 12%;
-    --navy: 212 52% 94%;
-    --platinum: 220 52% 13%;
+    --lime: 158 60% 36%;
+    --ink: 217 51% 12%;
+    --navy: 216 50% 94%;
+    --platinum: 217 51% 12%;
 
-    --success: 158 64% 34%;
-    --warning: 34 90% 46%;
+    --success: 158 62% 32%;
+    --warning: 34 88% 44%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 44% 22%;
-    --sidebar-primary: 214 92% 50%;
+    --sidebar-foreground: 217 42% 22%;
+    --sidebar-primary: 222 82% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 211 60% 95%;
-    --sidebar-accent-foreground: 220 52% 15%;
-    --sidebar-border: 214 40% 90%;
-    --sidebar-ring: 214 92% 50%;
+    --sidebar-accent: 216 55% 95%;
+    --sidebar-accent-foreground: 217 48% 16%;
+    --sidebar-border: 216 38% 91%;
+    --sidebar-ring: 222 82% 48%;
 
-    --shadow-cert: 0 28px 64px -34px rgba(20,80,200,0.28), 0 0 0 1px rgba(29,111,255,0.10);
-    --glow-gold: 0 0 28px -14px rgba(29,111,255,0.32);
-    --glow-emerald: 0 0 34px -16px rgba(29,111,255,0.4);
+    --shadow-cert: 0 24px 56px -32px rgba(15,27,45,0.24), 0 0 0 1px rgba(22,87,224,0.08);
+    --glow-gold: 0 0 24px -14px rgba(22,87,224,0.28);
+    --glow-emerald: 0 0 30px -16px rgba(22,87,224,0.34);
   }
 }
 
