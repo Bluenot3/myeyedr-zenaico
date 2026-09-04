@@ -150,6 +150,97 @@ function mapPositionStatus(raw: string): string {
   return "open";
 }
 
+/* ----------------------------- role → requisition ---------------------------- */
+
+/** Role families used across MyEyeDr offices, with the shorthand people actually type. */
+const ROLE_FAMILIES: { key: string; terms: string[] }[] = [
+  { key: "patient services coordinator", terms: ["patient services coordinator", "patient service coordinator", "psc", "patient coordinator", "front desk", "receptionist", "patient services"] },
+  { key: "optician", terms: ["optician", "licensed optician", "apprentice optician", "optical associate", "optical sales", "eyewear consultant"] },
+  { key: "optometric technician", terms: ["optometric technician", "optometric tech", "ophthalmic technician", "ophthalmic tech", "optometric assistant", "vision technician", "tech"] },
+  { key: "general manager", terms: ["general manager", "gm", "office manager", "practice manager", "store manager", "office lead"] },
+  { key: "assistant manager", terms: ["assistant manager", "asm", "assistant general manager", "agm", "supervisor"] },
+  { key: "lab technician", terms: ["lab technician", "lab tech", "optical lab", "edger", "finishing technician"] },
+  { key: "optometrist", terms: ["optometrist", "od", "doctor of optometry", "associate optometrist", "eye doctor"] },
+  { key: "contact lens specialist", terms: ["contact lens", "contact lens specialist", "cl tech"] },
+  { key: "billing", terms: ["billing", "insurance", "revenue cycle", "claims"] },
+];
+
+const familyOf = (text: string): string | null => {
+  const n = norm(text);
+  if (!n) return null;
+  let best: { key: string; len: number } | null = null;
+  for (const f of ROLE_FAMILIES) {
+    for (const t of f.terms) {
+      const tn = norm(t);
+      if (tn.length >= 2 && n.includes(tn) && (!best || tn.length > best.len)) best = { key: f.key, len: tn.length };
+    }
+  }
+  return best?.key ?? null;
+};
+
+const tokens = (s: string) =>
+  s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2 && !["the", "and", "for", "job", "role", "req", "full", "part", "time"].includes(t));
+
+/**
+ * Decide which requisition a Notion candidate belongs to.
+ * Looks at the role text (plus a headline/notes fallback), the office, and prefers live reqs.
+ * Returns the best position with a confidence score and the reason it matched.
+ */
+function matchRequisition(
+  roleText: string,
+  hintText: string,
+  locId: string | null,
+  positions: any[],
+): { position: any | null; score: number; reason: string } {
+  const raw = (roleText || "").trim();
+  const rawN = norm(raw);
+  let best: { position: any; score: number; reason: string } | null = null;
+
+  const fam = familyOf(raw) ?? familyOf(hintText || "");
+  const roleTokens = tokens(raw);
+
+  for (const p of positions) {
+    let score = 0;
+    let reason = "";
+
+    if (p.req_code && rawN && (rawN === norm(p.req_code) || rawN.includes(norm(p.req_code)))) {
+      score = 100;
+      reason = `requisition code ${p.req_code}`;
+    } else if (rawN && norm(p.title) === rawN) {
+      score = 92;
+      reason = "exact job title";
+    } else if (rawN && (norm(p.title).includes(rawN) || rawN.includes(norm(p.title)))) {
+      score = 78;
+      reason = "job title contained in the Notion role";
+    } else {
+      const pFam = familyOf(p.title);
+      if (fam && pFam && fam === pFam) {
+        score = 72;
+        reason = `same role family (${fam})`;
+      } else {
+        const pt = tokens(p.title);
+        const shared = roleTokens.filter((t) => pt.includes(t)).length;
+        if (shared) {
+          score = Math.min(66, 30 + shared * 18);
+          reason = "shared words in the job title";
+        }
+      }
+    }
+
+    if (!score) continue;
+    if (locId && p.location_id === locId) { score += 14; reason += " · same office"; }
+    else if (locId && p.location_id && p.location_id !== locId) score -= 10;
+    if (p.status === "open") score += 8;
+    else score -= 6;
+
+    if (!best || score > best.score) best = { position: p, score, reason };
+  }
+
+  if (!best || best.score < 45) return { position: null, score: best?.score ?? 0, reason: "no confident requisition match" };
+  return best;
+}
+
+
 /* ---------------------------------- handler -------------------------------- */
 
 serve(async (req) => {
@@ -247,6 +338,9 @@ serve(async (req) => {
 
       let created = 0, updated = 0, skipped = 0;
       const errors: string[] = [];
+      /** Which requisition each Notion candidate landed on (and who still needs a job). */
+      const assigned: { name: string; role: string; position: string; req_code: string; score: number; reason: string }[] = [];
+      const unassigned: { name: string; role: string; office: string }[] = [];
 
       try {
         // Pull pages (bounded)
@@ -263,7 +357,7 @@ serve(async (req) => {
 
         const [{ data: locations }, { data: positions }] = await Promise.all([
           admin.from("locations").select("id, site_name, region, manager"),
-          admin.from("positions").select("id, title, req_code, location_id, region"),
+          admin.from("positions").select("id, title, req_code, location_id, region, status"),
         ]);
         const locs = locations ?? [];
         const poss = positions ?? [];
@@ -272,15 +366,7 @@ serve(async (req) => {
           if (!n) return null;
           return locs.find((l: any) => norm(l.site_name) === n) ?? locs.find((l: any) => norm(l.site_name).includes(n) || n.includes(norm(l.site_name))) ?? null;
         };
-        const findPos = (name: string, locId: string | null) => {
-          const n = norm(name);
-          if (!n) return null;
-          const byCode = poss.find((p: any) => p.req_code && norm(p.req_code) === n);
-          if (byCode) return byCode;
-          const matches = poss.filter((p: any) => norm(p.title) === n || norm(p.title).includes(n) || n.includes(norm(p.title)));
-          if (!matches.length) return null;
-          return matches.find((p: any) => p.location_id === locId) ?? matches[0];
-        };
+
 
         for (const page of pages) {
           const props = page.properties ?? {};
@@ -289,10 +375,12 @@ serve(async (req) => {
               const name = (pick(props, map, "full_name", ["full name", "name", "candidate", "applicant"]) || titleProp(props)).trim();
               if (!name) { skipped++; continue; }
               const email = pick(props, map, "email", ["email", "e-mail", "email address"]).trim().toLowerCase();
-              const roleRaw = pick(props, map, "applied_role", ["role", "position", "applied role", "job title", "req"]);
+              const roleRaw = pick(props, map, "applied_role", ["role", "position", "applied role", "job title", "req", "requisition", "opening"]);
               const locName = pick(props, map, "location", ["location", "office", "store", "site", "clinic"]);
               const loc = findLoc(locName);
-              const pos = findPos(roleRaw, loc?.id ?? null);
+              const headline = pick(props, map, "headline", ["headline", "summary", "title", "about", "notes"]).slice(0, 300);
+              const m = matchRequisition(roleRaw, `${headline} ${locName}`, loc?.id ?? null, poss);
+              const pos = m.position;
               const stage = mapStage(pick(props, map, "stage", ["stage", "pipeline", "status", "step"]));
               const { status, pool } = mapStatus(pick(props, map, "status", ["status", "outcome", "disposition", "stage"]), stage);
 
@@ -301,51 +389,81 @@ serve(async (req) => {
                 email,
                 phone: pick(props, map, "phone", ["phone", "mobile", "cell", "phone number"]),
                 applied_role: pos?.title || roleRaw || "",
-                position_id: pos?.id ?? null,
                 location_id: loc?.id ?? null,
                 region: loc?.region ?? pos?.region ?? "",
                 stage,
                 status,
                 in_talent_pool: pool,
                 source: pick(props, map, "source", ["source", "channel", "referral"]) || "Notion",
-                headline: pick(props, map, "headline", ["headline", "summary", "title", "about"]).slice(0, 300),
+                headline,
                 years_experience: Math.max(0, Math.round(num(pick(props, map, "years_experience", ["years", "experience", "yoe"])))),
                 resume_url: pick(props, map, "resume_url", ["resume", "cv", "resume url", "attachment"]),
                 notion_page_id: page.id,
               };
+              if (pos?.id) row.position_id = pos.id;
 
               // Dedupe: notion page → email → name+phone
               let existing: any = null;
-              const byPage = await admin.from("candidates").select("id").eq("notion_page_id", page.id).maybeSingle();
+              const byPage = await admin.from("candidates").select("id, position_id").eq("notion_page_id", page.id).maybeSingle();
               existing = byPage.data;
               if (!existing && email) {
-                const byEmail = await admin.from("candidates").select("id").ilike("email", email).limit(1);
+                const byEmail = await admin.from("candidates").select("id, position_id").ilike("email", email).limit(1);
                 existing = byEmail.data?.[0] ?? null;
               }
               if (!existing && row.phone) {
-                const byName = await admin.from("candidates").select("id").ilike("full_name", name).eq("phone", row.phone as string).limit(1);
+                const byName = await admin.from("candidates").select("id, position_id").ilike("full_name", name).eq("phone", row.phone as string).limit(1);
                 existing = byName.data?.[0] ?? null;
               }
 
+              let candidateId: string;
               if (existing) {
                 const { error } = await admin.from("candidates").update(row).eq("id", existing.id);
                 if (error) throw error;
+                candidateId = existing.id;
                 updated++;
               } else {
                 const { data: ins, error } = await admin.from("candidates").insert(row).select("id").single();
                 if (error) throw error;
+                candidateId = ins.id;
                 created++;
                 await admin.from("candidate_events").insert({
                   candidate_id: ins.id,
                   event_type: "imported",
                   title: "Imported from Notion",
                   actor: "Notion sync",
-                  detail: { notion_page_id: page.id, notion_url: page.url ?? "" },
+                  detail: { notion_page_id: page.id, notion_url: page.url ?? "", notion_role: roleRaw, match_reason: m.reason, match_score: m.score },
                   location_id: (row.location_id as string) ?? null,
-                  requisition_id: (row.position_id as string) ?? null,
+                  requisition_id: pos?.id ?? null,
                 });
               }
+
+              // Requisition assignment — keeps the multi-application record straight
+              if (pos?.id) {
+                const { data: link } = await admin
+                  .from("candidate_requisitions")
+                  .select("id")
+                  .eq("candidate_id", candidateId)
+                  .eq("position_id", pos.id)
+                  .maybeSingle();
+                if (link?.id) {
+                  await admin.from("candidate_requisitions").update({ stage, status }).eq("id", link.id);
+                } else {
+                  await admin.from("candidate_requisitions").insert({
+                    candidate_id: candidateId,
+                    position_id: pos.id,
+                    location_id: pos.location_id ?? loc?.id ?? null,
+                    stage,
+                    status,
+                    source: "Notion",
+                    notes: `Auto-assigned from Notion (${m.reason}, ${m.score}% confidence)`,
+                  });
+                }
+                assigned.push({ name, role: roleRaw, position: pos.title, req_code: pos.req_code ?? "", score: m.score, reason: m.reason });
+              } else {
+                unassigned.push({ name, role: roleRaw || "(no role in Notion)", office: locName || "" });
+              }
             } else {
+
               const title = (pick(props, map, "title", ["title", "position", "role", "job title"]) || titleProp(props)).trim();
               if (!title) { skipped++; continue; }
               const locName = pick(props, map, "location", ["location", "office", "store", "site", "clinic"]);
@@ -415,7 +533,13 @@ serve(async (req) => {
           }).eq("id", run.id);
         }
 
-        return json({ ok: true, kind, read: pages.length, created, updated, skipped, errors });
+        return json({
+          ok: true, kind, read: pages.length, created, updated, skipped, errors,
+          assigned: assigned.slice(0, 100),
+          unassigned: unassigned.slice(0, 100),
+          assigned_count: assigned.length,
+          unassigned_count: unassigned.length,
+        });
       } catch (e) {
         if (run?.id) {
           await admin.from("notion_sync_runs").update({

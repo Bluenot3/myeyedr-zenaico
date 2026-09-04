@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   useDiscoverNotionDatabases, useNotionRuns, useNotionSettings, usePreviewNotionDatabase,
-  useRunNotionImport, type NotionDatabase, type SyncKind,
+  useRunNotionImport, type ImportResult, type NotionDatabase, type SyncKind,
 } from "@/hooks/useIntegrations";
 
 const KIND_META: Record<SyncKind, { label: string; blurb: string; icon: typeof Users; hsl: string }> = {
   candidates: {
     label: "Candidates",
-    blurb: "Pull applicants from your Notion tracker. Matched by Notion page, then email, then name + phone — existing candidates are updated, never duplicated.",
+    blurb: "Pull applicants from your Notion tracker. Deduped by Notion page, then email, then name + phone — and each person is matched to the requisition they belong to, using the role text, the office and live openings.",
     icon: Users,
     hsl: "197 100% 66%",
   },
@@ -47,6 +47,7 @@ export default function Integrations() {
   const [previewRows, setPreviewRows] = useState<Record<string, string>[] | null>(null);
   const [previewFor, setPreviewFor] = useState<string>("");
   const [loadError, setLoadError] = useState<string>("");
+  const [lastResult, setLastResult] = useState<ImportResult | null>(null);
 
   const settingFor = (kind: SyncKind) => settings.find((s) => s.kind === kind) || null;
 
@@ -93,10 +94,12 @@ export default function Integrations() {
     runImport.mutate(
       { kind, database_id, database_title: db?.title || settingFor(kind)?.database_title || "" },
       {
-        onSuccess: (res) =>
+        onSuccess: (res) => {
+          setLastResult(res);
           toast.success(
             `${KIND_META[kind].label}: ${res.created} added, ${res.updated} updated${res.skipped ? `, ${res.skipped} skipped` : ""}${res.errors?.length ? ` · ${res.errors.length} error(s)` : ""}`,
-          ),
+          );
+        },
         onError: (e: any) => toast.error(e?.message || "Sync failed"),
       },
     );
@@ -238,6 +241,64 @@ export default function Integrations() {
             );
           })}
         </div>
+
+        {/* Job matching report — who landed on which requisition */}
+        {lastResult?.kind === "candidates" && (lastResult.assigned?.length || lastResult.unassigned?.length) ? (
+          <div className="px-5 pb-5 grid gap-3 lg:grid-cols-2">
+            <div className="rounded-2xl border border-emerald/25 bg-emerald/[0.05] p-3.5">
+              <p className="text-[10px] micro-label text-emerald mb-2">
+                Matched to a job · {lastResult.assigned_count ?? lastResult.assigned?.length ?? 0}
+              </p>
+              {lastResult.assigned?.length ? (
+                <ul className="space-y-1.5 max-h-64 overflow-y-auto">
+                  {lastResult.assigned.map((a, i) => (
+                    <li key={`${a.name}-${i}`} className="rounded-xl border border-border/70 bg-background/50 px-2.5 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground truncate">{a.name}</span>
+                        <span className="ml-auto text-[10px] font-mono text-emerald shrink-0">{a.score}%</span>
+                      </div>
+                      <p className="text-[11px] text-foreground/90 truncate mt-0.5">
+                        {a.position}{a.req_code ? ` · ${a.req_code}` : ""}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        Notion role “{a.role || "—"}” · {a.reason}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">No candidates matched a requisition on this run.</p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-gold/30 bg-gold/[0.06] p-3.5">
+              <p className="text-[10px] micro-label text-gold mb-2">
+                Needs a job assigned · {lastResult.unassigned_count ?? lastResult.unassigned?.length ?? 0}
+              </p>
+              {lastResult.unassigned?.length ? (
+                <>
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    These people were imported, but their Notion role didn't confidently match an opening. Assign them from the pipeline.
+                  </p>
+                  <ul className="space-y-1.5 max-h-56 overflow-y-auto">
+                    {lastResult.unassigned.map((u, i) => (
+                      <li key={`${u.name}-${i}`} className="rounded-xl border border-border/70 bg-background/50 px-2.5 py-2">
+                        <p className="text-xs font-semibold text-foreground truncate">{u.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {u.role}{u.office ? ` · ${u.office}` : ""}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">Everyone from Notion landed on a requisition.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+
 
         {previewRows && previewRows.length > 0 && (
           <div className="px-5 pb-5">
