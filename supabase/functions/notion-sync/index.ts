@@ -372,10 +372,12 @@ serve(async (req) => {
               const name = (pick(props, map, "full_name", ["full name", "name", "candidate", "applicant"]) || titleProp(props)).trim();
               if (!name) { skipped++; continue; }
               const email = pick(props, map, "email", ["email", "e-mail", "email address"]).trim().toLowerCase();
-              const roleRaw = pick(props, map, "applied_role", ["role", "position", "applied role", "job title", "req"]);
+              const roleRaw = pick(props, map, "applied_role", ["role", "position", "applied role", "job title", "req", "requisition", "opening"]);
               const locName = pick(props, map, "location", ["location", "office", "store", "site", "clinic"]);
               const loc = findLoc(locName);
-              const pos = findPos(roleRaw, loc?.id ?? null);
+              const headline = pick(props, map, "headline", ["headline", "summary", "title", "about", "notes"]).slice(0, 300);
+              const m = matchRequisition(roleRaw, `${headline} ${locName}`, loc?.id ?? null, poss);
+              const pos = m.position;
               const stage = mapStage(pick(props, map, "stage", ["stage", "pipeline", "status", "step"]));
               const { status, pool } = mapStatus(pick(props, map, "status", ["status", "outcome", "disposition", "stage"]), stage);
 
@@ -384,50 +386,81 @@ serve(async (req) => {
                 email,
                 phone: pick(props, map, "phone", ["phone", "mobile", "cell", "phone number"]),
                 applied_role: pos?.title || roleRaw || "",
-                position_id: pos?.id ?? null,
                 location_id: loc?.id ?? null,
                 region: loc?.region ?? pos?.region ?? "",
                 stage,
                 status,
                 in_talent_pool: pool,
                 source: pick(props, map, "source", ["source", "channel", "referral"]) || "Notion",
-                headline: pick(props, map, "headline", ["headline", "summary", "title", "about"]).slice(0, 300),
+                headline,
                 years_experience: Math.max(0, Math.round(num(pick(props, map, "years_experience", ["years", "experience", "yoe"])))),
                 resume_url: pick(props, map, "resume_url", ["resume", "cv", "resume url", "attachment"]),
                 notion_page_id: page.id,
               };
+              if (pos?.id) row.position_id = pos.id;
 
               // Dedupe: notion page → email → name+phone
               let existing: any = null;
-              const byPage = await admin.from("candidates").select("id").eq("notion_page_id", page.id).maybeSingle();
+              const byPage = await admin.from("candidates").select("id, position_id").eq("notion_page_id", page.id).maybeSingle();
               existing = byPage.data;
               if (!existing && email) {
-                const byEmail = await admin.from("candidates").select("id").ilike("email", email).limit(1);
+                const byEmail = await admin.from("candidates").select("id, position_id").ilike("email", email).limit(1);
                 existing = byEmail.data?.[0] ?? null;
               }
               if (!existing && row.phone) {
-                const byName = await admin.from("candidates").select("id").ilike("full_name", name).eq("phone", row.phone as string).limit(1);
+                const byName = await admin.from("candidates").select("id, position_id").ilike("full_name", name).eq("phone", row.phone as string).limit(1);
                 existing = byName.data?.[0] ?? null;
               }
 
+              let candidateId: string;
               if (existing) {
                 const { error } = await admin.from("candidates").update(row).eq("id", existing.id);
                 if (error) throw error;
+                candidateId = existing.id;
                 updated++;
               } else {
                 const { data: ins, error } = await admin.from("candidates").insert(row).select("id").single();
                 if (error) throw error;
+                candidateId = ins.id;
                 created++;
                 await admin.from("candidate_events").insert({
                   candidate_id: ins.id,
                   event_type: "imported",
                   title: "Imported from Notion",
                   actor: "Notion sync",
-                  detail: { notion_page_id: page.id, notion_url: page.url ?? "" },
+                  detail: { notion_page_id: page.id, notion_url: page.url ?? "", notion_role: roleRaw, match_reason: m.reason, match_score: m.score },
                   location_id: (row.location_id as string) ?? null,
-                  requisition_id: (row.position_id as string) ?? null,
+                  requisition_id: pos?.id ?? null,
                 });
               }
+
+              // Requisition assignment — keeps the multi-application record straight
+              if (pos?.id) {
+                const { data: link } = await admin
+                  .from("candidate_requisitions")
+                  .select("id")
+                  .eq("candidate_id", candidateId)
+                  .eq("position_id", pos.id)
+                  .maybeSingle();
+                if (link?.id) {
+                  await admin.from("candidate_requisitions").update({ stage, status }).eq("id", link.id);
+                } else {
+                  await admin.from("candidate_requisitions").insert({
+                    candidate_id: candidateId,
+                    position_id: pos.id,
+                    location_id: pos.location_id ?? loc?.id ?? null,
+                    stage,
+                    status,
+                    source: "Notion",
+                    notes: `Auto-assigned from Notion (${m.reason}, ${m.score}% confidence)`,
+                  });
+                }
+                assigned.push({ name, role: roleRaw, position: pos.title, req_code: pos.req_code ?? "", score: m.score, reason: m.reason });
+              } else {
+                unassigned.push({ name, role: roleRaw || "(no role in Notion)", office: locName || "" });
+              }
+            }
+
             } else {
               const title = (pick(props, map, "title", ["title", "position", "role", "job title"]) || titleProp(props)).trim();
               if (!title) { skipped++; continue; }
