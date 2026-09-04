@@ -171,23 +171,26 @@ export default function Overview() {
   ];
 
   return (
-    <div className="space-y-6 animate-rise">
+    <div className="space-y-4 sm:space-y-5 animate-rise">
       {/* Hero */}
-      <div className="cert-surface rounded-2xl p-5 sm:p-7 relative overflow-hidden group">
-        <EyeMark size={140} className="absolute -right-8 -top-8 opacity-[0.14] transition-transform duration-700 group-hover:scale-105" />
-        <div className="relative">
-          <p className="text-xs font-medium text-muted-foreground">{today}</p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight mt-1">
-            {greeting}{firstName ? `, ${firstName}` : ""}.
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-            Here's where your candidates stand today. The cards below show exactly what needs your attention — tap any name to open their profile.
+      <div className="cert-surface rounded-2xl px-5 py-4 sm:px-6 sm:py-5 relative overflow-hidden group">
+        <EyeMark size={120} className="absolute -right-7 -top-7 opacity-[0.10] transition-transform duration-700 group-hover:scale-105" />
+        <div className="relative flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="micro-label text-[9px] text-muted-foreground">{today}</p>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foil leading-tight mt-1 tracking-tight">
+              {greeting}{firstName ? `, ${firstName}` : ""}.
+            </h1>
+          </div>
+          <p className="text-[12px] text-muted-foreground max-w-sm leading-snug">
+            Where your candidates stand today — tap any name to open their profile.
           </p>
         </div>
       </div>
 
       {/* AI briefing — personal, role-scoped */}
       <DailyBrief />
+
 
       {/* Next Up — highlighted scheduled event */}
       {nextEvent && (() => {
