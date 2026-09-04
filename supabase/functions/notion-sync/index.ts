@@ -338,6 +338,9 @@ serve(async (req) => {
 
       let created = 0, updated = 0, skipped = 0;
       const errors: string[] = [];
+      /** Which requisition each Notion candidate landed on (and who still needs a job). */
+      const assigned: { name: string; role: string; position: string; req_code: string; score: number; reason: string }[] = [];
+      const unassigned: { name: string; role: string; office: string }[] = [];
 
       try {
         // Pull pages (bounded)
@@ -531,7 +534,13 @@ serve(async (req) => {
           }).eq("id", run.id);
         }
 
-        return json({ ok: true, kind, read: pages.length, created, updated, skipped, errors });
+        return json({
+          ok: true, kind, read: pages.length, created, updated, skipped, errors,
+          assigned: assigned.slice(0, 100),
+          unassigned: unassigned.slice(0, 100),
+          assigned_count: assigned.length,
+          unassigned_count: unassigned.length,
+        });
       } catch (e) {
         if (run?.id) {
           await admin.from("notion_sync_runs").update({
