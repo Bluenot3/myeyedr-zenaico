@@ -259,29 +259,31 @@ export default function Overview() {
         );
       })()}
 
-      <div>
-        <div className="flex items-center gap-1.5 mb-3">
-          <Gauge className="h-4 w-4 text-emerald" />
-          <h2 className="font-display text-lg font-semibold">What needs attention</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {commandCards.map((cc, i) => (
-            <div key={cc.label} className="animate-rise" style={{ animationDelay: `${i * 40}ms` }}>
-              <StatCard label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* KPIs — headline row */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <StatCard label="Active" value={stats.active} icon={Users} tone="cyan" sub="in pipeline" />
         <StatCard label="Open Seats" value={stats.openings} icon={Briefcase} tone="emerald" sub="to fill" />
         <StatCard label="Hired" value={stats.hires} icon={TrendingUp} tone="lime" sub="this cycle" />
         <StatCard label="Talent Pool" value={stats.pool} icon={Sparkles} tone="gold" sub="kept warm" />
         <StatCard label="Avg Match" value={stats.avgScore} icon={Activity} tone="holo" sub="active pool" />
       </div>
+
+      <div>
+        <div className="flex items-center gap-2 mb-2.5">
+          <Gauge className="h-3.5 w-3.5 text-emerald" />
+          <h2 className="font-display text-[15px] font-semibold tracking-tight">What needs attention</h2>
+          <span className="ml-auto micro-label text-[8.5px] text-muted-foreground">live</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5">
+          {commandCards.map((cc, i) => (
+            <div key={cc.label} className="animate-rise" style={{ animationDelay: `${i * 30}ms` }}>
+              <StatCard compact label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+
 
       {/* Evaluation summary — Admins & Regionals see every evaluator's submissions, live from the cloud */}
       {evalSummary && (
