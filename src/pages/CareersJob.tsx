@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Briefcase, Building2, Clock, Loader2, MapPin, Users, Wallet } from "lucide-react";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
 import ApplyDialog from "@/components/careers/ApplyDialog";
 import { Button } from "@/components/ui/button";
-import { jobCity, postedAgo, usePublicJobs } from "@/lib/careers";
+import { careersJobUrl, jobCity, postedAgo, usePublicJobs } from "@/lib/careers";
 
 /** Render plain/markdown-ish requisition copy as readable paragraphs and bullets. */
 function RichText({ text }: { text: string }) {
