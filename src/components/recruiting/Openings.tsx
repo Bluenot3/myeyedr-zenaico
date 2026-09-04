@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe, Search, CheckSquare, Square, Layers, ChevronDown, Lock } from "lucide-react";
+import { Briefcase, Plus, MapPin, Users, Flame, Loader2, Filter, Link2, ExternalLink, Trash2, Globe, Search, CheckSquare, Square, Layers, ChevronDown, Lock, Send } from "lucide-react";
+import { careersJobUrl, shareLink } from "@/lib/careers";
 import { usePositions, useCandidates, useLocations, useCreatePosition, useUpdatePosition, useAllCandidateRequisitions, Position, PostingLocation } from "@/hooks/useRecruiting";
 import { REGIONS, PRIORITIES, POSITION_STATUS, stageMeta, initials } from "@/lib/recruiting";
 import { Button } from "@/components/ui/button";
