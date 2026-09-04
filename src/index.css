@@ -613,10 +613,10 @@
   .prose-claude > *:last-child { margin-bottom: 0 !important; }
   .prose-claude p { margin: 0.7em 0; }
   .prose-claude h1, .prose-claude h2, .prose-claude h3, .prose-claude h4 {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
+    font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.024em;
+    line-height: 1.22;
     margin: 1.1em 0 0.5em;
     color: hsl(var(--foreground));
   }
