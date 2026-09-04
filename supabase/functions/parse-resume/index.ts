@@ -39,9 +39,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { fileBase64, fileName, mimeType, resumeText } = await req.json();
+    const { fileBase64, fileUrl, fileName, mimeType, resumeText } = await req.json();
     const hasText = typeof resumeText === "string" && resumeText.trim().length > 0;
-    if (!fileBase64 && !hasText) {
+    const hasFileUrl = typeof fileUrl === "string" && /^https:\/\//i.test(fileUrl);
+    if (!fileBase64 && !hasFileUrl && !hasText) {
       return new Response(JSON.stringify({ error: "No file data provided" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -51,7 +52,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const dataUrl = fileBase64 ? `data:${mimeType || "application/pdf"};base64,${fileBase64}` : "";
+    const dataUrl = hasFileUrl ? fileUrl : fileBase64 ? `data:${mimeType || "application/pdf"};base64,${fileBase64}` : "";
 
     // Prefer pre-extracted text (e.g. DOCX parsed in the browser); otherwise send the file itself.
     const userContent = hasText
@@ -130,6 +131,7 @@ You MUST call the extract_candidate function with the data. If for any reason yo
                     },
                   },
                   certifications: { type: "array", items: { type: "string" }, description: "Certifications or licenses (e.g. ABO, NCLE, CPR)" },
+                  raw_text: { type: "string", description: "Complete readable text of the résumé, preserving all meaningful content" },
                   confidence: { type: "number", description: "Your confidence 0-1 that the extracted fields are accurate" },
                 },
                 required: ["full_name"],
@@ -143,20 +145,15 @@ You MUST call the extract_candidate function with the data. If for any reason yo
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited. Please try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const text = await response.text();
       console.error("AI error:", response.status, text);
-      return new Response(JSON.stringify({ error: "Failed to parse résumé" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      let message = `Résumé parsing failed (${response.status}).`;
+      try {
+        const upstream = JSON.parse(text);
+        message = upstream?.error?.message || upstream?.message || message;
+      } catch { /* preserve the status-based message */ }
+      return new Response(JSON.stringify({ error: message }), {
+        status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
