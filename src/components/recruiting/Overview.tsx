@@ -171,23 +171,26 @@ export default function Overview() {
   ];
 
   return (
-    <div className="space-y-6 animate-rise">
+    <div className="space-y-4 sm:space-y-5 animate-rise">
       {/* Hero */}
-      <div className="cert-surface rounded-2xl p-5 sm:p-7 relative overflow-hidden group">
-        <EyeMark size={140} className="absolute -right-8 -top-8 opacity-[0.14] transition-transform duration-700 group-hover:scale-105" />
-        <div className="relative">
-          <p className="text-xs font-medium text-muted-foreground">{today}</p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foil leading-tight mt-1">
-            {greeting}{firstName ? `, ${firstName}` : ""}.
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-            Here's where your candidates stand today. The cards below show exactly what needs your attention — tap any name to open their profile.
+      <div className="cert-surface rounded-2xl px-5 py-4 sm:px-6 sm:py-5 relative overflow-hidden group">
+        <EyeMark size={120} className="absolute -right-7 -top-7 opacity-[0.10] transition-transform duration-700 group-hover:scale-105" />
+        <div className="relative flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="micro-label text-[9px] text-muted-foreground">{today}</p>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foil leading-tight mt-1 tracking-tight">
+              {greeting}{firstName ? `, ${firstName}` : ""}.
+            </h1>
+          </div>
+          <p className="text-[12px] text-muted-foreground max-w-sm leading-snug">
+            Where your candidates stand today — tap any name to open their profile.
           </p>
         </div>
       </div>
 
       {/* AI briefing — personal, role-scoped */}
       <DailyBrief />
+
 
       {/* Next Up — highlighted scheduled event */}
       {nextEvent && (() => {
@@ -199,7 +202,7 @@ export default function Overview() {
         return (
           <button
             onClick={() => cand && openCandidateTab(cand, "scorecards")}
-            className="w-full text-left relative overflow-hidden rounded-2xl p-5 sm:p-6 group transition-all hover:-translate-y-0.5"
+            className="w-full text-left relative overflow-hidden rounded-2xl p-4 sm:p-5 group transition-all hover:-translate-y-0.5"
             style={{
               background: `linear-gradient(135deg, hsl(${em.hsl} / 0.16), hsl(${em.hsl} / 0.04))`,
               border: `1px solid hsl(${em.hsl} / 0.35)`,
@@ -207,10 +210,10 @@ export default function Overview() {
             }}
           >
             <span className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl opacity-40" style={{ background: `hsl(${em.hsl})` }} />
-            <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={{ background: `hsl(${em.hsl} / 0.18)`, color: `hsl(${em.hsl})`, border: `1.5px solid hsl(${em.hsl} / 0.45)` }}>
-                  <em.icon className="h-6 w-6" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style={{ background: `hsl(${em.hsl} / 0.18)`, color: `hsl(${em.hsl})`, border: `1.5px solid hsl(${em.hsl} / 0.45)` }}>
+                  <em.icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -219,7 +222,7 @@ export default function Overview() {
                     </span>
                     <span className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">{em.label}</span>
                   </div>
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground truncate mt-1">
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-foreground truncate mt-1 tracking-tight">
                     {cand?.full_name || nextEvent.title}
                   </h3>
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">
@@ -256,23 +259,8 @@ export default function Overview() {
         );
       })()}
 
-      <div>
-        <div className="flex items-center gap-1.5 mb-3">
-          <Gauge className="h-4 w-4 text-emerald" />
-          <h2 className="font-display text-lg font-semibold">What needs attention</h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {commandCards.map((cc, i) => (
-            <div key={cc.label} className="animate-rise" style={{ animationDelay: `${i * 40}ms` }}>
-              <StatCard label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* KPIs — headline row */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
         <StatCard label="Active" value={stats.active} icon={Users} tone="cyan" sub="in pipeline" />
         <StatCard label="Open Seats" value={stats.openings} icon={Briefcase} tone="emerald" sub="to fill" />
         <StatCard label="Hired" value={stats.hires} icon={TrendingUp} tone="lime" sub="this cycle" />
@@ -280,12 +268,29 @@ export default function Overview() {
         <StatCard label="Avg Match" value={stats.avgScore} icon={Activity} tone="holo" sub="active pool" />
       </div>
 
+      <div>
+        <div className="flex items-center gap-2 mb-2.5">
+          <Gauge className="h-3.5 w-3.5 text-emerald" />
+          <h2 className="font-display text-[15px] font-semibold tracking-tight">What needs attention</h2>
+          <span className="ml-auto micro-label text-[8.5px] text-muted-foreground">live</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5">
+          {commandCards.map((cc, i) => (
+            <div key={cc.label} className="animate-rise" style={{ animationDelay: `${i * 30}ms` }}>
+              <StatCard compact label={cc.label} value={cc.value} icon={cc.icon} tone={cc.tone} sub={cc.sub} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+
+
       {/* Evaluation summary — Admins & Regionals see every evaluator's submissions, live from the cloud */}
       {evalSummary && (
-        <div className="glass-panel rounded-xl p-5">
-          <div className="flex items-center gap-1.5 mb-4">
+        <div className="glass-panel rounded-2xl p-4 sm:p-5">
+          <div className="flex items-center gap-2 mb-3">
             <ClipboardCheck className="h-4 w-4 text-holo" />
-            <h3 className="font-display text-lg font-semibold">Evaluation Summary</h3>
+            <h3 className="font-display text-[15px] font-semibold tracking-tight">Evaluation Summary</h3>
             <span className="ml-auto text-[10px] font-mono uppercase tracking-wide text-muted-foreground">team-wide · live</span>
           </div>
           {evalSummary.total === 0 ? (
@@ -339,12 +344,12 @@ export default function Overview() {
       )}
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Next Best Actions */}
-        <div className="lg:col-span-2 glass-panel rounded-xl p-5">
-          <div className="flex items-center gap-1.5 mb-4">
+        <div className="lg:col-span-2 glass-panel rounded-2xl p-4 sm:p-5">
+          <div className="flex items-center gap-2 mb-3">
             <Flame className="h-4 w-4 text-orange" />
-            <h3 className="font-display text-lg font-semibold">Next Best Actions</h3>
+            <h3 className="font-display text-[15px] font-semibold tracking-tight">Next Best Actions</h3>
             <span className="ml-auto text-[11px] text-muted-foreground">prioritized</span>
           </div>
           <div className="space-y-2">
@@ -374,8 +379,8 @@ export default function Overview() {
         </div>
 
         {/* Funnel */}
-        <div className="glass-panel rounded-xl p-5">
-          <h3 className="font-display text-lg font-semibold mb-4">Pipeline Funnel</h3>
+        <div className="glass-panel rounded-2xl p-4 sm:p-5">
+          <h3 className="font-display text-[15px] font-semibold tracking-tight mb-3">Pipeline Funnel</h3>
           <div className="space-y-2.5">
             {funnel.map((f) => (
               <div key={f.key} className="flex items-center gap-2">
@@ -399,8 +404,8 @@ export default function Overview() {
           ])
         );
         return (
-          <div className="glass-panel rounded-xl p-5">
-            <h3 className="font-display text-lg font-semibold mb-4">Regional Coverage</h3>
+          <div className="glass-panel rounded-2xl p-4 sm:p-5">
+            <h3 className="font-display text-[15px] font-semibold tracking-tight mb-3">Regional Coverage</h3>
             {regionSet.length === 0 ? (
               <p className="text-xs text-muted-foreground py-4 text-center">
                 No regions yet — add locations and candidates to see coverage here.
