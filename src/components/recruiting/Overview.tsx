@@ -287,10 +287,10 @@ export default function Overview() {
 
       {/* Evaluation summary — Admins & Regionals see every evaluator's submissions, live from the cloud */}
       {evalSummary && (
-        <div className="glass-panel rounded-xl p-5">
-          <div className="flex items-center gap-1.5 mb-4">
+        <div className="glass-panel rounded-2xl p-4 sm:p-5">
+          <div className="flex items-center gap-2 mb-3">
             <ClipboardCheck className="h-4 w-4 text-holo" />
-            <h3 className="font-display text-lg font-semibold">Evaluation Summary</h3>
+            <h3 className="font-display text-[15px] font-semibold tracking-tight">Evaluation Summary</h3>
             <span className="ml-auto text-[10px] font-mono uppercase tracking-wide text-muted-foreground">team-wide · live</span>
           </div>
           {evalSummary.total === 0 ? (
@@ -344,12 +344,12 @@ export default function Overview() {
       )}
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Next Best Actions */}
-        <div className="lg:col-span-2 glass-panel rounded-xl p-5">
-          <div className="flex items-center gap-1.5 mb-4">
+        <div className="lg:col-span-2 glass-panel rounded-2xl p-4 sm:p-5">
+          <div className="flex items-center gap-2 mb-3">
             <Flame className="h-4 w-4 text-orange" />
-            <h3 className="font-display text-lg font-semibold">Next Best Actions</h3>
+            <h3 className="font-display text-[15px] font-semibold tracking-tight">Next Best Actions</h3>
             <span className="ml-auto text-[11px] text-muted-foreground">prioritized</span>
           </div>
           <div className="space-y-2">
@@ -379,8 +379,8 @@ export default function Overview() {
         </div>
 
         {/* Funnel */}
-        <div className="glass-panel rounded-xl p-5">
-          <h3 className="font-display text-lg font-semibold mb-4">Pipeline Funnel</h3>
+        <div className="glass-panel rounded-2xl p-4 sm:p-5">
+          <h3 className="font-display text-[15px] font-semibold tracking-tight mb-3">Pipeline Funnel</h3>
           <div className="space-y-2.5">
             {funnel.map((f) => (
               <div key={f.key} className="flex items-center gap-2">
@@ -404,8 +404,8 @@ export default function Overview() {
           ])
         );
         return (
-          <div className="glass-panel rounded-xl p-5">
-            <h3 className="font-display text-lg font-semibold mb-4">Regional Coverage</h3>
+          <div className="glass-panel rounded-2xl p-4 sm:p-5">
+            <h3 className="font-display text-[15px] font-semibold tracking-tight mb-3">Regional Coverage</h3>
             {regionSet.length === 0 ? (
               <p className="text-xs text-muted-foreground py-4 text-center">
                 No regions yet — add locations and candidates to see coverage here.
