@@ -150,6 +150,97 @@ function mapPositionStatus(raw: string): string {
   return "open";
 }
 
+/* ----------------------------- role → requisition ---------------------------- */
+
+/** Role families used across MyEyeDr offices, with the shorthand people actually type. */
+const ROLE_FAMILIES: { key: string; terms: string[] }[] = [
+  { key: "patient services coordinator", terms: ["patient services coordinator", "patient service coordinator", "psc", "patient coordinator", "front desk", "receptionist", "patient services"] },
+  { key: "optician", terms: ["optician", "licensed optician", "apprentice optician", "optical associate", "optical sales", "eyewear consultant"] },
+  { key: "optometric technician", terms: ["optometric technician", "optometric tech", "ophthalmic technician", "ophthalmic tech", "optometric assistant", "vision technician", "tech"] },
+  { key: "general manager", terms: ["general manager", "gm", "office manager", "practice manager", "store manager", "office lead"] },
+  { key: "assistant manager", terms: ["assistant manager", "asm", "assistant general manager", "agm", "supervisor"] },
+  { key: "lab technician", terms: ["lab technician", "lab tech", "optical lab", "edger", "finishing technician"] },
+  { key: "optometrist", terms: ["optometrist", "od", "doctor of optometry", "associate optometrist", "eye doctor"] },
+  { key: "contact lens specialist", terms: ["contact lens", "contact lens specialist", "cl tech"] },
+  { key: "billing", terms: ["billing", "insurance", "revenue cycle", "claims"] },
+];
+
+const familyOf = (text: string): string | null => {
+  const n = norm(text);
+  if (!n) return null;
+  let best: { key: string; len: number } | null = null;
+  for (const f of ROLE_FAMILIES) {
+    for (const t of f.terms) {
+      const tn = norm(t);
+      if (tn.length >= 2 && n.includes(tn) && (!best || tn.length > best.len)) best = { key: f.key, len: tn.length };
+    }
+  }
+  return best?.key ?? null;
+};
+
+const tokens = (s: string) =>
+  s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2 && !["the", "and", "for", "job", "role", "req", "full", "part", "time"].includes(t));
+
+/**
+ * Decide which requisition a Notion candidate belongs to.
+ * Looks at the role text (plus a headline/notes fallback), the office, and prefers live reqs.
+ * Returns the best position with a confidence score and the reason it matched.
+ */
+function matchRequisition(
+  roleText: string,
+  hintText: string,
+  locId: string | null,
+  positions: any[],
+): { position: any | null; score: number; reason: string } {
+  const raw = (roleText || "").trim();
+  const rawN = norm(raw);
+  let best: { position: any; score: number; reason: string } | null = null;
+
+  const fam = familyOf(raw) ?? familyOf(hintText || "");
+  const roleTokens = tokens(raw);
+
+  for (const p of positions) {
+    let score = 0;
+    let reason = "";
+
+    if (p.req_code && rawN && (rawN === norm(p.req_code) || rawN.includes(norm(p.req_code)))) {
+      score = 100;
+      reason = `requisition code ${p.req_code}`;
+    } else if (rawN && norm(p.title) === rawN) {
+      score = 92;
+      reason = "exact job title";
+    } else if (rawN && (norm(p.title).includes(rawN) || rawN.includes(norm(p.title)))) {
+      score = 78;
+      reason = "job title contained in the Notion role";
+    } else {
+      const pFam = familyOf(p.title);
+      if (fam && pFam && fam === pFam) {
+        score = 72;
+        reason = `same role family (${fam})`;
+      } else {
+        const pt = tokens(p.title);
+        const shared = roleTokens.filter((t) => pt.includes(t)).length;
+        if (shared) {
+          score = Math.min(66, 30 + shared * 18);
+          reason = "shared words in the job title";
+        }
+      }
+    }
+
+    if (!score) continue;
+    if (locId && p.location_id === locId) { score += 14; reason += " · same office"; }
+    else if (locId && p.location_id && p.location_id !== locId) score -= 10;
+    if (p.status === "open") score += 8;
+    else score -= 6;
+
+    if (!best || score > best.score) best = { position: p, score, reason };
+  }
+
+  if (!best || best.score < 45) return { position: null, score: best?.score ?? 0, reason: "no confident requisition match" };
+  return best;
+}
+
+
 /* ---------------------------------- handler -------------------------------- */
 
 serve(async (req) => {
