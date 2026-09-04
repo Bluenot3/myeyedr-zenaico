@@ -35,6 +35,21 @@ export interface NotionSyncRun {
   created_at: string;
 }
 
+export interface AssignedMatch {
+  name: string;
+  role: string;
+  position: string;
+  req_code: string;
+  score: number;
+  reason: string;
+}
+
+export interface UnassignedMatch {
+  name: string;
+  role: string;
+  office: string;
+}
+
 export interface ImportResult {
   ok: boolean;
   kind: SyncKind;
@@ -43,6 +58,11 @@ export interface ImportResult {
   updated: number;
   skipped: number;
   errors: string[];
+  /** Candidates matched to a requisition during this run (candidates sync only). */
+  assigned?: AssignedMatch[];
+  unassigned?: UnassignedMatch[];
+  assigned_count?: number;
+  unassigned_count?: number;
 }
 
 /** Reads the real failure text out of an edge-function error. */
