@@ -462,9 +462,8 @@ serve(async (req) => {
               } else {
                 unassigned.push({ name, role: roleRaw || "(no role in Notion)", office: locName || "" });
               }
-            }
-
             } else {
+
               const title = (pick(props, map, "title", ["title", "position", "role", "job title"]) || titleProp(props)).trim();
               if (!title) { skipped++; continue; }
               const locName = pick(props, map, "location", ["location", "office", "store", "site", "clinic"]);
