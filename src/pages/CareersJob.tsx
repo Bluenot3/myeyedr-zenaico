@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Briefcase, Building2, Clock, Loader2, MapPin, Users, Wallet } from "lucide-react";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
 import ApplyDialog from "@/components/careers/ApplyDialog";
 import { Button } from "@/components/ui/button";
-import { jobCity, postedAgo, usePublicJobs } from "@/lib/careers";
+import { careersJobUrl, jobCity, postedAgo, usePublicJobs } from "@/lib/careers";
 
 /** Render plain/markdown-ish requisition copy as readable paragraphs and bullets. */
 function RichText({ text }: { text: string }) {
@@ -53,11 +53,21 @@ function RichText({ text }: { text: string }) {
 
 export default function CareersJob() {
   const { id } = useParams<{ id: string }>();
+  const [params, setParams] = useSearchParams();
   const { data, isLoading } = usePublicJobs();
   const [applyOpen, setApplyOpen] = useState(false);
 
   const job = data?.jobs.find((j) => j.id === id) || null;
   const related = (data?.jobs || []).filter((j) => j.id !== id && (j.region === job?.region || j.title === job?.title)).slice(0, 3);
+
+  // Shared links can open straight into the apply sheet (?apply=1).
+  useEffect(() => {
+    if (!job || params.get("apply") !== "1") return;
+    setApplyOpen(true);
+    const next = new URLSearchParams(params);
+    next.delete("apply");
+    setParams(next, { replace: true });
+  }, [job, params, setParams]);
 
   useEffect(() => {
     if (!job) return;
@@ -69,11 +79,44 @@ export default function CareersJob() {
       "content",
       `${job.title} at MyEyeDr in ${jobCity(job)}. ${job.employment_type}. Apply direct to the hiring manager.`,
     );
+
+    // Canonical + JobPosting structured data so shared links preview and index well.
+    const canonical = document.createElement("link");
+    canonical.rel = "canonical";
+    canonical.href = careersJobUrl(job.id);
+    document.head.appendChild(canonical);
+
+    const ld = document.createElement("script");
+    ld.type = "application/ld+json";
+    ld.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: job.title,
+      description: job.description || job.requirements || `${job.title} at MyEyeDr in ${jobCity(job)}.`,
+      datePosted: job.posted_at,
+      employmentType: job.employment_type,
+      hiringOrganization: { "@type": "Organization", name: "MyEyeDr" },
+      jobLocation: {
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: job.location?.city || job.region,
+          addressRegion: job.location?.state || "",
+          addressCountry: "US",
+        },
+      },
+      directApply: true,
+    });
+    document.head.appendChild(ld);
+
     return () => {
       document.title = prev;
       meta?.setAttribute("content", prevDesc);
+      canonical.remove();
+      ld.remove();
     };
   }, [job]);
+
 
   return (
     <div className="relative min-h-screen bg-background">

@@ -110,6 +110,65 @@ export function jobCity(job: PublicJob): string {
 }
 
 /* ------------------------------------------------------------------ *
+ * Shareable public links (managers → candidates)
+ * ------------------------------------------------------------------ */
+
+/** Live public home for the careers portal. */
+const PUBLIC_HOME = "https://myeyedr.zenai.world";
+
+/**
+ * Origin candidates can actually open. Preview/localhost origins are private,
+ * so links built there fall back to the live public domain.
+ */
+export function careersOrigin(): string {
+  if (typeof window === "undefined") return PUBLIC_HOME;
+  const host = window.location.hostname;
+  const isPrivate =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host.startsWith("id-preview") ||
+    host.includes("--");
+  return isPrivate ? PUBLIC_HOME : window.location.origin;
+}
+
+/** Public apply link for one requisition (auto-opens the apply sheet). */
+export function careersJobUrl(positionId: string, opts?: { apply?: boolean }): string {
+  return `${careersOrigin()}/careers/${positionId}${opts?.apply ? "?apply=1" : ""}`;
+}
+
+export function careersHomeUrl(): string {
+  return `${careersOrigin()}/careers`;
+}
+
+/**
+ * Share a link with the native sheet when available, otherwise copy it.
+ * Returns how it was handled so callers can show the right toast.
+ */
+export async function shareLink(
+  url: string,
+  title: string,
+  text?: string,
+): Promise<"shared" | "copied" | "failed"> {
+  try {
+    const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
+    if (nav.share) {
+      await nav.share({ title, text, url });
+      return "shared";
+    }
+  } catch (err) {
+    // User dismissed the native sheet — don't fall through to a surprise copy.
+    if (err instanceof DOMException && err.name === "AbortError") return "failed";
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
+
+
+/* ------------------------------------------------------------------ *
  * Returning-applicant profile (one-tap apply)
  * Stored locally on the applicant's own device only — never uploaded
  * anywhere except as part of an application they explicitly submit.
