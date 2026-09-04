@@ -79,6 +79,9 @@ const Index = () => {
           <p className="mt-2.5 micro-label text-[8.5px] text-gold/90">Talent Command</p>
           <p className="micro-label text-[7px] text-muted-foreground/70 mt-1">Institutional Recruiting Desk</p>
         </div>
+        <div className="px-3 pt-3">
+          <CandidateSearch />
+        </div>
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {nav.map((n) => {
             const active = activeTab === n.key;
