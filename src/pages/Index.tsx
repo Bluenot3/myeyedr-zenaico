@@ -18,6 +18,7 @@ import FloatingAssistant from "@/components/recruiting/FloatingAssistant";
 import MobileNav from "@/components/recruiting/MobileNav";
 import Logo from "@/components/recruiting/Logo";
 import ZenSignature from "@/components/recruiting/ZenSignature";
+import CandidateSearch from "@/components/recruiting/CandidateSearch";
 
 import ThemeToggle from "@/components/recruiting/ThemeToggle";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -139,6 +140,7 @@ const Index = () => {
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono uppercase text-gold" style={{ background: "hsl(var(--gold)/0.12)", border: "1px solid hsl(var(--gold)/0.3)" }}>
                 <RoleIcon className="h-2.5 w-2.5" /> {roleInfo.label}
               </span>
+              <CandidateSearch compact />
               <ThemeToggle />
               <button onClick={signOut} title="Sign out" aria-label="Sign out" className="neu-btn neu-btn--danger h-9 w-9">
                 <LogOut className="h-4 w-4" />
