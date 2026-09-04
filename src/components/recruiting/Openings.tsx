@@ -473,6 +473,63 @@ export default function Openings() {
                   )}
                 </div>
 
+                {/* Share with candidates — public apply link */}
+                <div className="mt-3 rounded-lg bg-background/40 border border-border/60 p-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1">
+                      <Send className="h-3 w-3" /> Share with candidates
+                    </span>
+                    {p.status === "open" ? (
+                      <span className="text-[9px] text-emerald">Live · accepting applications</span>
+                    ) : (
+                      <span className="text-[9px] text-muted-foreground">Not public while {p.status.replace("_", " ")}</span>
+                    )}
+                  </div>
+                  {p.status === "open" ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <button
+                        onClick={async () => {
+                          const url = careersJobUrl(p.id, { apply: true });
+                          const how = await shareLink(url, `${p.title} at MyEyeDr`, `Apply direct — ${locName(p.location_id)}`);
+                          if (how === "shared") toast.success("Link shared");
+                          else if (how === "copied") toast.success("Apply link copied", { description: url });
+                          else toast.error("Couldn't share that link — copy it from the preview instead.");
+                        }}
+                        className="inline-flex items-center gap-1 text-[10px] rounded-full px-2.5 py-1 bg-emerald/12 text-emerald border border-emerald/30 hover:bg-emerald/20"
+                      >
+                        <Send className="h-2.5 w-2.5" /> Share apply link
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const url = careersJobUrl(p.id);
+                          try {
+                            await navigator.clipboard.writeText(url);
+                            toast.success("Job page link copied", { description: url });
+                          } catch {
+                            toast.error("Copy failed — open the preview and copy the address.");
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 text-[10px] rounded-full px-2.5 py-1 bg-muted text-muted-foreground border border-border hover:text-foreground"
+                      >
+                        <Link2 className="h-2.5 w-2.5" /> Copy page link
+                      </button>
+                      <a
+                        href={careersJobUrl(p.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] rounded-full px-2.5 py-1 bg-holo/12 text-holo border border-holo/30 hover:bg-holo/20"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" /> Preview
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="mt-1.5 text-[10px] text-muted-foreground">
+                      Set the status back to open to let candidates apply from a shared link.
+                    </p>
+                  )}
+                </div>
+
+
                 {/* Best-fit benchmark */}
                 <BestFitControl position={p} candidates={candidates} />
 
