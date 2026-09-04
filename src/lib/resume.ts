@@ -95,12 +95,46 @@ export interface ParseFileResult {
   doc: UploadedDoc;
 }
 
+const MAX_RESUME_BYTES = 20 * 1024 * 1024;
+
+async function invokeParseResume(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("parse-resume", { body });
+  if (!error) {
+    if (data?.error) throw new Error(String(data.error));
+    return data;
+  }
+
+  let message = error.message || "Résumé parsing failed.";
+  let status = 0;
+  const context = (error as { context?: Response }).context;
+  if (context) {
+    status = context.status;
+    try {
+      const payload = await context.clone().json();
+      if (payload?.error) message = String(payload.error);
+    } catch {
+      try {
+        const text = await context.clone().text();
+        if (text) message = text;
+      } catch {
+        // Keep the SDK message when the response body cannot be read.
+      }
+    }
+  }
+
+  const retryable = status === 429 || status >= 500;
+  throw Object.assign(new Error(message), { retryable });
+}
+
 /**
  * Upload the original résumé to storage AND parse it.
  * Handles PDF / images (sent to the model) and DOCX (text extracted locally first).
  * Legacy .doc is uploaded/attached but cannot be auto-parsed.
  */
 export async function uploadAndParseResume(file: File): Promise<ParseFileResult> {
+  if (!file.size) throw new Error("This résumé is empty. Please choose the original file again.");
+  if (file.size > MAX_RESUME_BYTES) throw new Error("This résumé is over 20 MB. Please use a smaller PDF or Word file.");
+
   // Always preserve the original file, linked to the candidate later.
   const { url } = await uploadCandidateFile(file);
   const doc: UploadedDoc = {
@@ -121,15 +155,23 @@ export async function uploadAndParseResume(file: File): Promise<ParseFileResult>
       "Legacy .doc files can't be auto-parsed — please re-save as PDF or .docx, or enter details manually.",
     );
   } else {
-    const base64 = await fileToBase64(file);
-    body = { fileBase64: base64, fileName: file.name, mimeType: file.type };
+    // Send the already-uploaded public file URL instead of embedding the whole
+    // document in the function request. Large PDFs otherwise exceed browser /
+    // gateway body limits on the published domain before parsing can begin.
+    body = { fileUrl: url, fileName: file.name, mimeType: file.type };
   }
 
-  const { data, error } = await supabase.functions.invoke("parse-resume", { body });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
+  let data: any;
+  try {
+    data = await invokeParseResume(body);
+  } catch (error) {
+    if (!(error instanceof Error) || !(error as Error & { retryable?: boolean }).retryable) throw error;
+    await new Promise((resolve) => window.setTimeout(resolve, 1200));
+    data = await invokeParseResume(body);
+  }
 
   const parsed = normalizeParsed(data?.data || {});
+  if (!parsed.full_name) throw new Error("No candidate name was found in this résumé. Please try a clearer PDF or Word file.");
   return { parsed, doc };
 }
 
