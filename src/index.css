@@ -353,11 +353,15 @@
 
   .hover-lift {
     transition: transform 0.45s cubic-bezier(0.16,1,0.3,1), box-shadow 0.45s ease, border-color 0.45s ease;
+    will-change: transform;
   }
   .hover-lift:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-cert), var(--glow-gold);
     border-color: hsl(var(--emerald) / 0.4);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hover-lift:hover { transform: none; }
   }
 
   .tap-target {
@@ -365,21 +369,34 @@
     touch-action: manipulation;
   }
 
-  /* Vivid optical-blue primary CTA */
+  /* Precision primary CTA — deep clinical blue, single crisp edge */
   .btn-optic {
     color: #fff;
-    background: linear-gradient(135deg, hsl(214 92% 52%), hsl(200 95% 50%) 55%, hsl(190 92% 52%));
+    background: linear-gradient(135deg, hsl(222 84% 46%), hsl(216 88% 50%) 55%, hsl(206 90% 50%));
     background-size: 180% 180%;
-    border: 1px solid hsl(212 100% 66% / 0.55);
-    box-shadow: 0 12px 30px -12px hsl(212 92% 50% / 0.6), inset 0 1px 0 rgba(255,255,255,0.28);
+    border: 1px solid hsl(222 84% 58% / 0.6);
+    box-shadow:
+      0 1px 1px rgba(15,27,45,0.06),
+      0 10px 24px -14px hsl(222 84% 46% / 0.55),
+      inset 0 1px 0 rgba(255,255,255,0.26);
     transition: background-position 0.5s ease, transform 0.25s ease, box-shadow 0.3s ease;
   }
   .btn-optic:hover {
     background-position: 100% 0;
     transform: translateY(-1px);
-    box-shadow: 0 18px 40px -12px hsl(212 92% 50% / 0.72), inset 0 1px 0 rgba(255,255,255,0.34);
+    box-shadow:
+      0 1px 1px rgba(15,27,45,0.06),
+      0 16px 34px -14px hsl(222 84% 46% / 0.62),
+      inset 0 1px 0 rgba(255,255,255,0.32);
   }
   .btn-optic:active { transform: translateY(0); }
+
+  /* Crisp, consistent keyboard focus across the whole app */
+  :where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.85);
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) - 4px);
+  }
 
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
