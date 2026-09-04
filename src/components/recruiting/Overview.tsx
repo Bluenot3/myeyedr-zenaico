@@ -202,7 +202,7 @@ export default function Overview() {
         return (
           <button
             onClick={() => cand && openCandidateTab(cand, "scorecards")}
-            className="w-full text-left relative overflow-hidden rounded-2xl p-5 sm:p-6 group transition-all hover:-translate-y-0.5"
+            className="w-full text-left relative overflow-hidden rounded-2xl p-4 sm:p-5 group transition-all hover:-translate-y-0.5"
             style={{
               background: `linear-gradient(135deg, hsl(${em.hsl} / 0.16), hsl(${em.hsl} / 0.04))`,
               border: `1px solid hsl(${em.hsl} / 0.35)`,
@@ -210,10 +210,10 @@ export default function Overview() {
             }}
           >
             <span className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl opacity-40" style={{ background: `hsl(${em.hsl})` }} />
-            <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={{ background: `hsl(${em.hsl} / 0.18)`, color: `hsl(${em.hsl})`, border: `1.5px solid hsl(${em.hsl} / 0.45)` }}>
-                  <em.icon className="h-6 w-6" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style={{ background: `hsl(${em.hsl} / 0.18)`, color: `hsl(${em.hsl})`, border: `1.5px solid hsl(${em.hsl} / 0.45)` }}>
+                  <em.icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function Overview() {
                     </span>
                     <span className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">{em.label}</span>
                   </div>
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground truncate mt-1">
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-foreground truncate mt-1 tracking-tight">
                     {cand?.full_name || nextEvent.title}
                   </h3>
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">
