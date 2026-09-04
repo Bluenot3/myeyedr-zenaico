@@ -1,76 +1,55 @@
-# Candidate Command — Stability, Invites, Insights & Job Library
+# Interview recording + speaker-accurate transcripts
 
-## 1. Stop the random "reset to dashboard" reloads
+Goal: interviews done in person or over the phone get captured cleanly inside the app, transcribed at the highest quality available, and split by who was talking — with the candidate's lines clearly separated from the interviewer's.
 
-Root cause: on every background token refresh, `useAuth` flips global `loading` true, which makes `Protected` swap `<Index/>` for the full-screen loader and remount it — wiping the in-memory active tab back to Overview.
+## What exists today
 
-- **`src/hooks/useAuth.tsx`** — Only show the blocking loader on the very first load. Track an `initialized` ref; on later `onAuthStateChange` events (TOKEN_REFRESHED / focus re-auth) update the session and refresh context silently in the background without toggling `loading`. Never let a token refresh unmount the app.
-- **`src/pages/Index.tsx`** — Persist the active tab in `localStorage` (and reflect it in the URL hash) so a genuine refresh restores the last section instead of jumping to Overview.
-- **`src/App.tsx`** — Give React Query stable defaults (`staleTime`, `refetchOnWindowFocus: false`, one retry) to stop refetch flicker when switching windows/tabs.
+- The Interview tab only accepts an already-recorded file. There is no way to record an interview from inside the app.
+- Transcription already runs through Scribe with speaker separation switched on, and per-word speaker tags are saved.
+- The transcript is displayed as one flat block of text, so those speaker tags are never shown, and the AI that picks the soundbites reads the same unlabeled text — so an interviewer's line can be quoted as if the candidate said it.
 
-## 2. Emailed user invites (link + temp-password fallback) — owner only
+## What gets built
 
-- Configure the shared email domain on the existing custom domain, set up email infrastructure, and scaffold a branded transactional invite email.
-- **`admin-users` edge function** — In `invite`, after creating the account also generate a secure set-password link and send the branded invite email to the new user. Still return the temp password so the existing credential dialog remains a fallback if the email bounces.
-- Add a "Resend invite" action per user in `UsersManager`.
+### 1. Record inside the app
 
-## 3. Owner-only access to Team & Access + sensitive data
+- A **Record interview** button next to the existing upload, with a session panel: big timer, live input-level meter, pause/resume, stop, discard.
+- Two modes, each with one line of guidance:
+  - **In person** — one device between both people.
+  - **Phone** — put the call on speakerphone (or use a headset) so both voices reach the mic.
+- A live level meter plus a warning if the input is near-silent or very quiet, so nobody discovers a dead mic after a 45-minute interview.
+- Long interviews are captured in rolling complete audio segments, so a browser crash or accidental tab close never loses the whole session.
+- The finished recording is saved with the candidate exactly like an upload today (original file always kept), then transcribed automatically.
 
-Only `royaltokens@gmail.com` and `alexander.leschik@myeyedr.com` may see/manage users.
+### 2. Better transcription quality
 
-- **Migration** — add `public.is_owner(uuid)` (checks those two emails via profiles), and tighten cross-user read policies on `profiles`, `user_roles`, `user_locations` from `is_admin` → `is_owner` (each user still sees their own row).
-- **`admin-users` edge function** — require `is_owner` (not just admin) for list/invite/reset/set_role/assign_locations/delete.
-- **`useAuth`** expose `isOwner`; **`Index.tsx`** gate the Team & Access tab to `isOwner`. Other admins keep AI/decision tools but can't browse users.
+- Highest-accuracy model, with a fallback if an account doesn't have it.
+- Tell the transcriber how many people are on the recording (defaults to 2, adjustable to 3+ for panel interviews) — this measurably improves who-said-what.
+- Audio is captured at a clean speech sample rate and sent as a complete, decodable file, which removes the most common cause of garbled or rejected recordings.
+- Long recordings are transcribed in overlapping chunks and stitched back together with correct timestamps, so a one-hour interview is transcribed in full instead of getting cut off.
 
-## 4. Onboarding → hiring-manager coverage & training checklist
+### 3. Who said what
 
-Offer letters, background check, drug screen, I-9, W-4, direct deposit, and benefits are handled in other systems — remove them.
+- Words are grouped into speaker turns with start/end times.
+- The system decides which speaker is the candidate (the person answering, not asking) and labels the rest as interviewer / panel.
+- A one-tap **"Wrong person"** control lets you reassign a speaker; every turn, soundbite and quote re-labels instantly and the correction is saved.
+- The soundbite and recommendation analysis now reads the labeled transcript, so quotes are only ever attributed to the person who actually said them.
 
-- **`src/lib/onboarding.ts`** — replace `defaultOnboardingSteps`/`ONBOARDING_GROUPS` with a focused checklist so the manager can concentrate on training, grouped as:
-  - **Coverage** — trainer assigned, floor coverage arranged so the trainer is freed up, backup trainer named.
-  - **Schedule & Space** — first day/time set, first-week schedule shared, workspace ready.
-  - **Access & Tools** — logins/credentials requested, systems access confirmed, badge/keys, uniform.
-  - **Day One** — welcome & team intros, training plan reviewed with new hire.
-- Keep the 4-week training plan. `OnboardingTracker` already renders from these constants, so it updates automatically. Add a small "Switch to new checklist" action for any onboarding record still holding the legacy steps.
+### 4. Reading the transcript
 
-## 5. Metrics & Insights dashboard (Admins & Regionals)
-
-New **Insights** tab (recharts, already installed) built entirely from existing data — no heavy new tables:
-
-- **Time to hire** — average days applied→hired, trend over recent months.
-- **Pipeline conversion funnel** — stage-to-stage drop-off and overall applied→hired rate.
-- **Source effectiveness** — candidates vs. hires by source, with a "best ROI source" callout.
-- **Candidate volume trend** — applications per week/month.
-- **What standout candidates say** — aggregate soundbite labels and most-common phrases from the transcripts/soundbites of hired & top-rated candidates ("top candidates tend to mention…"), surfaced as chips + a bar chart.
-- Gated to `hasAllAccess`; read-only, so it can't break existing flows.
-
-## 6. Reusable Job Library + full requisition control
-
-- **Migration** — new `public.job_templates` (title, department, employment_type, description, requirements, pay_range, tags, created_by) with GRANTs; managed by `has_all_access`, readable by authenticated. Add owner/admin delete policy on `positions` so requisitions can be fully removed.
-- **`parse-job` edge function** — accepts pasted text or extracted PDF text and uses Lovable AI to return structured job fields (modeled on `parse-resume`).
-- **New "Jobs" tab (Admin/Regional)** — Job Library: add a job by **uploading a PDF** or **pasting text** (auto-filled via `parse-job`) or manually; edit/delete; and **"Create requisition"** from a job → prefilled New Opening where you pick office(s), openings, and status (including historical `closed`/`filled` records).
-- **`Openings.tsx`** — full edit dialog (title, office, openings, priority, pay, status, description, requirements) so admins can open/close/edit **any** requisition regardless of location or stage, plus delete for record cleanup and a status filter that includes archived/closed for record-keeping.
-
-## 7. Verify the transcriber
-
-- Confirm the ElevenLabs connector key path in `analyze-interview` works end-to-end (Scribe v2 with v1 fallback), check edge logs, and improve the surfaced error text so failures are actionable. No behavior change unless a real bug is found.
+- Transcript renders as a conversation: speaker name, colour, timestamp, tap any line to jump the audio there.
+- The current line highlights and scrolls itself as the recording plays.
+- Search inside the transcript, plus copy and download.
+- Per-speaker talk-time split (a quick read on whether the interviewer talked more than the candidate).
 
 ## Technical notes
-- New tables (`job_templates`) follow the CREATE→GRANT→RLS→POLICY order; `is_owner` is `SECURITY DEFINER` with fixed `search_path`.
-- Email sending depends on DNS verification for the domain; invites still produce a shareable temp password immediately even while DNS finishes.
-- Pipeline `CandidateCard` layout stays untouched, per earlier direction.
 
-```text
-Sidebar (owner)     Sidebar (admin/regional)
-overview            overview
-pipeline            pipeline
-openings            openings
-jobs (library)      jobs (library, regional+)
-calendar            calendar
-insights            insights (regional+)
-pool                pool
-ask ai / agents     ask ai / agents (admin)
-decision            decision (admin)
-library / locations library / locations
-team & access       — (hidden)
-```
+- New recorder component using Web Audio PCM capture encoded to 16 kHz mono WAV per segment (not `MediaRecorder` timeslices, which produce headerless fragments that the transcriber rejects, and which break on iOS Safari).
+- `analyze-interview` edge function: keep ElevenLabs Scribe (`scribe_v2`, `scribe_v1` fallback) with `diarize: true`, add `num_speakers`, `language_code`, request word timestamps; add chunked transcription with time-offset merge and speaker-id reconciliation across chunks; build `turns` from words; pass a speaker-labeled transcript into the Lovable AI analysis call and require quotes to carry a speaker id; validate each quote's speaker before saving a soundbite.
+- Migration on `candidate_media`: `turns jsonb default '[]'`, `speakers jsonb default '[]'` (id, role, label, talk seconds), `speaker_roles jsonb default '{}'` (manual overrides), `capture_mode text` (in_person | phone | upload), `num_speakers int`. RLS/grants follow the table's existing policies — no new tables.
+- Client guards: reject sub-2 KB / near-silent captures with a re-record prompt, cap per-request upload size, surface the real transcription error text instead of a generic failure.
+- Existing uploads keep working: rows without `turns` fall back to today's flat transcript view.
+
+## Out of scope
+
+- The Indeed / auto-intake work discussed just before this stays parked; nothing here touches it.
+- No changes to scorecards, pipeline, or candidate cards.
