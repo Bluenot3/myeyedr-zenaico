@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   useDiscoverNotionDatabases, useNotionRuns, useNotionSettings, usePreviewNotionDatabase,
-  useRunNotionImport, type NotionDatabase, type SyncKind,
+  useRunNotionImport, type ImportResult, type NotionDatabase, type SyncKind,
 } from "@/hooks/useIntegrations";
 
 const KIND_META: Record<SyncKind, { label: string; blurb: string; icon: typeof Users; hsl: string }> = {
   candidates: {
     label: "Candidates",
-    blurb: "Pull applicants from your Notion tracker. Matched by Notion page, then email, then name + phone — existing candidates are updated, never duplicated.",
+    blurb: "Pull applicants from your Notion tracker. Deduped by Notion page, then email, then name + phone — and each person is matched to the requisition they belong to, using the role text, the office and live openings.",
     icon: Users,
     hsl: "197 100% 66%",
   },
@@ -47,6 +47,7 @@ export default function Integrations() {
   const [previewRows, setPreviewRows] = useState<Record<string, string>[] | null>(null);
   const [previewFor, setPreviewFor] = useState<string>("");
   const [loadError, setLoadError] = useState<string>("");
+  const [lastResult, setLastResult] = useState<ImportResult | null>(null);
 
   const settingFor = (kind: SyncKind) => settings.find((s) => s.kind === kind) || null;
 
@@ -93,10 +94,12 @@ export default function Integrations() {
     runImport.mutate(
       { kind, database_id, database_title: db?.title || settingFor(kind)?.database_title || "" },
       {
-        onSuccess: (res) =>
+        onSuccess: (res) => {
+          setLastResult(res);
           toast.success(
             `${KIND_META[kind].label}: ${res.created} added, ${res.updated} updated${res.skipped ? `, ${res.skipped} skipped` : ""}${res.errors?.length ? ` · ${res.errors.length} error(s)` : ""}`,
-          ),
+          );
+        },
         onError: (e: any) => toast.error(e?.message || "Sync failed"),
       },
     );
