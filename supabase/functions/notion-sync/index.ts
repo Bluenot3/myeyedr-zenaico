@@ -354,7 +354,7 @@ serve(async (req) => {
 
         const [{ data: locations }, { data: positions }] = await Promise.all([
           admin.from("locations").select("id, site_name, region, manager"),
-          admin.from("positions").select("id, title, req_code, location_id, region"),
+          admin.from("positions").select("id, title, req_code, location_id, region, status"),
         ]);
         const locs = locations ?? [];
         const poss = positions ?? [];
@@ -363,15 +363,7 @@ serve(async (req) => {
           if (!n) return null;
           return locs.find((l: any) => norm(l.site_name) === n) ?? locs.find((l: any) => norm(l.site_name).includes(n) || n.includes(norm(l.site_name))) ?? null;
         };
-        const findPos = (name: string, locId: string | null) => {
-          const n = norm(name);
-          if (!n) return null;
-          const byCode = poss.find((p: any) => p.req_code && norm(p.req_code) === n);
-          if (byCode) return byCode;
-          const matches = poss.filter((p: any) => norm(p.title) === n || norm(p.title).includes(n) || n.includes(norm(p.title)));
-          if (!matches.length) return null;
-          return matches.find((p: any) => p.location_id === locId) ?? matches[0];
-        };
+
 
         for (const page of pages) {
           const props = page.properties ?? {};
