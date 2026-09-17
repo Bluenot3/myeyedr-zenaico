@@ -529,3 +529,78 @@ export function buildForms(bp: RoleBlueprint, roleLabel?: string): GeneratedForm
     },
   ];
 }
+
+/* ------------------------------------------------------------------ */
+/* Universal quick phone screen (10–15 minutes, any position)          */
+/* ------------------------------------------------------------------ */
+
+export interface QuickDimension {
+  id: string;
+  label: string;
+  prompt: string;      // the one question to ask
+  lookFor: string;     // what a good answer sounds like
+}
+
+/** Six judgments that apply to every position — no role-specific variant needed. */
+export const QUICK_PHONE_DIMENSIONS: QuickDimension[] = [
+  {
+    id: "qps_availability",
+    label: "Availability & Schedule Fit",
+    prompt: "The role is these hours at this office — does that work for your schedule and commute, and when could you start?",
+    lookFor: "Confirms the hours outright, reliable transportation, realistic start date, no hidden second-job conflict.",
+  },
+  {
+    id: "qps_reliability",
+    label: "Attendance & Reliability",
+    prompt: "How many unplanned absences or late arrivals have you had in the last six months, and what caused them?",
+    lookFor: "Honest about their record, calls before the shift starts, has a real backup plan for rides and childcare.",
+  },
+  {
+    id: "qps_communication",
+    label: "Communication & Phone Presence",
+    prompt: "Tell me in a minute or two what you do in your current role day to day.",
+    lookFor: "Clear, warm, easy to understand, listens without interrupting, professional on the phone.",
+  },
+  {
+    id: "qps_work_ethic",
+    label: "Work Ethic & Drive",
+    prompt: "What's the busiest stretch you've handled at work, and what did you personally do to keep up?",
+    lookFor: "A specific example with a specific outcome, pride in finishing, runs toward work instead of waiting.",
+  },
+  {
+    id: "qps_motivation",
+    label: "Motivation & Stability",
+    prompt: "Why this role, and what are you looking for in your next team?",
+    lookFor: "Knows what the job is, wants stability and growth, reasons beyond pay, sensible job-history story.",
+  },
+  {
+    id: "qps_attitude",
+    label: "Attitude & Coachability",
+    prompt: "Tell me about the last piece of feedback you got at work — what changed afterward?",
+    lookFor: "No defensiveness, names the change, speaks fairly about past managers and teammates.",
+  },
+];
+
+export const QUICK_PHONE_CONFIRMATIONS = [
+  { id: "pay", label: "Pay range confirmed" },
+  { id: "schedule", label: "Schedule confirmed" },
+  { id: "start", label: "Start date confirmed" },
+];
+
+export const QUICK_PHONE_FLAGS = [
+  "Vague availability",
+  "Negative about past employers",
+  "No concrete examples",
+  "Dodged attendance question",
+  "Missed / rescheduled the call",
+  "Unclear on the role",
+];
+
+export const QUICK_PHONE_VERDICTS = [
+  { key: "advance", label: "Advance to interview", hsl: "160 84% 42%" },
+  { key: "hold", label: "Hold", hsl: "40 90% 55%" },
+  { key: "pool", label: "Talent pool", hsl: "210 90% 58%" },
+  { key: "pass", label: "Pass", hsl: "0 80% 58%" },
+];
+
+export const QUICK_PHONE_TEMPLATE_NAME = "Quick Phone Screen";
