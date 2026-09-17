@@ -145,6 +145,16 @@ export default function PipelineBoard() {
             <span className="block text-xs font-medium">All requisitions</span>
             <span className="block text-[9.5px] text-muted-foreground">{candidates.length} candidates</span>
           </button>
+          {unassignedCount > 0 && (
+            <button
+              onClick={() => setReqId("unassigned")}
+              title={`${unassignedCount} candidates not yet assigned to a requisition`}
+              className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${reqId === "unassigned" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
+            >
+              <span className="block text-xs font-medium">Not assigned</span>
+              <span className="block text-[9.5px] text-muted-foreground">{unassignedCount} candidates</span>
+            </button>
+          )}
           {visibleReqs.map((p) => {
             const closed = CLOSED_STATUSES.has(p.status);
             const active = reqId === p.id;
