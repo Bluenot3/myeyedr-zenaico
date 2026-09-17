@@ -126,7 +126,9 @@ export default function PipelineBoard() {
       {/* Requisition switcher */}
       <div className="glass-panel rounded-xl p-2.5">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1"><Briefcase className="h-3 w-3" /> Requisition pipelines</span>
+          <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1">
+            <Briefcase className="h-3 w-3" /> {openReqs.length} open requisition{openReqs.length === 1 ? "" : "s"} · numbers below are candidates
+          </span>
           {closedReqs.length > 0 && (
             <button onClick={() => setShowClosedReqs((v) => !v)} className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
               {showClosedReqs ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -137,9 +139,11 @@ export default function PipelineBoard() {
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
           <button
             onClick={() => setReqId("all")}
-            className={`shrink-0 rounded-lg border px-3 h-9 text-xs transition-colors ${reqId === "all" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
+            title={`${candidates.length} candidates across all requisitions`}
+            className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${reqId === "all" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
           >
-            All openings <span className="ml-1 opacity-70">{candidates.length}</span>
+            <span className="block text-xs font-medium">All requisitions</span>
+            <span className="block text-[9.5px] text-muted-foreground">{candidates.length} candidates</span>
           </button>
           {visibleReqs.map((p) => {
             const closed = CLOSED_STATUSES.has(p.status);
