@@ -69,7 +69,22 @@ const ACTION_ICON: Record<string, typeof ArrowRight> = {
   schedule_interview: CalendarPlus,
   draft_email: Mail,
   log_contact: PhoneCall,
+  create_candidate: User,
+  delete_candidate: Trash2,
+  bulk_set_candidate_status: Users,
+  bulk_share_candidates: Share2,
+  bulk_apply_to_position: Briefcase,
+  run_signal_scan: Sparkles,
+  record_decision: ClipboardList,
+  update_onboarding: CheckCircle2,
+  create_location: MapPin,
+  update_location: MapPin,
+  invite_user: UserPlus,
+  update_job_template: Pencil,
+  delete_job_template: Trash2,
+  schedule_recurring_task: CalendarClock,
 };
+
 
 interface Suggestion { label: string; prompt: string; tone?: string }
 
