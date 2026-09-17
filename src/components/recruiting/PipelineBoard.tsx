@@ -45,7 +45,7 @@ export default function PipelineBoard() {
 
   // If a selected requisition disappears (no access / deleted), fall back to all.
   useEffect(() => {
-    if (reqId !== "all" && positions.length > 0 && !positions.some((p) => p.id === reqId)) setReqId("all");
+    if (reqId !== "all" && reqId !== "unassigned" && positions.length > 0 && !positions.some((p) => p.id === reqId)) setReqId("all");
   }, [reqId, positions]);
 
   // Closed pipelines are read-only — drop any pending selection.
