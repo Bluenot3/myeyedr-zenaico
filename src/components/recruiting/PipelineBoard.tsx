@@ -152,17 +152,16 @@ export default function PipelineBoard() {
               <button
                 key={p.id}
                 onClick={() => setReqId(p.id)}
-                title={`${p.title} · ${locName(p.location_id) || p.region || "—"}`}
+                title={`${p.title} · ${locName(p.location_id) || p.region || "—"} · ${reqCount(p.id)} candidates`}
                 className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${active ? (closed ? "border-muted-foreground/40 bg-muted text-foreground" : "border-emerald/40 bg-emerald/12 text-emerald") : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"} ${closed ? "opacity-80" : ""}`}
               >
                 <span className="flex items-center gap-1.5 text-xs font-medium">
                   {closed && <Lock className="h-3 w-3 shrink-0" />}
                   {p.req_code && <span className="font-mono text-[9px] uppercase opacity-70">{p.req_code}</span>}
                   <span className="truncate max-w-[150px]">{p.title}</span>
-                  <span className="opacity-70 text-[10px]">{reqCount(p.id)}</span>
                 </span>
                 <span className="flex items-center gap-1 text-[9.5px] text-muted-foreground truncate max-w-[190px]">
-                  <MapPin className="h-2.5 w-2.5 shrink-0" /> {locName(p.location_id) || p.region || "Unassigned"}
+                  <MapPin className="h-2.5 w-2.5 shrink-0" /> {locName(p.location_id) || p.region || "Unassigned"} · {reqCount(p.id)} cand.
                 </span>
               </button>
             );
