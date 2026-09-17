@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { uploadCandidateFile, fileToBase64, UploadedDoc } from "@/lib/storage";
+import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import mammoth from "mammoth";
 
 /** Normalized candidate fields extracted from a résumé. */
@@ -171,7 +171,9 @@ export async function uploadAndParseResume(file: File): Promise<ParseFileResult>
   }
 
   const parsed = normalizeParsed(data?.data || {});
-  if (!parsed.full_name) throw new Error("No candidate name was found in this résumé. Please try a clearer PDF or Word file.");
+  if (!Object.keys(parsed).length) {
+    throw new Error("No readable candidate details were found. Please try a clearer PDF or Word file.");
+  }
   return { parsed, doc };
 }
 
