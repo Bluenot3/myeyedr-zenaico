@@ -74,6 +74,11 @@ export default function PipelineBoard() {
 
   const locName = (id: string | null) => locations.find((l) => l.id === id)?.site_name;
   const openCandidate = (c: Candidate, tab: string = "match") => { setSelected(c); setProfileTab(tab); setOpen(true); };
+  const revealAddedCandidate = (candidate: Candidate) => {
+    setSearch("");
+    setRegion("All");
+    setReqId(candidate.position_id || "all");
+  };
 
   const toggle = (id: string) => setIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const clearSel = () => setIds(new Set());
@@ -110,7 +115,11 @@ export default function PipelineBoard() {
         </div>
         <div className="flex items-center gap-2">
           <BulkResumeUpload />
-          <AddCandidateDialog compact />
+          <AddCandidateDialog
+            compact
+            initialPositionId={reqId === "all" || isClosedPipeline ? undefined : reqId}
+            onAdded={revealAddedCandidate}
+          />
         </div>
       </div>
 

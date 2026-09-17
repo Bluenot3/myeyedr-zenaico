@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import {
   UserPlus, Loader2, UploadCloud, FileText, Sparkles, X, Paperclip, CheckCircle2, ScanEye, Link2, ExternalLink,
 } from "lucide-react";
-import { useCreateCandidate, useLocations, usePositions } from "@/hooks/useRecruiting";
+import { Candidate, useCreateCandidate, useLocations, usePositions } from "@/hooks/useRecruiting";
 import { SOURCES } from "@/lib/recruiting";
 import { uploadCandidateFile as uploadFile, UploadedDoc as DocEntry } from "@/lib/storage";
 import { uploadAndParseResume } from "@/lib/resume";
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 
 interface Props {
   compact?: boolean;
+  initialPositionId?: string;
+  onAdded?: (candidate: Candidate) => void;
 }
 
 
@@ -23,7 +25,7 @@ const EMPTY = {
   best_fit_roles: "", apply_url: "",
 };
 
-export default function AddCandidateDialog({ compact }: Props) {
+export default function AddCandidateDialog({ compact, initialPositionId, onAdded }: Props) {
   const [open, setOpen] = useState(false);
   const createCandidate = useCreateCandidate();
   const { data: locations = [] } = useLocations();
@@ -47,6 +49,18 @@ export default function AddCandidateDialog({ compact }: Props) {
     setParsed(false);
     setParsing(false);
     setParsedExtra({});
+  };
+
+  const prepareForOpen = () => {
+    if (!initialPositionId) return;
+    const position = positions.find((item) => item.id === initialPositionId);
+    if (!position) return;
+    set({
+      position_id: position.id,
+      location_id: position.location_id || "",
+      region: position.region || "",
+      applied_role: position.title,
+    });
   };
 
   const handleResume = async (file: File) => {
@@ -113,7 +127,7 @@ export default function AddCandidateDialog({ compact }: Props) {
     const linkDocs: DocEntry[] = linkUrl
       ? [{ name: `${form.source || "Application"} link`, url: linkUrl, type: "link", size: 0, kind: "attachment" }]
       : [];
-    await createCandidate.mutateAsync({
+    const candidate = await createCandidate.mutateAsync({
       full_name: form.full_name,
       email: form.email,
       phone: form.phone,
@@ -141,6 +155,7 @@ export default function AddCandidateDialog({ compact }: Props) {
       score: 0,
       rating: 0,
     });
+    onAdded?.(candidate);
     reset();
     setOpen(false);
   };
@@ -148,7 +163,7 @@ export default function AddCandidateDialog({ compact }: Props) {
   const locPositions = positions.filter((p) => !form.location_id || p.location_id === form.location_id);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) prepareForOpen(); else reset(); }}>
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1.5 h-9 bg-emerald text-primary-foreground hover:bg-emerald/90 shadow-[0_0_20px_-6px_hsl(var(--emerald))]">
           <UserPlus className="h-4 w-4" />
