@@ -410,7 +410,260 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "create_candidate",
+      description: "Create a brand new candidate record and place them on a requisition's pipeline.",
+      parameters: {
+        type: "object",
+        properties: {
+          full_name: { type: "string" },
+          email: { type: "string" },
+          phone: { type: "string" },
+          applied_role: { type: "string" },
+          position_id: { type: "string" },
+          position_title: { type: "string" },
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+          current_employer: { type: "string" },
+          years_experience: { type: "number" },
+          headline: { type: "string" },
+          source: { type: "string" },
+          stage: { type: "string", enum: STAGE_KEYS },
+        },
+        required: ["full_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_candidate",
+      description: "Permanently delete a candidate record. Only use when the admin explicitly asks to delete, not to archive.",
+      parameters: {
+        type: "object",
+        properties: { candidate_id: { type: "string" }, candidate_name: { type: "string" } },
+        required: ["candidate_id", "candidate_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_set_candidate_status",
+      description:
+        "Set status (active / talent pool / rejected / hired) for MANY candidates at once. Prefer this over repeating single-candidate actions.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_ids: { type: "array", items: { type: "string" } },
+          candidate_names: { type: "string", description: "Short human summary of who is included" },
+          status: { type: "string", enum: ["active", "talent_pool", "rejected", "hired"] },
+          reason: { type: "string" },
+        },
+        required: ["candidate_ids", "candidate_names", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_share_candidates",
+      description: "Share many candidates with another office at once so that location's manager can see them.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_ids: { type: "array", items: { type: "string" } },
+          candidate_names: { type: "string" },
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+          note: { type: "string" },
+        },
+        required: ["candidate_ids", "candidate_names", "location_id", "location_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_apply_to_position",
+      description: "Add many candidates as additional applications on one requisition (e.g. pull matching talent-pool people into a new opening).",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_ids: { type: "array", items: { type: "string" } },
+          candidate_names: { type: "string" },
+          position_id: { type: "string" },
+          position_title: { type: "string" },
+          location_id: { type: "string" },
+          reason: { type: "string" },
+        },
+        required: ["candidate_ids", "candidate_names", "position_id", "position_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "run_signal_scan",
+      description: "Run the AI signal scanner on a candidate to surface gaps, patterns and targeted follow-up questions.",
+      parameters: {
+        type: "object",
+        properties: { candidate_id: { type: "string" }, candidate_name: { type: "string" } },
+        required: ["candidate_id", "candidate_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "record_decision",
+      description: "Record a formal hiring decision with rationale on a candidate's file.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          decision: { type: "string", enum: ["hire", "hold", "reject", "talent_pool"] },
+          rationale: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name", "decision"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_onboarding",
+      description:
+        "Set or update a hired candidate's onboarding readiness: trainer, first day, coverage plan and notes. Never handles offer letters, payroll, background checks or I-9.",
+      parameters: {
+        type: "object",
+        properties: {
+          candidate_id: { type: "string" },
+          candidate_name: { type: "string" },
+          trainer_name: { type: "string" },
+          first_day_date: { type: "string", description: "ISO date, e.g. 2026-10-05" },
+          coverage_plan: { type: "string" },
+          notes: { type: "string" },
+        },
+        required: ["candidate_id", "candidate_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_location",
+      description: "Add a new office/location to the network.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          city: { type: "string" },
+          state: { type: "string" },
+          region: { type: "string" },
+          manager: { type: "string" },
+          manager_email: { type: "string" },
+        },
+        required: ["name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_location",
+      description: "Edit an existing office: name, city, state, region, or assigned manager.",
+      parameters: {
+        type: "object",
+        properties: {
+          location_id: { type: "string" },
+          location_name: { type: "string" },
+          name: { type: "string" },
+          city: { type: "string" },
+          state: { type: "string" },
+          region: { type: "string" },
+          manager: { type: "string" },
+          manager_email: { type: "string" },
+        },
+        required: ["location_id", "location_name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "invite_user",
+      description:
+        "Invite a teammate by email with a role and the offices they may see. Only the owner accounts can complete this action.",
+      parameters: {
+        type: "object",
+        properties: {
+          email: { type: "string" },
+          full_name: { type: "string" },
+          title: { type: "string" },
+          role: { type: "string", enum: ["admin", "regional", "manager"] },
+          location_ids: { type: "array", items: { type: "string" } },
+          location_names: { type: "string" },
+        },
+        required: ["email", "full_name", "role"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_job_template",
+      description: "Edit a saved job description in the Job Library.",
+      parameters: {
+        type: "object",
+        properties: {
+          template_id: { type: "string" },
+          template_title: { type: "string" },
+          title: { type: "string" },
+          department: { type: "string" },
+          employment_type: { type: "string" },
+          description: { type: "string" },
+          requirements: { type: "string" },
+          pay_range: { type: "string" },
+        },
+        required: ["template_id", "template_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_job_template",
+      description: "Remove a saved job description from the Job Library.",
+      parameters: {
+        type: "object",
+        properties: { template_id: { type: "string" }, template_title: { type: "string" } },
+        required: ["template_id", "template_title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "schedule_recurring_task",
+      description:
+        "Create a standing task the assistant runs on a cadence (e.g. every morning summarise new candidates and aging reqs).",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string" },
+          prompt: { type: "string", description: "The exact instruction to run each time" },
+          cadence: { type: "string", enum: ["hourly", "daily", "weekdays", "weekly", "once"] },
+        },
+        required: ["title", "prompt", "cadence"],
+      },
+    },
+  },
 ];
+
 
 
 
