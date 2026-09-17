@@ -574,6 +574,163 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
           for (const id of pids) await updatePosition.mutateAsync({ id, ...updates });
           break;
         }
+        case "create_candidate": {
+          const pos = positions.find((p) => p.id === a.args.position_id);
+          const locId = a.args.location_id || pos?.location_id || null;
+          const loc = locations.find((l) => l.id === locId);
+          await createCandidate.mutateAsync({
+            full_name: a.args.full_name,
+            email: a.args.email || "",
+            phone: a.args.phone || "",
+            applied_role: a.args.applied_role || pos?.title || "",
+            headline: a.args.headline || "",
+            current_employer: a.args.current_employer || "",
+            years_experience: Number(a.args.years_experience) || 0,
+            position_id: pos?.id ?? null,
+            location_id: locId,
+            region: loc?.region || "",
+            source: a.args.source || "Talent Assistant",
+            stage: a.args.stage || "applied",
+            status: "active",
+          } as any);
+          break;
+        }
+        case "delete_candidate":
+          await deleteCandidate.mutateAsync(a.args.candidate_id);
+          break;
+        case "bulk_set_candidate_status": {
+          const ids: string[] = Array.isArray(a.args.candidate_ids) ? a.args.candidate_ids : [];
+          if (ids.length === 0) throw new Error("No candidates selected");
+          const reason = a.args.reason || "";
+          if (a.args.status === "talent_pool") {
+            for (const id of ids) {
+              const c = candidates.find((x) => x.id === id);
+              if (c) await lifecycle.pool.mutateAsync({ candidate: c, reason, roles: "" });
+            }
+          } else if (a.args.status === "rejected") {
+            for (const id of ids) {
+              const c = candidates.find((x) => x.id === id);
+              if (c) await lifecycle.reject.mutateAsync({ candidate: c, reason });
+            }
+          } else if (a.args.status === "hired") {
+            for (const id of ids) {
+              const c = candidates.find((x) => x.id === id);
+              if (c) await lifecycle.hire.mutateAsync(c);
+            }
+          } else {
+            await bulkUpdate.mutateAsync({ ids, updates: { status: "active", in_talent_pool: false } as any });
+          }
+          break;
+        }
+        case "bulk_share_candidates": {
+          const ids: string[] = Array.isArray(a.args.candidate_ids) ? a.args.candidate_ids : [];
+          if (ids.length === 0) throw new Error("No candidates selected");
+          if (!a.args.location_id) throw new Error("No office selected");
+          for (const id of ids) {
+            await share.mutateAsync({ candidate_id: id, location_id: a.args.location_id, note: a.args.note });
+          }
+          break;
+        }
+        case "bulk_apply_to_position": {
+          const ids: string[] = Array.isArray(a.args.candidate_ids) ? a.args.candidate_ids : [];
+          const pos = positions.find((p) => p.id === a.args.position_id);
+          if (!pos) throw new Error("Requisition not found");
+          if (ids.length === 0) throw new Error("No candidates selected");
+          for (const id of ids) {
+            const c = candidates.find((x) => x.id === id);
+            await createApplication.mutateAsync({
+              candidate_id: id,
+              position_id: pos.id,
+              location_id: a.args.location_id || pos.location_id || null,
+              source: c?.source,
+              stage: "applied",
+              is_primary: false,
+              title: `Also applied to ${pos.title}${a.args.reason ? ` — ${a.args.reason}` : ""}`,
+            });
+          }
+          break;
+        }
+        case "run_signal_scan":
+          await signalScan.mutateAsync({ candidateId: a.args.candidate_id, evaluatorName: "Talent Assistant" });
+          break;
+        case "record_decision":
+          await recordDecision.mutateAsync({
+            candidate_id: a.args.candidate_id,
+            decision: a.args.decision,
+            rationale: a.args.rationale || "",
+          } as any);
+          break;
+        case "update_onboarding": {
+          const updates: Record<string, any> = {};
+          if (a.args.trainer_name) updates.trainer_name = a.args.trainer_name;
+          if (a.args.first_day_date) updates.first_day_date = a.args.first_day_date;
+          if (a.args.coverage_plan) updates.coverage_plan = a.args.coverage_plan;
+          if (a.args.notes) updates.notes = a.args.notes;
+          await upsertOnboarding.mutateAsync({
+            candidate_id: a.args.candidate_id,
+            updates,
+            seedLocationId: cand?.location_id ?? null,
+          });
+          toast.success("Onboarding readiness updated");
+          break;
+        }
+        case "create_location":
+          await createLocation.mutateAsync({
+            name: a.args.name,
+            city: a.args.city || "",
+            state: a.args.state || "",
+            region: a.args.region || "",
+            manager: a.args.manager || "",
+            manager_email: a.args.manager_email || "",
+          } as any);
+          break;
+        case "update_location": {
+          const updates: Record<string, any> = {};
+          for (const k of ["name", "city", "state", "region", "manager", "manager_email"]) {
+            if (a.args[k]) updates[k] = a.args[k];
+          }
+          if (Object.keys(updates).length === 0) throw new Error("No fields to update");
+          await updateLocation.mutateAsync({ id: a.args.location_id, ...updates });
+          break;
+        }
+        case "invite_user": {
+          const { data, error } = await supabase.functions.invoke("admin-users", {
+            body: {
+              action: "invite",
+              email: a.args.email,
+              full_name: a.args.full_name,
+              title: a.args.title || "",
+              role: a.args.role || "manager",
+              location_ids: Array.isArray(a.args.location_ids) ? a.args.location_ids : [],
+              redirect_to: `${window.location.origin}/reset-password`,
+            },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          toast.success(`Invite sent to ${a.args.email}`);
+          break;
+        }
+        case "update_job_template": {
+          const updates: Record<string, any> = {};
+          for (const k of ["title", "department", "employment_type", "description", "requirements", "pay_range"]) {
+            if (a.args[k]) updates[k] = a.args[k];
+          }
+          if (Object.keys(updates).length === 0) throw new Error("No fields to update");
+          await updateTemplate.mutateAsync({ id: a.args.template_id, ...updates } as any);
+          break;
+        }
+        case "delete_job_template":
+          await deleteTemplate.mutateAsync(a.args.template_id);
+          break;
+        case "schedule_recurring_task":
+          await createTask.mutateAsync({
+            title: a.args.title,
+            prompt: a.args.prompt,
+            cadence: a.args.cadence || "daily",
+          });
+          break;
+
+
 
         default:
           throw new Error("Unknown action");
