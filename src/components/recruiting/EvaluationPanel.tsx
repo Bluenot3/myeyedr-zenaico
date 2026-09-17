@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  ClipboardCheck, Plus, Star, Trash2, Save, Users, ChevronDown, ChevronUp, Sparkles, Phone, Pencil,
+  ClipboardCheck, Plus, Star, Trash2, Save, Users, ChevronDown, ChevronUp, Sparkles, Phone, Pencil, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
 import { initials } from "@/lib/recruiting";
 import ScoreRing from "./ScoreRing";
 import InterviewEvaluationForm from "./InterviewEvaluationForm";
+import QuickPhoneScreen from "./QuickPhoneScreen";
 
 interface Props {
   candidate: Candidate;
@@ -50,6 +51,7 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
   const [notes, setNotes] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [richForm, setRichForm] = useState<{ template: ScorecardTemplate; existing: CandidateEvaluation | null } | null>(null);
+  const [quickOpen, setQuickOpen] = useState(false);
 
   const startTemplate = (t: ScorecardTemplate) => {
     if (isRich(t)) {
@@ -190,6 +192,21 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
   /* ---- List mode ---- */
   return (
     <div className="space-y-4 animate-rise">
+      {/* Quick universal phone screen */}
+      <button
+        onClick={() => setQuickOpen(true)}
+        className="w-full flex items-center gap-3 rounded-2xl border border-emerald/35 bg-emerald/8 p-4 text-left hover:bg-emerald/12 transition-colors tap-target"
+      >
+        <div className="h-11 w-11 grid place-items-center rounded-xl bg-emerald text-primary-foreground shrink-0">
+          <Phone className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">Quick Phone Screen · 10 min</p>
+          <p className="text-[11px] text-muted-foreground">Six taps, one verdict — exports as a PDF and image that stay on {candidate.full_name.split(" ")[0]}'s file.</p>
+        </div>
+        <Plus className="h-5 w-5 text-emerald shrink-0" />
+      </button>
+
       {/* Start a new evaluation */}
       <div className="glass-panel rounded-xl p-4">
         <div className="flex items-center gap-1.5 mb-3">
@@ -267,6 +284,21 @@ export default function EvaluationPanel({ candidate, eventId }: Props) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Quick phone screen card */}
+      <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
+        <DialogContent className="max-w-[1000px] w-[calc(100vw-16px)] max-h-[92vh] overflow-y-auto p-0 gap-0 bg-transparent border-0 shadow-none">
+          <DialogTitle className="sr-only">Quick phone screen</DialogTitle>
+          {quickOpen && (
+            <QuickPhoneScreen
+              candidate={candidate}
+              eventId={eventId}
+              evaluatorName={evaluatorName}
+              onDone={() => setQuickOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -314,6 +346,31 @@ function EvalCard({ ev, expanded, onToggle, onEdit, onDelete }: { ev: CandidateE
               {r.comment && <p className="text-[10px] text-muted-foreground italic mt-0.5">{r.comment}</p>}
             </div>
           ))}
+          {d?.quick && (
+            <div className="space-y-1.5 mt-2">
+              {d.flags && d.flags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {d.flags.map((f) => (
+                    <span key={f} className="text-[9px] font-medium rounded-full px-2 py-0.5 bg-destructive/12 text-destructive">{f}</span>
+                  ))}
+                </div>
+              )}
+              {(d.pdfUrl || d.pngUrl) && (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {d.pdfUrl && (
+                    <a href={d.pdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-2 py-1 bg-emerald/12 text-emerald">
+                      <Download className="h-3 w-3" /> Card PDF
+                    </a>
+                  )}
+                  {d.pngUrl && (
+                    <a href={d.pngUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] font-medium rounded-md px-2 py-1 bg-holo/12 text-holo">
+                      <Download className="h-3 w-3" /> Card image
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {rich && d && (
             <div className="space-y-1.5 mt-2">
               {d.finalDecision && <p className="text-[11px] text-foreground/85"><b>Final decision:</b> {d.finalDecision}</p>}

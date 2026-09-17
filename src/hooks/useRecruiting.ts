@@ -261,6 +261,15 @@ export interface EvaluationDetails {
   managerInitials?: string;
   location?: string;
   interviewDate?: string;
+  // Quick phone screen card
+  quick?: boolean;
+  confirmations?: Record<string, boolean>;
+  flags?: string[];
+  standout?: string;
+  concern?: string;
+  verdict?: string;
+  pdfUrl?: string;
+  pngUrl?: string;
 }
 
 export interface CandidateEvaluation {
