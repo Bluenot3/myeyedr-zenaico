@@ -74,16 +74,12 @@ export default function QuickPhoneScreen({ candidate, eventId, evaluatorName, on
 
   const canvasToPdfBlob = (canvas: HTMLCanvasElement) => {
     const png = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ unit: "pt", format: "letter", orientation: "portrait" });
-    const pw = pdf.internal.pageSize.getWidth();
-    const ph = pdf.internal.pageSize.getHeight();
     const margin = 24;
-    const maxW = pw - margin * 2;
-    const maxH = ph - margin * 2;
-    const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
-    const w = canvas.width * ratio;
+    const contentW = 612 - margin * 2;
+    const ratio = contentW / canvas.width;
     const h = canvas.height * ratio;
-    pdf.addImage(png, "PNG", (pw - w) / 2, margin, w, h);
+    const pdf = new jsPDF({ unit: "pt", format: [612, h + margin * 2], orientation: "portrait" });
+    pdf.addImage(png, "PNG", margin, margin, contentW, h);
     return pdf.output("blob") as Blob;
   };
 
