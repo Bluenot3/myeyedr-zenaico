@@ -55,7 +55,7 @@ export default function PipelineBoard() {
     return candidates.filter((c) => {
       const s = !search || [c.full_name, c.applied_role, c.headline, c.email].some((f) => f.toLowerCase().includes(search.toLowerCase()));
       const r = region === "All" || c.region === region;
-      const q = reqId === "all" || c.position_id === reqId;
+      const q = reqId === "all" || (reqId === "unassigned" ? !c.position_id : c.position_id === reqId);
       return s && r && q;
     });
   }, [candidates, search, region, reqId]);
