@@ -78,7 +78,8 @@ export default function QuickPhoneScreen({ candidate, eventId, evaluatorName, on
     const contentW = 612 - margin * 2;
     const ratio = contentW / canvas.width;
     const h = canvas.height * ratio;
-    const pdf = new jsPDF({ unit: "pt", format: [612, h + margin * 2], orientation: "portrait" });
+    const pageH = Math.max(792, Math.round(h + margin * 2));
+    const pdf = new jsPDF({ unit: "pt", format: [612, pageH], orientation: "portrait" });
     pdf.addImage(png, "PNG", margin, margin, contentW, h);
     return pdf.output("blob") as Blob;
   };
