@@ -132,6 +132,17 @@ export default function AssistantChat({ compact = false }: { compact?: boolean }
   const createEvent = useCreateEvent();
   const logContact = useLogContact();
   const createApplication = useCreateApplication();
+  const createCandidate = useCreateCandidate();
+  const deleteCandidate = useDeleteCandidate();
+  const createLocation = useCreateLocation();
+  const updateLocation = useUpdateLocation();
+  const upsertOnboarding = useUpsertOnboarding();
+  const recordDecision = useRecordDecision();
+  const updateTemplate = useUpdateJobTemplate();
+  const deleteTemplate = useDeleteJobTemplate();
+  const signalScan = useAnalyzeCandidateSignals();
+  const createTask = useCreateAssistantTask();
+
 
   const due = dueTasks(tasks);
 
