@@ -108,7 +108,7 @@ serve(async (req) => {
 
     /* ---- best-effort AI parse (never blocks the application) ---- */
     let parsed: Record<string, any> = {};
-    if (fileBase64) {
+    if (fileBase64 && resumeUrl) {
       try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/parse-resume`, {
           method: "POST",
@@ -116,7 +116,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
           },
-          body: JSON.stringify({ fileBase64, fileName, mimeType }),
+          body: JSON.stringify({ fileUrl: resumeUrl, fileName, mimeType }),
         });
         if (res.ok) {
           const out = await res.json();
