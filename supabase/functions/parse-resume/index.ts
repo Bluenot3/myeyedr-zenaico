@@ -143,7 +143,7 @@ serve(async (req) => {
           ]
         : [
             { type: "input_text", text: prompt },
-            { type: "input_file", file_url: dataUrl, filename: safeFileName },
+            { type: "input_file", file_url: dataUrl },
           ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
