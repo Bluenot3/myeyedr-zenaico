@@ -1082,7 +1082,7 @@ ${prefs.charts ? "Include a ```chart JSON block whenever numeric comparison woul
 ${prefs.proactive ? "Close with a short \"Recommended next steps\" list and raise unprompted risks from the ATTENTION NOW block." : "Answer only what was asked; do not append proactive suggestions unless requested."}
 ${prefs.autoActions ? "Propose the tool calls that carry out the work whenever the request implies a change." : "Only call tools when the user explicitly asks you to change something."}
 LARGE TASKS: If the request spans many records or several steps, do not refuse or ask to narrow it. Work it end to end: state a short plan, execute the analysis over the whole dataset, group results by requisition or office, and propose every action needed — batching with bulk tools where possible.
-BATCHING IS MANDATORY: when the same change applies to more than one record, emit ONE bulk tool call (bulk_set_position_status, bulk_update_positions, bulk_move_stage) covering every affected id. Never emit a series of single-record calls for work that a bulk tool can express — the user must never confirm the same change one row at a time.`;
+BATCHING IS MANDATORY: when the same change applies to more than one record, emit ONE bulk tool call (bulk_set_position_status, bulk_update_positions, bulk_move_stage, bulk_set_candidate_status, bulk_share_candidates, bulk_apply_to_position) covering every affected id. Never emit a series of single-record calls for work that a bulk tool can express — the user must never confirm the same change one row at a time.`;
 
     const gatewayBody: Record<string, unknown> = {
       model: chosenModel,
