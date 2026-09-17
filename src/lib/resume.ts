@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { uploadCandidateFile, fileToBase64, UploadedDoc } from "@/lib/storage";
+import { uploadCandidateFile, UploadedDoc } from "@/lib/storage";
 import mammoth from "mammoth";
 
 /** Normalized candidate fields extracted from a résumé. */
