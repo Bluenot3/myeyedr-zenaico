@@ -15,11 +15,14 @@ import {
   useCandidates, useUpdateCandidate, useAddNote, useShareCandidate, useCandidateLifecycle,
   useBulkUpdateCandidates, useCreatePosition, useUpdatePosition, useDeletePosition,
   useReassignRequisition, useCreateJobTemplate, useCreateEvent, usePositions, useLocations,
-  useLogContact, useCreateApplication,
+  useLogContact, useCreateApplication, useCreateCandidate, useDeleteCandidate,
+  useCreateLocation, useUpdateLocation, useUpsertOnboarding, useRecordDecision,
+  useUpdateJobTemplate, useDeleteJobTemplate, useAnalyzeCandidateSignals,
 } from "@/hooks/useRecruiting";
 import {
-  useAssistantTasks, useRecordTaskRun, dueTasks, type AssistantTask,
+  useAssistantTasks, useRecordTaskRun, dueTasks, useCreateAssistantTask, type AssistantTask,
 } from "@/hooks/useAssistantTasks";
+
 import {
   loadPrefs, savePrefs, LENGTH_LABEL, STYLE_LABEL, type AssistantPrefs,
 } from "@/lib/assistantPrefs";
