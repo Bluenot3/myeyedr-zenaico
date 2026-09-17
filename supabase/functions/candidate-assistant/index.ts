@@ -690,6 +690,21 @@ const ACTION_LABEL: Record<string, (a: any) => string> = {
   log_contact: (a) => `Log ${a.method || "contact"} with ${a.candidate_name}`,
   bulk_set_position_status: (a) => `Set ${(a.position_ids || []).length} requisitions to “${a.status}” — ${a.summary}`,
   bulk_update_positions: (a) => `Update ${(a.position_ids || []).length} requisitions — ${a.summary}`,
+  create_candidate: (a) => `Add candidate: ${a.full_name}${a.position_title ? ` → ${a.position_title}` : ""}`,
+  delete_candidate: (a) => `Delete ${a.candidate_name} permanently`,
+  bulk_set_candidate_status: (a) => `Set ${(a.candidate_ids || []).length} candidates to “${a.status}” — ${a.candidate_names}`,
+  bulk_share_candidates: (a) => `Share ${(a.candidate_ids || []).length} candidates with ${a.location_name}`,
+  bulk_apply_to_position: (a) => `Apply ${(a.candidate_ids || []).length} candidates to ${a.position_title}`,
+  run_signal_scan: (a) => `Run signal scan on ${a.candidate_name}`,
+  record_decision: (a) => `Record “${a.decision}” decision for ${a.candidate_name}`,
+  update_onboarding: (a) => `Update onboarding readiness for ${a.candidate_name}`,
+  create_location: (a) => `Add office: ${a.name}`,
+  update_location: (a) => `Edit office: ${a.location_name}`,
+  invite_user: (a) => `Invite ${a.full_name} (${a.email}) as ${a.role}`,
+  update_job_template: (a) => `Edit job description: ${a.template_title}`,
+  delete_job_template: (a) => `Remove job description: ${a.template_title}`,
+  schedule_recurring_task: (a) => `Schedule standing task: ${a.title} (${a.cadence})`,
+
 };
 
 
