@@ -103,6 +103,7 @@ export default function PipelineBoard() {
 
   const hasSel = ids.size > 0 && !isClosedPipeline;
   const reqCount = (id: string) => candidates.filter((c) => c.position_id === id).length;
+  const unassignedCount = useMemo(() => candidates.filter((c) => !c.position_id).length, [candidates]);
 
   return (
     <div className="space-y-4 animate-rise">
