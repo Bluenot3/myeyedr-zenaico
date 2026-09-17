@@ -6,7 +6,9 @@ import {
   Send, Loader2, Bot, User, Sparkles, Check, X, CheckCircle2, ArrowRight, Trash2, StickyNote,
   Share2, Pencil, Paperclip, Briefcase, Copy, Lock, CalendarPlus, Users, BookMarked, FileText,
   Mail, PhoneCall, AlertTriangle, TrendingUp, ClipboardList, Square, CalendarClock, Play,
+  MapPin, UserPlus,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
