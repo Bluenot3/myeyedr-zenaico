@@ -45,7 +45,7 @@ export default function PipelineBoard() {
 
   // If a selected requisition disappears (no access / deleted), fall back to all.
   useEffect(() => {
-    if (reqId !== "all" && positions.length > 0 && !positions.some((p) => p.id === reqId)) setReqId("all");
+    if (reqId !== "all" && reqId !== "unassigned" && positions.length > 0 && !positions.some((p) => p.id === reqId)) setReqId("all");
   }, [reqId, positions]);
 
   // Closed pipelines are read-only — drop any pending selection.
@@ -55,7 +55,7 @@ export default function PipelineBoard() {
     return candidates.filter((c) => {
       const s = !search || [c.full_name, c.applied_role, c.headline, c.email].some((f) => f.toLowerCase().includes(search.toLowerCase()));
       const r = region === "All" || c.region === region;
-      const q = reqId === "all" || c.position_id === reqId;
+      const q = reqId === "all" || (reqId === "unassigned" ? !c.position_id : c.position_id === reqId);
       return s && r && q;
     });
   }, [candidates, search, region, reqId]);
@@ -103,6 +103,7 @@ export default function PipelineBoard() {
 
   const hasSel = ids.size > 0 && !isClosedPipeline;
   const reqCount = (id: string) => candidates.filter((c) => c.position_id === id).length;
+  const unassignedCount = useMemo(() => candidates.filter((c) => !c.position_id).length, [candidates]);
 
   return (
     <div className="space-y-4 animate-rise">
@@ -126,7 +127,9 @@ export default function PipelineBoard() {
       {/* Requisition switcher */}
       <div className="glass-panel rounded-xl p-2.5">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1"><Briefcase className="h-3 w-3" /> Requisition pipelines</span>
+          <span className="micro-label text-[9px] text-muted-foreground inline-flex items-center gap-1">
+            <Briefcase className="h-3 w-3" /> {openReqs.length} open requisition{openReqs.length === 1 ? "" : "s"} · numbers below are candidates
+          </span>
           {closedReqs.length > 0 && (
             <button onClick={() => setShowClosedReqs((v) => !v)} className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
               {showClosedReqs ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -137,10 +140,22 @@ export default function PipelineBoard() {
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
           <button
             onClick={() => setReqId("all")}
-            className={`shrink-0 rounded-lg border px-3 h-9 text-xs transition-colors ${reqId === "all" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
+            title={`${candidates.length} candidates across all requisitions`}
+            className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${reqId === "all" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
           >
-            All openings <span className="ml-1 opacity-70">{candidates.length}</span>
+            <span className="block text-xs font-medium">All requisitions</span>
+            <span className="block text-[9.5px] text-muted-foreground">{candidates.length} candidates</span>
           </button>
+          {unassignedCount > 0 && (
+            <button
+              onClick={() => setReqId("unassigned")}
+              title={`${unassignedCount} candidates not yet assigned to a requisition`}
+              className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${reqId === "unassigned" ? "border-emerald/40 bg-emerald/12 text-emerald" : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"}`}
+            >
+              <span className="block text-xs font-medium">Not assigned</span>
+              <span className="block text-[9.5px] text-muted-foreground">{unassignedCount} candidates</span>
+            </button>
+          )}
           {visibleReqs.map((p) => {
             const closed = CLOSED_STATUSES.has(p.status);
             const active = reqId === p.id;
@@ -148,17 +163,16 @@ export default function PipelineBoard() {
               <button
                 key={p.id}
                 onClick={() => setReqId(p.id)}
-                title={`${p.title} · ${locName(p.location_id) || p.region || "—"}`}
+                title={`${p.title} · ${locName(p.location_id) || p.region || "—"} · ${reqCount(p.id)} candidates`}
                 className={`shrink-0 rounded-lg border px-3 h-9 text-left transition-colors ${active ? (closed ? "border-muted-foreground/40 bg-muted text-foreground" : "border-emerald/40 bg-emerald/12 text-emerald") : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"} ${closed ? "opacity-80" : ""}`}
               >
                 <span className="flex items-center gap-1.5 text-xs font-medium">
                   {closed && <Lock className="h-3 w-3 shrink-0" />}
                   {p.req_code && <span className="font-mono text-[9px] uppercase opacity-70">{p.req_code}</span>}
                   <span className="truncate max-w-[150px]">{p.title}</span>
-                  <span className="opacity-70 text-[10px]">{reqCount(p.id)}</span>
                 </span>
                 <span className="flex items-center gap-1 text-[9.5px] text-muted-foreground truncate max-w-[190px]">
-                  <MapPin className="h-2.5 w-2.5 shrink-0" /> {locName(p.location_id) || p.region || "Unassigned"}
+                  <MapPin className="h-2.5 w-2.5 shrink-0" /> {locName(p.location_id) || p.region || "Unassigned"} · {reqCount(p.id)} cand.
                 </span>
               </button>
             );
