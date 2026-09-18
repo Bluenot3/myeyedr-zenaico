@@ -628,6 +628,7 @@ function CredentialDialog({ email, password, emailed, onClose }: { email: string
           <p className="text-sm text-muted-foreground">Share these details securely — they can sign in with them right away.</p>
         )}
         <div className="rounded-xl border border-border bg-background/40 p-4 space-y-2 font-mono text-sm">
+          <div className="flex justify-between gap-3"><span className="text-muted-foreground">Sign in</span><span className="truncate text-primary">{signInUrl()}</span></div>
           <div className="flex justify-between gap-3"><span className="text-muted-foreground">Email</span><span className="truncate">{email}</span></div>
           <div className="flex justify-between gap-3"><span className="text-muted-foreground">Password</span><span className="text-gold">{password}</span></div>
         </div>
