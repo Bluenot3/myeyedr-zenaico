@@ -305,3 +305,57 @@ function CredentialDialog({ email, password, emailed, onClose }: { email: string
     </Dialog>
   );
 }
+
+function SetPasswordDialog({
+  user,
+  onClose,
+  onSaved,
+}: {
+  user: ManagedUser;
+  onClose: () => void;
+  onSaved: (c: { email: string; password: string; emailed?: boolean }) => void;
+}) {
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    if (pw.trim().length < 8) { toast.error("Use at least 8 characters."); return; }
+    setBusy(true);
+    try {
+      await callAdmin("reset_password", { user_id: user.id, password: pw.trim(), force_reset: false });
+      toast.success("Password set — they can sign in with it right away.");
+      onSaved({ email: user.email, password: pw.trim() });
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md glass-panel">
+        <DialogHeader>
+          <DialogTitle className="font-display text-xl flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-gold" /> Set password
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Choose a password for <strong>{user.full_name || user.email}</strong>. They can sign in with it immediately and keep using it — no email or extra step needed. They can change it later from this screen.
+        </p>
+        <div>
+          <Label className="text-xs">New password</Label>
+          <Input
+            autoFocus
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            placeholder="At least 8 characters"
+            onKeyDown={(e) => { if (e.key === "Enter") save(); }}
+          />
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={save} disabled={busy} className="btn-optic">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />} Save password
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
