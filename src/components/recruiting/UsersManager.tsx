@@ -19,6 +19,12 @@ import { toast } from "sonner";
 
 type Role = "admin" | "regional" | "manager";
 
+// Canonical public domain so shared sign-in details and invite redirects
+// always point to the branded portal, never a preview host.
+const PUBLIC_ORIGIN = "https://myeyedr.zenai.world";
+const signInUrl = () => `${PUBLIC_ORIGIN}/auth`;
+const resetUrl = () => `${PUBLIC_ORIGIN}/reset-password`;
+
 interface ManagedUser {
   id: string;
   email: string;
