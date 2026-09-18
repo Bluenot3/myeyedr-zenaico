@@ -43,6 +43,7 @@ export default function UsersManager() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [credential, setCredential] = useState<{ email: string; password: string; emailed?: boolean } | null>(null);
   const [assignFor, setAssignFor] = useState<ManagedUser | null>(null);
+  const [pwFor, setPwFor] = useState<ManagedUser | null>(null);
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["managed-users"],
