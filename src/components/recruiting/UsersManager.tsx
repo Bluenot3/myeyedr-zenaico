@@ -111,7 +111,7 @@ export default function UsersManager() {
 
   const resendInvite = async (u: ManagedUser) => {
     try {
-      const res = await callAdmin("resend_invite", { user_id: u.id, email: u.email, redirect_to: `${window.location.origin}/reset-password` });
+      const res = await callAdmin("resend_invite", { user_id: u.id, email: u.email, redirect_to: resetUrl() });
       setCredential({ email: u.email, password: res.temp_password, emailed: res.emailed });
       reload();
       if (res.emailed) toast.success("Invite email resent");
@@ -148,7 +148,7 @@ export default function UsersManager() {
     let ok = 0;
     for (const u of selUsers) {
       try {
-        const res = await callAdmin("resend_invite", { user_id: u.id, email: u.email, redirect_to: `${window.location.origin}/reset-password` });
+        const res = await callAdmin("resend_invite", { user_id: u.id, email: u.email, redirect_to: resetUrl() });
         if (res?.emailed) ok++;
       } catch { /* keep going */ }
     }
@@ -343,7 +343,7 @@ export default function UsersManager() {
                         <DropdownMenuItem onClick={() => setPwFor(u)}><KeyRound className="h-3.5 w-3.5 mr-2" /> Set password</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => resendInvite(u)}><Mail className="h-3.5 w-3.5 mr-2" /> Re-send invite email</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => resetPw(u)}><ShieldCheck className="h-3.5 w-3.5 mr-2" /> One-time temp password</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`Sign in at ${window.location.origin}/auth\nEmail: ${u.email}`); toast.success("Sign-in details copied"); }}>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`Sign in at ${signInUrl()}\nEmail: ${u.email}`); toast.success("Sign-in details copied"); }}>
                           <Copy className="h-3.5 w-3.5 mr-2" /> Copy sign-in details
                         </DropdownMenuItem>
                         {!isSelf && (
@@ -413,7 +413,7 @@ function InviteDialog({ locations, onClose, onInvited }: { locations: Loc[]; onC
     if (!email.trim() || !name.trim()) { toast.error("Name and email required"); return; }
     setBusy(true);
     try {
-      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [], redirect_to: `${window.location.origin}/reset-password` });
+      const res = await callAdmin("invite", { email, full_name: name, title, role, location_ids: role === "manager" ? locIds : [], redirect_to: resetUrl() });
       onInvited({ email: res.email, password: res.temp_password, emailed: res.emailed });
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
@@ -493,7 +493,7 @@ function BulkInviteDialog({ locations, onClose, onDone }: { locations: Loc[]; on
     const out: typeof results = [];
     for (const r of rows) {
       try {
-        await callAdmin("invite", { email: r.email, full_name: r.name, title: r.title, role, location_ids: role === "manager" ? locIds : [], redirect_to: `${window.location.origin}/reset-password` });
+        await callAdmin("invite", { email: r.email, full_name: r.name, title: r.title, role, location_ids: role === "manager" ? locIds : [], redirect_to: resetUrl() });
         out.push({ email: r.email, name: r.name, ok: true, detail: "Invite email sent" });
       } catch (e: any) {
         out.push({ email: r.email, name: r.name, ok: false, detail: e.message });
@@ -614,7 +614,7 @@ function AssignLocationsDialog({ user, locations, onClose, onSaved }: { user: Ma
 function CredentialDialog({ email, password, emailed, onClose }: { email: string; password: string; emailed?: boolean; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
-    navigator.clipboard.writeText(`Sign in at ${window.location.origin}/auth\nEmail: ${email}\nPassword: ${password}`);
+    navigator.clipboard.writeText(`Sign in at ${signInUrl()}\nEmail: ${email}\nPassword: ${password}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
