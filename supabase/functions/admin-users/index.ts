@@ -167,14 +167,19 @@ serve(async (req) => {
       case "reset_password": {
         const user_id = String(body.user_id ?? "");
         if (!user_id) return json({ error: "user_id required" }, 400);
-        const pw = tempPassword();
+        const custom = typeof body.password === "string" ? body.password.trim() : "";
+        if (custom && custom.length < 8) return json({ error: "Password must be at least 8 characters" }, 400);
+        // When an admin sets an explicit password, the user can keep using it — no forced change.
+        const force = custom ? body.force_reset === true : true;
+        const pw = custom || tempPassword();
         const { error } = await db.auth.admin.updateUserById(user_id, {
           password: pw,
-          user_metadata: { must_reset_password: true },
+          email_confirm: true,
+          user_metadata: { must_reset_password: force },
         });
         if (error) return json({ error: error.message }, 400);
-        await db.from("profiles").update({ must_reset_password: true }).eq("id", user_id);
-        return json({ ok: true, temp_password: pw });
+        await db.from("profiles").update({ must_reset_password: force }).eq("id", user_id);
+        return json({ ok: true, temp_password: pw, must_reset: force });
       }
 
       case "set_role": {
