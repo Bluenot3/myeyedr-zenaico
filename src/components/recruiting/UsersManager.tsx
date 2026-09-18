@@ -165,6 +165,7 @@ export default function UsersManager() {
           onSaved={() => { setAssignFor(null); reload(); }}
         />
       )}
+      {pwFor && <SetPasswordDialog user={pwFor} onClose={() => setPwFor(null)} onSaved={(c) => { setPwFor(null); setCredential(c); reload(); }} />}
       {credential && <CredentialDialog email={credential.email} password={credential.password} emailed={credential.emailed} onClose={() => setCredential(null)} />}
     </div>
   );
